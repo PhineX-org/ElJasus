@@ -1,6 +1,14 @@
 // ============================================
-// EL JASUS — VOICE CHAT (WebRTC)
+// EL JASUS — VOICE CHAT (WebRTC) v2
 // Peer-to-peer audio via Firebase signaling
+// Bugs fixed:
+//  • muted state reset on leave
+//  • FAB z-index / position layering correct
+//  • audio element leak prevented on reconnect
+//  • mute icon reflected on FAB
+//  • updateUI guard handles missing DOM
+//  • voice activity detection stops cleanly
+//  • peer answer sent to correct initiator
 // ============================================
 
 class VoiceChat {
@@ -15,6 +23,7 @@ class VoiceChat {
         this.muted       = false;
         this.active      = false;
         this.speaking    = {};   // uid → bool
+        this._audioCtx   = null; // single AudioContext for VAD
 
         this.config = {
             iceServers: [
@@ -29,6 +38,8 @@ class VoiceChat {
 
     // ── JOIN VOICE ────────────────────────────
     async join() {
+        if (this.active) return; // already in voice
+
         try {
             this.localStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -38,7 +49,9 @@ class VoiceChat {
                 },
                 video: false
             });
+
             this.active = true;
+            this.muted  = false; // always start unmuted
             this.updateUI();
             this.setupVoiceDetection();
 
@@ -48,38 +61,65 @@ class VoiceChat {
             if (window.SND) SND.play('join');
             if (window.showToast) showToast('🎙️ انضممت للدردشة الصوتية');
         } catch (err) {
-            console.error('Voice chat error:', err);
+            console.error('[VC] join error:', err);
+            this.active = false;
             if (err.name === 'NotAllowedError') {
-                alert('يجب السماح بالوصول للميكروفون لاستخدام الدردشة الصوتية');
+                if (window.showToast) showToast('⛔ يجب السماح بالوصول للميكروفون');
+                else alert('يجب السماح بالوصول للميكروفون لاستخدام الدردشة الصوتية');
             } else {
-                alert('خطأ في الدردشة الصوتية: ' + err.message);
+                if (window.showToast) showToast('⛔ خطأ في الصوت: ' + err.message);
+                else alert('خطأ في الدردشة الصوتية: ' + err.message);
             }
         }
     }
 
     // ── LEAVE VOICE ───────────────────────────
     leave() {
+        // Stop local mic tracks
         if (this.localStream) {
             this.localStream.getTracks().forEach(t => t.stop());
             this.localStream = null;
         }
 
-        Object.values(this.peers).forEach(pc => pc.close());
-        this.peers = {};
-        this.active = false;
-        this.updateUI();
+        // Stop voice activity detection
+        if (this._audioCtx) {
+            try { this._audioCtx.close(); } catch(e) {}
+            this._audioCtx = null;
+        }
 
+        // Close all peer connections + remove their audio elements
+        Object.keys(this.peers).forEach(uid => {
+            this.removePeer(uid);
+            this.removeVoiceUser(uid);
+        });
+        this.peers = {};
+
+        // ✅ FIX: always reset muted state on leave
+        this.active = false;
+        this.muted  = false;
+
+        this.updateUI();
         this.signal('left', {});
+
         if (window.showToast) showToast('🎙️ غادرت الدردشة الصوتية');
     }
 
     // ── MUTE / UNMUTE ─────────────────────────
     toggleMute() {
-        if (!this.localStream) return;
+        if (!this.active) {
+            if (window.showToast) showToast('⛔ انضم للدردشة الصوتية أولاً');
+            return;
+        }
         this.muted = !this.muted;
-        this.localStream.getAudioTracks().forEach(t => (t.enabled = !this.muted));
+
+        // Apply to existing stream
+        if (this.localStream) {
+            this.localStream.getAudioTracks().forEach(t => (t.enabled = !this.muted));
+        }
+
         this.updateUI();
-        if (window.SND) SND.play('click');
+        if (window.SND) SND.play?.('click');
+        if (window.showToast) showToast(this.muted ? '🔇 تم كتم الصوت' : '🎙️ تم تشغيل الصوت');
     }
 
     // ── SIGNALING VIA FIREBASE ─────────────────
@@ -101,7 +141,8 @@ class VoiceChat {
         onChildAdded(sigRef, snap => {
             const msg = snap.val();
             if (!msg || msg.from === this.uid) return;
-            if (msg.timestamp < Date.now() - 30000) return; // ignore old signals
+            // Ignore stale signals (older than 30s)
+            if (msg.timestamp < Date.now() - 30000) return;
 
             this.handleSignal(msg);
         });
@@ -110,11 +151,11 @@ class VoiceChat {
     async handleSignal(msg) {
         switch (msg.type) {
             case 'joined':
+                this.addVoiceUser(msg.from, msg.fromName);
                 if (this.active) {
-                    // Create peer connection and offer
+                    // We're already in voice — initiate a peer connection to the newcomer
                     await this.createPeer(msg.from, true);
                 }
-                this.addVoiceUser(msg.from, msg.fromName);
                 break;
 
             case 'offer':
@@ -123,9 +164,11 @@ class VoiceChat {
 
             case 'answer':
                 if (this.peers[msg.from]) {
-                    await this.peers[msg.from].setRemoteDescription(
-                        new RTCSessionDescription(msg.data)
-                    );
+                    try {
+                        await this.peers[msg.from].setRemoteDescription(
+                            new RTCSessionDescription(msg.data)
+                        );
+                    } catch(e) { console.warn('[VC] setRemoteDescription error:', e); }
                 }
                 break;
 
@@ -135,7 +178,7 @@ class VoiceChat {
                         await this.peers[msg.from].addIceCandidate(
                             new RTCIceCandidate(msg.data)
                         );
-                    } catch(e) {}
+                    } catch(e) { /* ignore ICE errors */ }
                 }
                 break;
 
@@ -152,8 +195,10 @@ class VoiceChat {
 
     // ── PEER CONNECTION ───────────────────────
     async createPeer(remoteUid, initiator) {
+        // Close existing connection cleanly
         if (this.peers[remoteUid]) {
             this.peers[remoteUid].close();
+            delete this.peers[remoteUid];
         }
 
         const pc = new RTCPeerConnection(this.config);
@@ -164,12 +209,15 @@ class VoiceChat {
             this.localStream.getTracks().forEach(t => pc.addTrack(t, this.localStream));
         }
 
-        // Handle remote audio
+        // Handle remote audio — remove stale element first
         pc.ontrack = (e) => {
+            const old = document.getElementById(`audio-${remoteUid}`);
+            if (old) old.remove();
+
             const audio = document.createElement('audio');
-            audio.autoplay = true;
+            audio.autoplay  = true;
+            audio.id        = `audio-${remoteUid}`;
             audio.srcObject = e.streams[0];
-            audio.id = `audio-${remoteUid}`;
             document.getElementById('voice-audio-container')?.appendChild(audio);
         };
 
@@ -180,13 +228,15 @@ class VoiceChat {
             }
         };
 
-        // Connection state
+        // Connection state changes
         pc.onconnectionstatechange = () => {
-            const state = pc.connectionState;
-            this.updatePeerStatus(remoteUid, state);
+            this.updatePeerStatus(remoteUid, pc.connectionState);
+            // Auto-remove on permanent failure
+            if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+                this.removePeer(remoteUid);
+            }
         };
 
-        // Create offer if initiator
         if (initiator) {
             const offer = await pc.createOffer({ offerToReceiveAudio: true });
             await pc.setLocalDescription(offer);
@@ -197,6 +247,8 @@ class VoiceChat {
     }
 
     async handleOffer(fromUid, fromName, offerData) {
+        if (!this.active) return; // ignore offers if we're not in voice
+
         const pc = await this.createPeer(fromUid, false);
         await pc.setRemoteDescription(new RTCSessionDescription(offerData));
         const answer = await pc.createAnswer();
@@ -218,34 +270,44 @@ class VoiceChat {
     setupVoiceDetection() {
         if (!this.localStream || !window.AudioContext) return;
 
-        const audioCtx  = new AudioContext();
-        const source    = audioCtx.createMediaStreamSource(this.localStream);
-        const analyser  = audioCtx.createAnalyser();
+        // Close any previous AudioContext
+        if (this._audioCtx) {
+            try { this._audioCtx.close(); } catch(e) {}
+        }
+
+        this._audioCtx = new AudioContext();
+        const source   = this._audioCtx.createMediaStreamSource(this.localStream);
+        const analyser = this._audioCtx.createAnalyser();
         analyser.fftSize = 256;
         source.connect(analyser);
 
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        let lastState = false;
+        const data      = new Uint8Array(analyser.frequencyBinCount);
+        let lastState   = false;
+        let rafId       = null;
 
         const check = () => {
-            if (!this.active) return;
+            // Stop if no longer active or stream gone
+            if (!this.active || !this.localStream) {
+                if (rafId) cancelAnimationFrame(rafId);
+                return;
+            }
             analyser.getByteFrequencyData(data);
-            const avg = data.reduce((a, b) => a + b, 0) / data.length;
-            const speaking = avg > 20;
+            const avg      = data.reduce((a, b) => a + b, 0) / data.length;
+            const speaking = avg > 20 && !this.muted;
 
             if (speaking !== lastState) {
                 lastState = speaking;
                 this.setSpeaking(this.uid, speaking);
                 this.signal('speaking', { speaking });
 
-                // Visual feedback on own avatar
+                // Visual glow on own avatar
                 const myAvatar = document.getElementById(`voice-user-${this.uid}`);
                 if (myAvatar) {
                     myAvatar.style.borderColor = speaking ? '#00ff00' : 'rgba(0,242,255,.3)';
-                    myAvatar.style.boxShadow   = speaking ? '0 0 15px #00ff00' : 'none';
+                    myAvatar.style.boxShadow   = speaking ? '0 0 15px rgba(0,255,0,.5)' : 'none';
                 }
             }
-            requestAnimationFrame(check);
+            rafId = requestAnimationFrame(check);
         };
         check();
     }
@@ -262,14 +324,25 @@ class VoiceChat {
     updatePeerStatus(uid, state) {
         const dot = document.getElementById(`peer-dot-${uid}`);
         if (!dot) return;
-        const colors = { connected:'#00ff00', connecting:'#ffd700', failed:'#ff4444', disconnected:'#666' };
+        const colors = {
+            connected:    '#00ff00',
+            connecting:   '#ffd700',
+            failed:       '#ff4444',
+            disconnected: '#666',
+            closed:       '#666',
+        };
         dot.style.background = colors[state] || '#666';
     }
 
     // ── VOICE USERS UI ────────────────────────
     addVoiceUser(uid, name) {
         const container = document.getElementById('voice-users');
-        if (!container || document.getElementById(`voice-user-${uid}`)) return;
+        if (!container) return;
+        if (document.getElementById(`voice-user-${uid}`)) return; // already shown
+
+        // Remove "nobody here" placeholder
+        const placeholder = container.querySelector('.vc-empty');
+        if (placeholder) placeholder.remove();
 
         const el = document.createElement('div');
         el.id = `voice-user-${uid}`;
@@ -278,19 +351,31 @@ class VoiceChat {
             padding:8px;border-radius:12px;border:2px solid rgba(0,242,255,.3);
             background:rgba(0,242,255,.05);transition:all .3s;min-width:60px;`;
         el.innerHTML = `
-            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00f2ff,#7c30ff);
-                display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;">
+            <div style="width:36px;height:36px;border-radius:50%;
+                background:linear-gradient(135deg,#00f2ff,#7c30ff);
+                display:flex;align-items:center;justify-content:center;position:relative;">
                 <i class="fas fa-user" style="color:white;font-size:14px;"></i>
-                <div id="peer-dot-${uid}" style="position:absolute;bottom:0;right:0;width:10px;height:10px;
-                    border-radius:50%;background:#ffd700;border:2px solid #0a0e1a;"></div>
+                <div id="peer-dot-${uid}" style="
+                    position:absolute;bottom:0;right:0;
+                    width:10px;height:10px;border-radius:50%;
+                    background:#ffd700;border:2px solid #0a0e1a;"></div>
             </div>
-            <span style="font-size:9px;color:#ccc;font-weight:700;max-width:56px;overflow:hidden;
-                text-overflow:ellipsis;white-space:nowrap;">${name}</span>`;
+            <span style="font-size:9px;color:#ccc;font-weight:700;
+                max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>`;
         container.appendChild(el);
     }
 
     removeVoiceUser(uid) {
         document.getElementById(`voice-user-${uid}`)?.remove();
+        // If container is now empty, restore placeholder
+        const container = document.getElementById('voice-users');
+        if (container && !container.querySelector('[id^="voice-user-"]')) {
+            const p = document.createElement('p');
+            p.className = 'vc-empty';
+            p.style.cssText = 'color:#555;font-size:11px;text-align:center;width:100%;';
+            p.textContent = 'لا أحد في الدردشة الصوتية';
+            container.appendChild(p);
+        }
     }
 
     // ── UI PANEL ──────────────────────────────
@@ -298,87 +383,162 @@ class VoiceChat {
         if (document.getElementById('voice-panel')) return;
 
         document.body.insertAdjacentHTML('beforeend', `
-        <div id="voice-audio-container" style="display:none;"></div>
+        <!-- Hidden audio container -->
+        <div id="voice-audio-container" style="display:none;position:absolute;"></div>
 
+        <!-- Voice chat panel — z-index 8500, right side -->
         <div id="voice-panel" style="
-            position:fixed;bottom:80px;right:20px;z-index:8500;
+            position:fixed;bottom:136px;right:20px;z-index:8500;
             background:linear-gradient(135deg,rgba(10,14,26,.97),rgba(20,25,45,.97));
             border:2px solid rgba(0,242,255,.3);border-radius:20px;padding:16px;
-            backdrop-filter:blur(20px);min-width:220px;display:none;
-            box-shadow:0 8px 32px rgba(0,0,0,.5);font-family:'Cairo',sans-serif;">
+            backdrop-filter:blur(20px);min-width:230px;display:none;
+            box-shadow:0 8px 32px rgba(0,0,0,.5);font-family:'Cairo',sans-serif;
+            animation:vcPanelIn .25s ease;">
 
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h4 style="color:#00f2ff;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin:0;">
+                <h4 style="color:#00f2ff;font-size:12px;font-weight:900;
+                    text-transform:uppercase;letter-spacing:2px;margin:0;">
                     🎙️ الدردشة الصوتية
                 </h4>
-                <button onclick="document.getElementById('voice-panel').style.display='none'"
-                    style="background:none;border:none;color:#666;cursor:pointer;font-size:16px;">✕</button>
+                <button id="vc-close-btn"
+                    style="background:none;border:none;color:#555;cursor:pointer;font-size:16px;
+                        padding:4px 6px;border-radius:6px;transition:color .2s;"
+                    onmouseover="this.style.color='#ccc'" onmouseout="this.style.color='#555'">✕</button>
             </div>
 
-            <div id="voice-users" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;min-height:50px;
-                align-items:center;justify-content:center;">
-                <p style="color:#555;font-size:11px;text-align:center;width:100%;">لا أحد في الدردشة الصوتية</p>
+            <!-- Active users list -->
+            <div id="voice-users" style="
+                display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;
+                min-height:50px;align-items:center;justify-content:center;">
+                <p class="vc-empty" style="color:#555;font-size:11px;text-align:center;width:100%;">
+                    لا أحد في الدردشة الصوتية
+                </p>
             </div>
 
-            <div style="display:flex;gap:8px;">
-                <button id="vc-join-btn" onclick="window.VC?.join()" style="
-                    flex:1;padding:10px;border-radius:12px;font-weight:900;font-size:12px;
-                    background:linear-gradient(135deg,#00f2ff,#7c30ff);border:none;color:white;cursor:pointer;">
-                    انضم
+            <!-- Controls -->
+            <div style="display:flex;gap:8px;align-items:center;">
+                <!-- Join button (visible when not in voice) -->
+                <button id="vc-join-btn"
+                    style="flex:1;padding:10px;border-radius:12px;font-weight:900;font-size:12px;
+                        background:linear-gradient(135deg,#00f2ff,#7c30ff);border:none;
+                        color:white;cursor:pointer;transition:opacity .2s;"
+                    onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                    انضم للصوت
                 </button>
-                <button id="vc-mute-btn" onclick="window.VC?.toggleMute()" style="
-                    width:42px;height:42px;border-radius:12px;border:2px solid rgba(0,242,255,.3);
-                    background:rgba(0,242,255,.1);color:#00f2ff;cursor:pointer;font-size:16px;display:flex;
-                    align-items:center;justify-content:center;">
-                    <i class="fas fa-microphone"></i>
+
+                <!-- Mute button (visible when in voice) -->
+                <button id="vc-mute-btn"
+                    style="display:none;flex:1;padding:10px;border-radius:12px;font-weight:900;font-size:12px;
+                        border:2px solid rgba(0,242,255,.3);background:rgba(0,242,255,.1);
+                        color:#00f2ff;cursor:pointer;transition:all .2s;">
+                    <i class="fas fa-microphone"></i> مفتوح
                 </button>
-                <button id="vc-leave-btn" onclick="window.VC?.leave()" style="
-                    width:42px;height:42px;border-radius:12px;border:2px solid rgba(239,68,68,.3);
-                    background:rgba(239,68,68,.1);color:#ef4444;cursor:pointer;font-size:16px;display:flex;
-                    align-items:center;justify-content:center;">
+
+                <!-- Leave button (visible when in voice) -->
+                <button id="vc-leave-btn"
+                    style="display:none;width:42px;height:42px;border-radius:12px;
+                        border:2px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);
+                        color:#ef4444;cursor:pointer;font-size:16px;
+                        display:none;align-items:center;justify-content:center;
+                        transition:all .2s;"
+                    title="مغادرة الصوت">
                     <i class="fas fa-phone-slash"></i>
                 </button>
             </div>
         </div>
 
-        <button id="voice-fab" onclick="document.getElementById('voice-panel').style.display=
-            document.getElementById('voice-panel').style.display==='block'?'none':'block'" style="
+        <!-- Voice FAB — stacked below chat FAB at bottom:80px -->
+        <button id="voice-fab" style="
             position:fixed;bottom:80px;right:20px;z-index:8501;
             width:46px;height:46px;border-radius:50%;
             background:linear-gradient(135deg,rgba(0,242,255,.15),rgba(124,48,255,.15));
             border:2px solid rgba(0,242,255,.4);cursor:pointer;
             display:flex;align-items:center;justify-content:center;
-            backdrop-filter:blur(12px);color:#00f2ff;font-size:18px;transition:all .3s;"
+            backdrop-filter:blur(12px);color:#00f2ff;font-size:18px;
+            transition:all .3s;box-shadow:0 4px 15px rgba(0,242,255,.2);"
             title="الدردشة الصوتية">
             <i class="fas fa-microphone"></i>
-        </button>`);
+        </button>
+
+        <style>
+            @keyframes vcPanelIn {
+                from { opacity:0; transform:translateY(12px) scale(.97); }
+                to   { opacity:1; transform:translateY(0) scale(1); }
+            }
+        </style>`);
+
+        // Wire up FAB toggle
+        document.getElementById('voice-fab').addEventListener('click', () => this._togglePanel());
+
+        // Wire up panel close button
+        document.getElementById('vc-close-btn').addEventListener('click', () => this._togglePanel(false));
+
+        // Wire up join/mute/leave
+        document.getElementById('vc-join-btn').addEventListener('click',  () => this.join());
+        document.getElementById('vc-mute-btn').addEventListener('click',  () => this.toggleMute());
+        document.getElementById('vc-leave-btn').addEventListener('click', () => {
+            this.leave();
+            this._togglePanel(false);
+        });
+    }
+
+    _togglePanel(force) {
+        const panel = document.getElementById('voice-panel');
+        if (!panel) return;
+        const isOpen = panel.style.display === 'block';
+        const next   = force !== undefined ? force : !isOpen;
+        panel.style.display = next ? 'block' : 'none';
     }
 
     updateUI() {
         const joinBtn  = document.getElementById('vc-join-btn');
         const muteBtn  = document.getElementById('vc-mute-btn');
-        const leavBtn  = document.getElementById('vc-leave-btn');
+        const leaveBtn = document.getElementById('vc-leave-btn');
         const fab      = document.getElementById('voice-fab');
-
-        if (!joinBtn) return;
+        if (!joinBtn || !muteBtn || !leaveBtn || !fab) return;
 
         if (this.active) {
+            // ── In voice ──
             joinBtn.style.display  = 'none';
-            muteBtn.style.display  = 'flex';
-            leavBtn.style.display  = 'flex';
-            fab.style.borderColor  = '#00ff00';
-            fab.style.boxShadow    = '0 0 15px rgba(0,255,0,.4)';
-            muteBtn.innerHTML      = this.muted
+            muteBtn.style.display  = 'block';
+            leaveBtn.style.display = 'flex';
+
+            // Mute button appearance
+            if (this.muted) {
+                muteBtn.style.background    = 'rgba(239,68,68,.15)';
+                muteBtn.style.borderColor   = 'rgba(239,68,68,.4)';
+                muteBtn.style.color         = '#ef4444';
+                muteBtn.innerHTML           = '<i class="fas fa-microphone-slash"></i> مكتوم';
+            } else {
+                muteBtn.style.background    = 'rgba(0,242,255,.1)';
+                muteBtn.style.borderColor   = 'rgba(0,242,255,.3)';
+                muteBtn.style.color         = '#00f2ff';
+                muteBtn.innerHTML           = '<i class="fas fa-microphone"></i> مفتوح';
+            }
+
+            // FAB: green when active, red-ish when muted
+            fab.style.borderColor = this.muted ? 'rgba(239,68,68,.7)' : '#00ff00';
+            fab.style.boxShadow   = this.muted
+                ? '0 0 12px rgba(239,68,68,.4)'
+                : '0 0 15px rgba(0,255,0,.4)';
+            fab.innerHTML = this.muted
                 ? '<i class="fas fa-microphone-slash" style="color:#ef4444;"></i>'
-                : '<i class="fas fa-microphone" style="color:#00f2ff;"></i>';
+                : '<i class="fas fa-microphone" style="color:#00ff00;"></i>';
+
             // Add self to user list
             this.addVoiceUser(this.uid, this.username);
+
         } else {
+            // ── Not in voice ──
             joinBtn.style.display  = 'block';
             muteBtn.style.display  = 'none';
-            leavBtn.style.display  = 'none';
-            fab.style.borderColor  = 'rgba(0,242,255,.4)';
-            fab.style.boxShadow    = 'none';
+            leaveBtn.style.display = 'none';
+
+            // FAB: default cyan idle state
+            fab.style.borderColor = 'rgba(0,242,255,.4)';
+            fab.style.boxShadow   = '0 4px 15px rgba(0,242,255,.2)';
+            fab.innerHTML         = '<i class="fas fa-microphone" style="color:#00f2ff;"></i>';
+
             this.removeVoiceUser(this.uid);
         }
     }

@@ -159,24 +159,6 @@
     <div id="discussion-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/90 backdrop-blur-md animate__animated animate__fadeIn">
         <div class="glass w-full max-w-4xl rounded-[2rem] p-4 border border-white/10 shadow-2xl relative inner-scroll" style="max-height:94dvh;">
             
-            <!-- Chat Button -->
-            <button id="toggleChatBtn" class="fixed top-6 left-6 z-[60] bg-gradient-to-r from-cyan-500 to-blue-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all border-2 border-cyan-400/50">
-                <i class="fas fa-comments text-2xl"></i>
-            </button>
-
-            <!-- Chat Window -->
-            <div id="chatWindow" class="hidden fixed top-20 left-6 z-[60] w-80 glass rounded-2xl p-4 border-2 border-cyan-500/30 shadow-2xl animate__animated animate__slideInLeft">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-black text-cyan-400 neon-text">💬 الشات</h3>
-                    <button id="closeChatBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
-                </div>
-                <div id="discussionMessages" class="h-64 overflow-y-auto custom-scrollbar mb-3 text-right text-xs bg-black/40 p-3 rounded-xl border border-white/10"></div>
-                <div class="flex gap-2">
-                    <input id="discussionInput" type="text" class="flex-1 bg-black/40 border border-white/10 p-2 rounded-lg text-xs outline-none focus:border-cyan-500" placeholder="اكتب رسالتك...">
-                    <button id="sendDiscussionBtn" class="dynamic-bg-primary px-4 rounded-lg text-xs font-black">إرسال</button>
-                </div>
-            </div>
-
             <h2 class="text-2xl font-black mb-6 text-center neon-text">نقاش الجولة 🗣️</h2>
             
             <!-- Suspects List -->
@@ -189,24 +171,35 @@
                 سيتم الانتقال للتصويت عندما يضغط جميع اللاعبين على زر الانتقال.
             </p>
 
-            <!-- HINT SYSTEM -->
-            <div id="hint-section" class="mt-3 flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,215,0,.08);border:2px solid rgba(255,215,0,.2);">
-                <div class="flex items-center gap-2">
-                    <span style="font-size:20px;">💡</span>
-                    <div>
-                        <p class="text-xs font-bold text-yellow-400">تلميح للأبرياء</p>
-                        <p class="text-xs text-gray-400">رصيدك: <span id="hintBalance" class="text-yellow-400 font-bold">0</span> تلميح</p>
+            <!-- SPY HINT SYSTEM — hidden by default, shown only if player is spy -->
+            <div id="hint-section" class="hidden mt-3 rounded-2xl p-4" style="background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(220,38,38,.06));border:2px solid rgba(239,68,68,.35);">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span style="font-size:22px;">🕵️</span>
+                        <div>
+                            <p class="text-xs font-black" style="color:#f87171;">تلميح للجاسوس فقط</p>
+                            <p class="text-xs text-gray-400">تلميحات متبقية: <span id="hintBalance" class="font-black" style="color:#f87171;">3</span> / 3</p>
+                        </div>
                     </div>
+                    <button id="useHintBtn" onclick="useHint()"
+                        class="px-4 py-2 rounded-xl font-black text-xs transition-all"
+                        style="background:linear-gradient(135deg,rgba(239,68,68,.35),rgba(220,38,38,.2));border:2px solid rgba(239,68,68,.6);color:#fca5a5;">
+                        اكشف تلميحاً 🔍
+                    </button>
                 </div>
-                <button id="useHintBtn" onclick="useHint()" class="px-4 py-2 rounded-xl font-black text-xs uppercase transition-all"
-                    style="background:linear-gradient(135deg,rgba(255,215,0,.3),rgba(255,165,0,.2));border:2px solid rgba(255,215,0,.5);color:#ffd700;">
-                    استخدم تلميحاً
-                </button>
+                <!-- Revealed hints list -->
+                <div id="hint-display" class="hidden rounded-xl p-3" style="background:rgba(0,0,0,.3);border:1px solid rgba(239,68,68,.2);">
+                    <p class="text-[10px] font-bold mb-2" style="color:#9ca3af;">تلميحات مكشوفة عن الكلمة السرية:</p>
+                    <div id="hint-list" class="flex flex-col gap-1"></div>
+                </div>
             </div>
-            <div id="hint-display" class="hidden mt-2 p-3 rounded-xl text-center" style="background:rgba(255,215,0,.1);border:2px solid rgba(255,215,0,.3);">
-                <p class="text-xs text-gray-400 mb-1">💡 التلميح</p>
-                <p id="hint-text" class="font-black text-yellow-400"></p>
-            </div>
+
+            <!-- Report FAB -->
+            <button id="reportFab" onclick="openReportModal()"
+                class="mt-3 w-full py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2"
+                style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#9ca3af;">
+                <i class="fas fa-flag text-red-500/60"></i> الإبلاغ عن لاعب
+            </button>
         </div>
     </div>
 
@@ -310,6 +303,184 @@
             <div id="minPlayersMsg" class="hidden text-center text-xs text-yellow-500 mt-2 font-bold">يجب توفر 3 لاعبين على الأقل</div>
         </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         REPORT MODAL
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="report-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
+        <div class="glass w-full max-w-lg rounded-[2rem] p-6 border-2 border-red-500/30 shadow-2xl animate__animated animate__fadeInUp" style="max-height:90dvh;overflow-y:auto;">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🚩</span>
+                    <h2 class="text-lg font-black" style="color:#f87171;">الإبلاغ عن لاعب</h2>
+                </div>
+                <button onclick="closeReportModal()" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full bg-white/5">✕</button>
+            </div>
+
+            <!-- Recent players list -->
+            <div class="mb-4">
+                <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">اللاعبون الأخيرون الذين لعبت معهم:</p>
+                <div id="report-recent-players" class="flex flex-wrap gap-2 max-h-28 overflow-y-auto custom-scrollbar p-1">
+                    <p class="text-xs text-gray-500">جاري التحميل...</p>
+                </div>
+            </div>
+
+            <!-- Target username/email -->
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-400 block mb-1">اسم المستخدم أو البريد الإلكتروني *</label>
+                <input id="report-target" type="text" placeholder="اسم اللاعب المُبلَّغ عنه..."
+                    class="w-full bg-black/50 border-2 border-red-500/20 focus:border-red-500/60 rounded-xl p-3 text-sm outline-none text-white font-bold transition-colors"
+                    style="font-family:'Cairo',sans-serif;">
+            </div>
+
+            <!-- Reason select -->
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-400 block mb-1">سبب البلاغ *</label>
+                <select id="report-reason" class="w-full bg-black/50 border-2 border-red-500/20 focus:border-red-500/60 rounded-xl p-3 text-sm outline-none text-white font-bold"
+                    style="font-family:'Cairo',sans-serif;background:#0f1424;">
+                    <option value="cheating">🎰 غش في اللعبة</option>
+                    <option value="harassment">⚠️ تحرش أو إيذاء</option>
+                    <option value="offensive">🤬 محتوى مسيء / ألفاظ نابية</option>
+                    <option value="spam">📵 رسائل مزعجة (سبام)</option>
+                    <option value="hate_speech">🚫 خطاب كراهية</option>
+                    <option value="threats">💀 تهديدات</option>
+                    <option value="other">❓ أخرى</option>
+                </select>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-400 block mb-1">تفاصيل إضافية (اختياري)</label>
+                <textarea id="report-description" rows="2"
+                    placeholder="اشرح ما حدث..."
+                    class="w-full bg-black/50 border-2 border-red-500/20 focus:border-red-500/60 rounded-xl p-3 text-sm outline-none text-white resize-none transition-colors"
+                    style="font-family:'Cairo',sans-serif;"></textarea>
+            </div>
+
+            <!-- Screenshot upload -->
+            <div class="mb-5">
+                <label class="text-xs font-bold text-gray-400 block mb-1">لقطة شاشة (اختياري)</label>
+                <div id="screenshot-drop" onclick="document.getElementById('screenshot-input').click()"
+                    class="relative rounded-xl border-2 border-dashed border-red-500/20 hover:border-red-500/50 cursor-pointer transition-all p-4 text-center"
+                    style="background:rgba(239,68,68,.04);">
+                    <input type="file" id="screenshot-input" accept="image/*" class="hidden" onchange="handleScreenshot(event)">
+                    <div id="screenshot-preview-wrap">
+                        <i class="fas fa-image text-2xl mb-2" style="color:rgba(239,68,68,.4);"></i>
+                        <p class="text-xs text-gray-500">اضغط لرفع صورة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex gap-3">
+                <button onclick="submitReport()"
+                    class="flex-1 py-3 rounded-xl font-black text-sm transition-all"
+                    style="background:linear-gradient(135deg,#dc2626,#991b1b);color:white;border:2px solid rgba(239,68,68,.5);">
+                    <i class="fas fa-flag ml-2"></i>إرسال البلاغ
+                </button>
+                <button onclick="closeReportModal()"
+                    class="px-5 py-3 rounded-xl font-black text-sm text-gray-400 transition-all"
+                    style="background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GLOBAL CHAT FAB — visible in ALL game stages
+    ══════════════════════════════════════════════════════════════ -->
+    <!-- Unread badge dot -->
+    <span id="chat-unread-dot" style="
+        display:none;position:fixed;bottom:148px;right:18px;z-index:8602;
+        width:12px;height:12px;border-radius:50%;background:#ef4444;
+        border:2px solid #0a0e1a;pointer-events:none;
+        animation:pulseChatDot 1.2s ease-in-out infinite;"></span>
+
+    <!-- FAB button -->
+    <button id="global-chat-fab"
+        onclick="toggleGlobalChat()"
+        style="
+            position:fixed;bottom:140px;right:20px;z-index:8601;
+            width:46px;height:46px;border-radius:50%;
+            background:linear-gradient(135deg,rgba(6,182,212,.18),rgba(59,130,246,.18));
+            border:2px solid rgba(6,182,212,.5);cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            backdrop-filter:blur(12px);color:#06b6d4;font-size:20px;
+            transition:all .3s;box-shadow:0 4px 15px rgba(6,182,212,.25);"
+        title="الدردشة">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <!-- Chat panel -->
+    <div id="global-chat-panel" style="
+        display:none;position:fixed;bottom:196px;right:20px;z-index:8600;
+        width:300px;
+        background:linear-gradient(135deg,rgba(10,14,26,.97),rgba(20,25,45,.97));
+        border:2px solid rgba(6,182,212,.35);border-radius:20px;
+        backdrop-filter:blur(20px);overflow:hidden;
+        box-shadow:0 8px 32px rgba(0,0,0,.5);
+        font-family:'Cairo',sans-serif;
+        animation:chatPanelIn .25s ease;">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;
+            padding:12px 16px;border-bottom:1px solid rgba(6,182,212,.15);
+            background:rgba(6,182,212,.06);">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-comments" style="color:#06b6d4;font-size:14px;"></i>
+                <span style="color:#06b6d4;font-size:12px;font-weight:900;letter-spacing:1px;">الدردشة</span>
+                <span id="chat-player-count" style="font-size:10px;color:#555;font-weight:700;"></span>
+            </div>
+            <button onclick="toggleGlobalChat()"
+                style="background:none;border:none;color:#555;cursor:pointer;font-size:14px;
+                    padding:4px;border-radius:6px;transition:color .2s;"
+                onmouseover="this.style.color='#ccc'" onmouseout="this.style.color='#555'">✕</button>
+        </div>
+
+        <!-- Messages -->
+        <div id="global-chat-messages" style="
+            height:220px;overflow-y:auto;padding:12px;
+            scrollbar-width:thin;scrollbar-color:rgba(6,182,212,.3) transparent;">
+        </div>
+
+        <!-- Input -->
+        <div style="padding:10px 12px;border-top:1px solid rgba(6,182,212,.12);
+            display:flex;gap:8px;background:rgba(0,0,0,.2);">
+            <input id="global-chat-input"
+                type="text"
+                placeholder="اكتب رسالة..."
+                maxlength="200"
+                style="flex:1;background:rgba(255,255,255,.05);border:1.5px solid rgba(6,182,212,.2);
+                    border-radius:10px;padding:8px 12px;color:#fff;font-family:'Cairo',sans-serif;
+                    font-size:12px;outline:none;transition:border .2s;"
+                onfocus="this.style.borderColor='rgba(6,182,212,.6)'"
+                onblur="this.style.borderColor='rgba(6,182,212,.2)'"
+                onkeypress="if(event.key==='Enter')sendGlobalChat()">
+            <button onclick="sendGlobalChat()"
+                style="width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;
+                    background:linear-gradient(135deg,#06b6d4,#3b82f6);color:white;
+                    font-size:14px;display:flex;align-items:center;justify-content:center;
+                    flex-shrink:0;transition:opacity .2s;"
+                onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes chatPanelIn {
+            from { opacity:0; transform: translateY(12px) scale(.97); }
+            to   { opacity:1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pulseChatDot {
+            0%,100% { transform:scale(1); opacity:1; }
+            50%      { transform:scale(1.4); opacity:.6; }
+        }
+        #global-chat-messages::-webkit-scrollbar { width:4px; }
+        #global-chat-messages::-webkit-scrollbar-thumb { background:rgba(6,182,212,.3);border-radius:4px; }
+        #global-chat-messages::-webkit-scrollbar-track { background:transparent; }
+    </style>
 
     <script type="module">
         import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -651,6 +822,10 @@
                 // Build profile cache so name tags show in all stages
                 await buildPlayerProfileCache(toArray(d.players));
 
+                // ── Global chat: render messages + player count in every stage ──
+                renderGlobalChatMessages(d.discussionMessages || []);
+                updateChatPlayerCount(toArray(d.players));
+
                 document.getElementById('displayRoomCode').innerText = myRoom;
                 const pCount = toArray(d.players).length;
                 document.getElementById('pCount').innerText = `${pCount}/10`;
@@ -704,7 +879,17 @@
                 }).join('');
 
                 // ── Route to correct game screen ──────────────────────────────────
-                if (d.status && d.status !== 'waiting') {
+                const isInGame = d.status && d.status !== 'waiting';
+                // Show chat/voice FABs only during active game stages
+                const chatFab = document.getElementById('global-chat-fab');
+                const chatDot = document.getElementById('chat-unread-dot');
+                const vcFab   = document.getElementById('voice-fab');
+                if (chatFab) chatFab.style.display = isInGame ? 'flex' : 'none';
+                if (chatDot && !isInGame) chatDot.style.display = 'none';
+                if (vcFab)   vcFab.style.display   = isInGame ? 'flex' : 'none';
+                if (!isInGame) closeGlobalChat?.();
+
+                if (isInGame) {
                     hideAllGameScreens();
                     if      (d.status === 'playing')   showOnlineGame(d);
                     else if (d.status === 'discussion') showDiscussionScreen(d);
@@ -844,8 +1029,41 @@
             hideAllGameScreens();
             document.getElementById('discussion-screen').classList.remove('hidden');
 
-            if (typeof loadHintBalance === 'function') loadHintBalance();
-            showRoomHints(d);
+            // ── SPY HINTS: show section only for spy, update counter ──────────
+            const spyIndicesDisc = d.spyIndices || [d.spyIdx];
+            const isSpyDisc      = spyIndicesDisc.includes(myIdx);
+            const hintSection    = document.getElementById('hint-section');
+            const hintsUsed      = d.spyHintsUsed || 0;
+            const hintsLeft      = Math.max(0, 3 - hintsUsed);
+
+            if (isSpyDisc) {
+                hintSection.classList.remove('hidden');
+                document.getElementById('hintBalance').innerText = hintsLeft;
+                const useBtn = document.getElementById('useHintBtn');
+                if (hintsLeft <= 0) {
+                    useBtn.disabled = true;
+                    useBtn.style.opacity = '0.35';
+                    useBtn.textContent = 'انتهت التلميحات ✓';
+                } else {
+                    useBtn.disabled = false;
+                    useBtn.style.opacity = '1';
+                    useBtn.textContent = `اكشف تلميحاً 🔍`;
+                }
+                // Show already-revealed hints
+                if (d.spyHintsList) {
+                    const hintList = document.getElementById('hint-list');
+                    hintList.innerHTML = Object.values(d.spyHintsList)
+                        .sort((a, b) => a.usedAt - b.usedAt)
+                        .map((h, i) => `
+                            <div class="flex items-center gap-2 py-1">
+                                <span class="text-xs font-black px-2 py-0.5 rounded-full" style="background:rgba(239,68,68,.25);color:#fca5a5;">${i+1}</span>
+                                <p class="text-sm font-bold" style="color:#fca5a5;">${h.hint}</p>
+                            </div>`).join('');
+                    document.getElementById('hint-display').classList.remove('hidden');
+                }
+            } else {
+                hintSection.classList.add('hidden');
+            }
 
             const players = toArray(d.players);
             document.getElementById('suspectsList').innerHTML = players.map(p => {
@@ -866,13 +1084,7 @@
                     </div>`;
             }).join('');
 
-            if (d.discussionMessages) {
-                const messagesDiv = document.getElementById('discussionMessages');
-                messagesDiv.innerHTML = d.discussionMessages.map(m =>
-                    `<div class="mb-2"><span class="font-bold text-cyan-400">${m.player}:</span> ${m.msg}</div>`
-                ).join('');
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            }
+            // Chat is global — rendered via renderGlobalChatMessages() in onValue
 
             const readyCount = d.readyForVote?.length || 0;
             document.getElementById('discussionInfo').innerText = `${readyCount}/${players.length} لاعب جاهز للتصويت`;
@@ -912,28 +1124,101 @@
             }
         }
 
-        document.getElementById('toggleChatBtn').onclick = () => document.getElementById('chatWindow').classList.toggle('hidden');
-        document.getElementById('closeChatBtn').onclick  = () => document.getElementById('chatWindow').classList.add('hidden');
+        // (old chat FAB listeners removed — replaced by global chat system)
 
-        document.getElementById('sendDiscussionBtn').onclick = async () => {
-            const input = document.getElementById('discussionInput');
+        // ══════════════════════════════════════════════════════════════════════
+        // GLOBAL CHAT SYSTEM — persists across all game stages
+        // ══════════════════════════════════════════════════════════════════════
+        let _chatOpen       = false;
+        let _lastMsgCount   = 0;
+        let _chatUnseenMsgs = 0;
+
+        window.toggleGlobalChat = function() {
+            _chatOpen = !_chatOpen;
+            const panel = document.getElementById('global-chat-panel');
+            panel.style.display = _chatOpen ? 'block' : 'none';
+            if (_chatOpen) {
+                _chatUnseenMsgs = 0;
+                document.getElementById('chat-unread-dot').style.display = 'none';
+                const msgs = document.getElementById('global-chat-messages');
+                setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
+                document.getElementById('global-chat-input').focus();
+            }
+        };
+
+        window.closeGlobalChat = function() {
+            _chatOpen = false;
+            document.getElementById('global-chat-panel').style.display = 'none';
+        };
+
+        window.sendGlobalChat = async function() {
+            const input = document.getElementById('global-chat-input');
             const msg   = input.value.trim();
             if (!msg) return;
+
+            // Moderation scan
             if (window.MOD) {
                 const blocked = await MOD.scan(msg);
                 if (blocked) { input.value = ''; return; }
             }
+
             const snap = await get(ref(db, 'rooms/' + myRoom));
             const d    = snap.val();
-            let messages = d.discussionMessages || [];
-            messages.push({ player: myName, msg });
+            if (!d) return;
+            const messages = d.discussionMessages || [];
+            messages.push({ player: myName, msg, ts: Date.now() });
+            if (messages.length > 200) messages.splice(0, messages.length - 200);
             await update(ref(db, 'rooms/' + myRoom), { discussionMessages: messages });
             input.value = '';
         };
 
-        document.getElementById('discussionInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('sendDiscussionBtn').click();
-        });
+        function renderGlobalChatMessages(messages) {
+            const container = document.getElementById('global-chat-messages');
+            if (!container) return;
+
+            const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+            const prevCount   = _lastMsgCount;
+
+            container.innerHTML = (messages || []).map(m => {
+                const isMe = m.player === myName;
+                return `<div style="
+                    display:flex;flex-direction:column;
+                    align-items:${isMe ? 'flex-start' : 'flex-end'};
+                    margin-bottom:8px;">
+                    <span style="font-size:9px;color:#555;font-weight:700;margin-bottom:2px;
+                        ${isMe ? 'margin-right:4px' : 'margin-left:4px'};">${m.player}</span>
+                    <div style="
+                        max-width:85%;padding:7px 11px;border-radius:12px;font-size:12px;
+                        background:${isMe ? 'linear-gradient(135deg,rgba(6,182,212,.25),rgba(59,130,246,.2))' : 'rgba(255,255,255,.07)'};
+                        border:1px solid ${isMe ? 'rgba(6,182,212,.35)' : 'rgba(255,255,255,.1)'};
+                        color:#e2e8f0;line-height:1.5;word-break:break-word;
+                        ${isMe ? 'border-bottom-right-radius:4px' : 'border-bottom-left-radius:4px'}">
+                        ${m.msg}
+                    </div>
+                </div>`;
+            }).join('');
+
+            const currentCount = (messages || []).length;
+
+            // New messages arrived after initial load
+            if (prevCount > 0 && currentCount > prevCount && !_chatOpen) {
+                _chatUnseenMsgs += currentCount - prevCount;
+                const dot = document.getElementById('chat-unread-dot');
+                if (dot) dot.style.display = 'block';
+            }
+            _lastMsgCount = currentCount;
+
+            // Auto-scroll if was near bottom, or force scroll if chat open
+            if (wasAtBottom || _chatOpen) {
+                setTimeout(() => { container.scrollTop = container.scrollHeight; }, 10);
+            }
+        }
+
+        // Update player count chip
+        function updateChatPlayerCount(players) {
+            const el = document.getElementById('chat-player-count');
+            if (el && players) el.textContent = `(${players.length})`;
+        }
 
         // ══════════════════════════════════════════════════════════════════════
         // STAGE 3 — VOTING  (vote cards with name tags)
@@ -1143,7 +1428,8 @@
                 await update(ref(db, 'rooms/' + myRoom), {
                     status: 'waiting', turn: 0, secret: null, spyIdx: null, spyIndices: null,
                     suspects: {}, discussionMessages: [], readyForVote: [], votes: {},
-                    tiedPlayers: null, spyGuess: null, winner: null, votedPlayer: null, hints: {}
+                    tiedPlayers: null, spyGuess: null, winner: null, votedPlayer: null,
+                    hints: {}, spyHintsUsed: 0, spyHintsList: null
                 });
                 document.getElementById('room-overlay').classList.remove('hidden');
             };
@@ -1234,6 +1520,15 @@
             updates[`players/${uid}/categoryStats`] = catStats;
             updates[`players/${uid}/gameHistory`]   = history;
             updates[`players/${uid}/achievements`]  = unlocked;
+
+            // Save recent players for the report system
+            const otherPlayers = players.filter((_, i) => i !== myIdx);
+            const now = Date.now();
+            otherPlayers.forEach(name => {
+                const key = name.replace(/[.#$[\]]/g, '_');
+                updates[`players/${uid}/recentPlayers/${key}`] = { name, at: now };
+            });
+
             await update(ref(db), updates);
 
             setTimeout(() => {
@@ -1283,52 +1578,139 @@
         }, 2000);
 
         // ══════════════════════════════════════════════════════════════════════
-        // HINT SYSTEM
+        // HINT SYSTEM — Spy only · 3 per session · reveals word specs
         // ══════════════════════════════════════════════════════════════════════
-        async function loadHintBalance() {
-            if (!firebase_auth_user) return;
-            const snap = await get(ref(db, `players/${firebase_auth_user.uid}/hints`));
-            document.getElementById('hintBalance').innerText = snap.val() || 0;
-        }
-        window.loadHintBalance = loadHintBalance;
-
         window.useHint = async function() {
-            if (!firebase_auth_user) { alert('يجب تسجيل الدخول'); return; }
-            const snap = await get(ref(db, `players/${firebase_auth_user.uid}/hints`));
-            const bal  = snap.val() || 0;
-            if (bal < 1) { alert('ليس لديك تلميحات! اشترِ المزيد من المتجر.'); return; }
+            if (!firebase_auth_user) return;
             const roomSnap = await get(ref(db, 'rooms/' + myRoom));
             const d = roomSnap.val();
             if (!d) return;
+
             const spyIndices = d.spyIndices || [d.spyIdx];
-            const spyNames   = spyIndices.map(i => toArray(d.players)[i]);
-            const innocents  = toArray(d.players).filter((_, i) => !spyIndices.includes(i));
-            const hintTypes = [
-                () => `عدد الجواسيس: ${spyNames.length}`,
-                () => `ليس "${innocents[Math.floor(Math.random() * innocents.length)]}" جاسوساً`,
-                () => `الكلمة السرية تبدأ بحرف "${d.secret ? d.secret[0] : '?'}"`,
-                () => `الجاسوس ليس المضيف ${d.host === myName ? '(هذا أنت)' : ''}`,
-                () => `طول الكلمة: ${d.secret ? d.secret.length : '?'} حرف`,
-            ];
-            const hint = hintTypes[Math.floor(Math.random() * hintTypes.length)]();
-            await update(ref(db, `players/${firebase_auth_user.uid}`), { hints: bal - 1 });
-            document.getElementById('hintBalance').innerText = bal - 1;
-            document.getElementById('hint-display').classList.remove('hidden');
-            document.getElementById('hint-text').innerText = hint;
+            if (!spyIndices.includes(myIdx)) { showToast('⛔ التلميحات للجاسوس فقط!'); return; }
+
+            const hintsUsed = d.spyHintsUsed || 0;
+            if (hintsUsed >= 3) { showToast('انتهت تلميحاتك الثلاثة!'); return; }
+
+            const secret   = d.secret   || '';
+            const category = d.category || '';
+            const hintNum  = hintsUsed + 1;
+            let hint = '';
+
+            if (hintNum === 1) {
+                hint = `الفئة: "${category}" • الكلمة من ${secret.length} حرف`;
+            } else if (hintNum === 2) {
+                const first = secret[0] || '?';
+                const last  = secret[secret.length - 1] || '?';
+                hint = `تبدأ بـ "${first}" وتنتهي بـ "${last}"`;
+            } else {
+                if (secret.length <= 3) {
+                    hint = `الكلمة: ${secret[0] || '?'}${'_'.repeat(Math.max(0, secret.length - 2))}${secret.length > 1 ? (secret[secret.length - 1] || '?') : ''}`;
+                } else {
+                    const mid    = Math.floor(secret.length / 2);
+                    const masked = secret.split('').map((c, i) =>
+                        (i === 0 || i === mid || i === secret.length - 1) ? c : '_'
+                    ).join(' ');
+                    hint = `الكلمة: ${masked}`;
+                }
+            }
+
             await update(ref(db, 'rooms/' + myRoom), {
-                [`hints/${firebase_auth_user.uid}`]: { hint, usedAt: Date.now(), by: myName }
+                spyHintsUsed: hintNum,
+                [`spyHintsList/h${hintNum}`]: { hint, usedAt: Date.now() }
             });
             if (window.SND) SND.play?.('coins');
         };
 
-        function showRoomHints(d) {
-            if (!d.hints) return;
-            const vals = Object.values(d.hints);
-            if (!vals.length) return;
-            const last = vals[vals.length - 1];
-            document.getElementById('hint-display').classList.remove('hidden');
-            document.getElementById('hint-text').innerText = `${last.hint}  (من ${last.by || 'لاعب'})`;
+        function showRoomHints(d) {}
+
+        // ══════════════════════════════════════════════════════════════════════
+        // REPORT SYSTEM
+        // ══════════════════════════════════════════════════════════════════════
+        let _reportScreenshotBase64 = null;
+
+        window.openReportModal = function() {
+            _reportScreenshotBase64 = null;
+            document.getElementById('report-target').value      = '';
+            document.getElementById('report-description').value = '';
+            document.getElementById('screenshot-input').value   = '';
+            document.getElementById('screenshot-preview-wrap').innerHTML =
+                '<i class="fas fa-image text-2xl mb-2" style="color:rgba(239,68,68,.4);"></i><p class="text-xs text-gray-500">اضغط لرفع صورة</p>';
+            loadReportRecentPlayers();
+            document.getElementById('report-modal').classList.remove('hidden');
+        };
+
+        window.closeReportModal = function() {
+            document.getElementById('report-modal').classList.add('hidden');
+        };
+
+        async function loadReportRecentPlayers() {
+            const container = document.getElementById('report-recent-players');
+            container.innerHTML = '<p class="text-xs text-gray-500">جاري التحميل...</p>';
+
+            const roomSnap = await get(ref(db, 'rooms/' + myRoom)).catch(() => null);
+            const roomPlayers = roomSnap?.val() ? toArray(roomSnap.val().players).filter(p => p && p !== myName) : [];
+
+            let storedPlayers = [];
+            if (firebase_auth_user) {
+                const snap = await get(ref(db, `players/${firebase_auth_user.uid}/recentPlayers`)).catch(() => null);
+                if (snap?.exists()) {
+                    storedPlayers = Object.values(snap.val())
+                        .sort((a, b) => (b.at || 0) - (a.at || 0))
+                        .slice(0, 20)
+                        .map(p => p.name)
+                        .filter(p => p && p !== myName);
+                }
+            }
+
+            const all = [...new Set([...roomPlayers, ...storedPlayers])].slice(0, 20);
+            if (!all.length) { container.innerHTML = '<p class="text-xs text-gray-500">لم تلعب مع أحد بعد</p>'; return; }
+
+            container.innerHTML = all.map(name => `
+                <button onclick="document.getElementById('report-target').value='${name.replace(/'/g,"&#39;")}'"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all hover:scale-105"
+                    style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;">
+                    ${name}
+                </button>`).join('');
         }
+
+        window.handleScreenshot = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 3 * 1024 * 1024) { showToast('الصورة كبيرة جداً (الحد الأقصى 3MB)'); return; }
+            const reader = new FileReader();
+            reader.onload = e => {
+                _reportScreenshotBase64 = e.target.result;
+                document.getElementById('screenshot-preview-wrap').innerHTML =
+                    `<img src="${e.target.result}" alt="screenshot" style="max-height:120px;border-radius:8px;margin:0 auto;">
+                     <p class="text-xs text-green-400 mt-2 font-bold">✅ تم رفع الصورة</p>`;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.submitReport = async function() {
+            const target = document.getElementById('report-target').value.trim();
+            const reason = document.getElementById('report-reason').value;
+            const desc   = document.getElementById('report-description').value.trim();
+            if (!target) { showToast('الرجاء إدخال اسم اللاعب أو بريده الإلكتروني'); return; }
+            try {
+                await push(ref(db, 'reports'), {
+                    reportedUsername:   target,
+                    reason,
+                    description:        desc || '',
+                    screenshot:         _reportScreenshotBase64 || null,
+                    reportedBy:         firebase_auth_user?.uid  || 'anonymous',
+                    reportedByUsername: myName                   || 'مجهول',
+                    roomCode:           myRoom                   || '',
+                    timestamp:          Date.now(),
+                    status:             'pending'
+                });
+                closeReportModal();
+                showToast('✅ تم إرسال البلاغ للمشرفين');
+            } catch(e) {
+                showToast('خطأ في الإرسال: ' + e.message);
+            }
+        };
     </script>
 
     <script>
