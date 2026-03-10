@@ -1558,96 +1558,114 @@
             };
         }
 
-        // ── ONLINE: CREATE ROOM ──────────────────────────────────────
-        document.getElementById('createBtn').onclick = async () => {
-            myName = document.getElementById('pName').value.trim();
-            if (!myName) return alert("الاسم مطلوب");
+       // ── ONLINE: CREATE ROOM ──────────────────────────────────────
+document.getElementById('createBtn').onclick = async () => {
+    myName = document.getElementById('pName').value.trim();
+    if (!myName) return alert("الاسم مطلوب");
 
-            // Ban check
-            if (window.MOD) {
-                const ban = await MOD.checkBan?.();
-                if (ban) { MOD.checkOnLoad(); return; }
-            }
+    // Ban check
+    if (window.MOD) {
+        const ban = await MOD.checkBan?.();
+        if (ban) { MOD.checkOnLoad(); return; }
+    }
 
-            // FIX: use auth.currentUser directly — never stale, no race condition
-            const user = auth.currentUser;
-            if (!user) {
-                alert('يجب تسجيل الدخول أولاً لإنشاء غرفة');
-                window.location.href = 'login.html';
-                return;
-            }
+    const user = auth.currentUser;
+    if (!user) {
+        alert('يجب تسجيل الدخول أولاً لإنشاء غرفة');
+        window.location.href = 'login.html';
+        return;
+    }
 
-            localStorage.setItem('eljasus_user_name', myName);
-            myRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
-            isHost = true;
+    localStorage.setItem('eljasus_user_name', myName);
+    myRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
+    isHost = true;
 
-            try {
-                await set(ref(db, 'rooms/' + myRoom), {
-                    host:       myName,
-                    status:     'waiting',
-                    players:    [myName],
-                    turn:       0,
-                    category:   document.getElementById('gameCat').value,
-                    visibility: 'private',
-                    secret:     null,
-                    spyIdx:     null
-                });
-                localStorage.setItem('currentRoom', myRoom);
-                localStorage.setItem('isHost', 'true');
-                window.location.href = `room.html?room=${myRoom}`; 
-            } catch (e) {
-                console.error('Create room error:', e);
-                alert('فشل إنشاء الغرفة: ' + e.message);
+    try {
+        // ✅ FIXED: Correct structure matching room.html
+        const roomData = {
+            hostId: user.uid,              // ← KEY FIX: Add hostId with UID
+            category: document.getElementById('gameCat').value,
+            visibility: 'public',
+            status: 'waiting',
+            createdAt: serverTimestamp(),
+            players: {                     // ← Use object, not array
+                [user.uid]: {
+                    username: myName,
+                    uid: user.uid,
+                    joinedAt: serverTimestamp(),
+                    connected: true,
+                    status: 'online'
+                }
             }
         };
+        
+        await set(ref(db, 'rooms/' + myRoom), roomData);
+        localStorage.setItem('currentRoom', myRoom);
+        localStorage.setItem('isHost', 'true');
+        window.location.href = `room.html?room=${myRoom}`;  // ← Add room code to URL
+    } catch (e) {
+        console.error('Create room error:', e);
+        alert('فشل إنشاء الغرفة: ' + e.message);
+    }
+};
 
         // ── ONLINE: JOIN ROOM ────────────────────────────────────────
-        document.getElementById('joinBtn').onclick = async () => {
-            myName = document.getElementById('pName').value.trim();
-            if (!myName) return alert("الاسم مطلوب");
+document.getElementById('joinBtn').onclick = async () => {
+    myName = document.getElementById('pName').value.trim();
+    if (!myName) return alert("الاسم مطلوب");
 
-            // Ban check
-            if (window.MOD) {
-                const ban = await MOD.checkBan?.();
-                if (ban) { MOD.checkOnLoad(); return; }
-            }
+    // Ban check
+    if (window.MOD) {
+        const ban = await MOD.checkBan?.();
+        if (ban) { MOD.checkOnLoad(); return; }
+    }
 
-            // FIX: use auth.currentUser directly — never stale, no race condition
-            const user = auth.currentUser;
-            if (!user) {
-                alert('يجب تسجيل الدخول أولاً للانضمام لغرفة');
-                window.location.href = 'login.html';
-                return;
-            }
+    const user = auth.currentUser;
+    if (!user) {
+        alert('يجب تسجيل الدخول أولاً للانضمام لغرفة');
+        window.location.href = 'login.html';
+        return;
+    }
 
-            localStorage.setItem('eljasus_user_name', myName);
+    localStorage.setItem('eljasus_user_name', myName);
 
-            // FIX: UIPrompt is async — must await it or codeInput is a Promise object
-            const codeInput = await UIPrompt("أدخل كود الغرفة:");
-            if (!codeInput) return;
-            myRoom = codeInput.toString().toUpperCase();
+    const codeInput = await UIPrompt("أدخل كود الغرفة:");
+    if (!codeInput) return;
+    myRoom = codeInput.toString().toUpperCase();
 
-            try {
-                const snap = await get(ref(db, 'rooms/' + myRoom));
-                if (!snap.exists()) return alert("الغرفة غير موجودة");
+    try {
+        const roomRef = ref(db, 'rooms/' + myRoom);
+        const snap = await get(roomRef);
+        if (!snap.exists()) return alert("الغرفة غير موجودة");
 
-                const d = snap.val();
-                const players = Array.isArray(d.players) ? d.players : Object.values(d.players || {});
+        const roomData = snap.val();
+        const players = roomData.players || {};
+        
+        // Check if room is full (10 players max)
+        if (Object.keys(players).length >= 10 && !players[user.uid]) {
+            return alert("الغرفة ممتلئة (10/10)");
+        }
 
-                if (!players.includes(myName)) {
-                    if (players.length >= 10) return alert("الغرفة ممتلئة");
-                    await update(ref(db, 'rooms/' + myRoom), { players: [...players, myName] });
-                }
+        // ✅ FIXED: Add player with correct structure
+        if (!players[user.uid]) {
+            await update(ref(db, `rooms/${myRoom}/players/${user.uid}`), {
+                username: myName,
+                uid: user.uid,
+                joinedAt: serverTimestamp(),
+                connected: true,
+                status: 'online'
+            });
+        }
 
-                isHost = false;
-                localStorage.setItem('currentRoom', myRoom);
-                localStorage.setItem('isHost', 'false');
-                window.location.href = `room.html?room=${myRoom}`;
-            } catch (e) {
-                console.error('Join room error:', e);
-                alert('فشل الانضمام للغرفة: ' + e.message);
-            }
-        };
+        isHost = false;
+        localStorage.setItem('currentRoom', myRoom);
+        localStorage.setItem('isHost', 'false');
+        window.location.href = `room.html?room=${myRoom}`;  // ← Add room code to URL
+    } catch (e) {
+        console.error('Join room error:', e);
+        alert('فشل الانضمام للغرفة: ' + e.message);
+    }
+};
 
     </script>
 
