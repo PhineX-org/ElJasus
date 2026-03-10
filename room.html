@@ -165,6 +165,10 @@
             to { transform: rotate(360deg); }
         }
 
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
         .fade-in-up {
             animation: fadeInUp 0.5s ease-out;
         }
@@ -396,8 +400,22 @@
 </head>
 <body>
 
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="min-h-screen flex items-center justify-center p-4 relative z-10">
+        <div class="glass rounded-3xl p-8 text-center max-w-md">
+            <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-xl font-bold neon-text mb-2">جاري التحميل...</p>
+            <p class="text-sm opacity-60 mb-4">الاتصال بالغرفة</p>
+            <p id="loadingRoomCode" class="text-xs opacity-40 mb-6">---</p>
+            <button onclick="window.location.href='index.html'" 
+                class="px-6 py-2 rounded-xl bg-white/10 hover:bg-white/20 border-2 border-white/20 transition-all text-sm">
+                <i class="fas fa-arrow-right ml-2"></i>العودة للقائمة الرئيسية
+            </button>
+        </div>
+    </div>
+
     <!-- Main Game Container -->
-    <div id="gameContainer" class="min-h-screen flex items-center justify-center p-4 relative z-10">
+    <div id="gameContainer" class="hidden min-h-screen flex items-center justify-center p-4 relative z-10">
         
         <!-- WAITING STATUS -->
         <div id="waitingScreen" class="hidden w-full max-w-4xl">
@@ -836,6 +854,20 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
+        // Check Firebase connection
+        console.log('Firebase initialized');
+        console.log('Database URL:', firebaseConfig.databaseURL);
+
+        // Test Firebase connection
+        const connectedRef = ref(db, '.info/connected');
+        onValue(connectedRef, (snapshot) => {
+            if (snapshot.val() === true) {
+                console.log('✓ Firebase connected');
+            } else {
+                console.warn('✗ Firebase disconnected');
+            }
+        });
+
         // Global state
         window.gameState = {
             roomCode: null,
@@ -853,41 +885,94 @@
             spyHintsUsed: 0
         };
 
+        // Debug function (call from console: window.debugGameState())
+        window.debugGameState = function() {
+            console.log('=== GAME STATE DEBUG ===');
+            console.log('Room Code:', window.gameState.roomCode);
+            console.log('Current User:', window.gameState.currentUser?.uid);
+            console.log('Is Host:', window.gameState.isHost);
+            console.log('Current Status:', window.gameState.currentStatus);
+            console.log('Players:', window.gameState.players);
+            console.log('Player Count:', Object.keys(window.gameState.players).length);
+            console.log('=======================');
+            return window.gameState;
+        };
+
         // Initialize room from URL
         const urlParams = new URLSearchParams(window.location.search);
         const roomCode = urlParams.get('room');
         
-        if (!roomCode) {
+        console.log('URL params:', window.location.search);
+        console.log('Room code from URL:', roomCode);
+        
+        if (!roomCode || roomCode.trim() === '') {
+            console.error('No room code in URL');
+            alert('لم يتم توفير كود الغرفة');
             window.location.href = 'index.html';
         }
 
         window.gameState.roomCode = roomCode;
+        
+        // Display room code in loading screen
+        const loadingRoomCodeEl = document.getElementById('loadingRoomCode');
+        if (loadingRoomCodeEl) {
+            loadingRoomCodeEl.textContent = `كود الغرفة: ${roomCode}`;
+        }
+
+        // Set a timeout for loading - if it takes too long, show error
+        const loadingTimeout = setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+                console.error('Loading timeout - taking too long to connect');
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'text-sm text-danger mt-4';
+                errorMsg.textContent = 'الاتصال يستغرق وقتاً طويلاً. تحقق من اتصالك بالإنترنت أو حاول مرة أخرى.';
+                loadingScreen.querySelector('.glass').appendChild(errorMsg);
+            }
+        }, 10000); // 10 seconds timeout
+
+        // Clear timeout when loading completes
+        window.clearLoadingTimeout = function() {
+            clearTimeout(loadingTimeout);
+        };
 
         // Auth state
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
+                console.log('No user authenticated, redirecting to index.html');
                 window.location.href = 'index.html';
                 return;
             }
 
+            console.log('User authenticated:', user.uid);
             window.gameState.currentUser = user;
             
-            // Get player data
-            const playerSnap = await get(ref(db, `players/${user.uid}`));
-            const playerData = playerSnap.val();
-            
-            if (!playerData) {
-                window.location.href = 'index.html';
-                return;
-            }
+            try {
+                // Get player data
+                const playerSnap = await get(ref(db, `players/${user.uid}`));
+                const playerData = playerSnap.val();
+                
+                if (!playerData) {
+                    console.error('No player data found for uid:', user.uid);
+                    alert('لم يتم العثور على بيانات اللاعب. يرجى تسجيل الدخول مرة أخرى.');
+                    window.location.href = 'index.html';
+                    return;
+                }
 
-            // Join room
-            await joinRoom(user.uid, playerData.username || playerData.email);
-            
-            // Setup listeners
-            setupRoomListener();
-            setupChatListener();
-            setupFriendsListener();
+                console.log('Player data loaded:', playerData);
+
+                // Join room
+                await joinRoom(user.uid, playerData.username || playerData.email);
+                
+                // Setup listeners
+                setupRoomListener();
+                setupChatListener();
+                setupFriendsListener();
+            } catch (error) {
+                console.error('Error in auth state change:', error);
+                alert('حدث خطأ: ' + error.message);
+                window.location.href = 'index.html';
+            }
         });
 
         // ═══════════════════════════════════════════════════════════
@@ -895,57 +980,78 @@
         // ═══════════════════════════════════════════════════════════
 
         async function joinRoom(uid, username) {
-            const roomRef = ref(db, `rooms/${window.gameState.roomCode}`);
-            const roomSnap = await get(roomRef);
-            
-            if (!roomSnap.exists()) {
-                alert('الغرفة غير موجودة');
+            try {
+                const roomRef = ref(db, `rooms/${window.gameState.roomCode}`);
+                const roomSnap = await get(roomRef);
+                
+                if (!roomSnap.exists()) {
+                    console.error('Room does not exist:', window.gameState.roomCode);
+                    alert('الغرفة غير موجودة أو تم حذفها');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const roomData = roomSnap.val();
+                console.log('Room data loaded:', roomData);
+                
+                // Check if banned
+                const banSnap = await get(ref(db, `banned_users/${uid}`));
+                if (banSnap.exists()) {
+                    alert('لقد تم حظرك من اللعبة');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Check if room is full
+                const playerCount = roomData.players ? Object.keys(roomData.players).length : 0;
+                const isPlayerInRoom = roomData.players && roomData.players[uid];
+                
+                if (playerCount >= 10 && !isPlayerInRoom) {
+                    alert('الغرفة ممتلئة (10/10)');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Add player to room
+                const playerRef = ref(db, `rooms/${window.gameState.roomCode}/players/${uid}`);
+                await set(playerRef, {
+                    username,
+                    uid,
+                    joinedAt: serverTimestamp(),
+                    connected: true,
+                    status: 'online'
+                });
+
+                // Setup disconnect handler
+                onDisconnect(playerRef).update({ connected: false, status: 'disconnected' });
+
+                // Check if host (room.hostId should match uid)
+                window.gameState.isHost = roomData.hostId === uid;
+                console.log('Is host:', window.gameState.isHost, 'Room hostId:', roomData.hostId, 'My uid:', uid);
+
+                // Clear loading timeout
+                if (window.clearLoadingTimeout) {
+                    window.clearLoadingTimeout();
+                }
+
+                // Hide loading, show game
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('gameContainer').classList.remove('hidden');
+
+                // Update UI
+                document.getElementById('roomCodeDisplay').textContent = window.gameState.roomCode;
+                
+                if (window.gameState.isHost) {
+                    document.getElementById('hostControls').classList.remove('hidden');
+                    document.getElementById('startBtn').classList.remove('hidden');
+                    console.log('Host controls enabled');
+                } else {
+                    document.getElementById('waitingMsg').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error joining room:', error);
+                alert('حدث خطأ أثناء الانضمام للغرفة: ' + error.message);
                 window.location.href = 'index.html';
-                return;
-            }
-
-            const roomData = roomSnap.val();
-            
-            // Check if banned
-            const banSnap = await get(ref(db, `banned_users/${uid}`));
-            if (banSnap.exists()) {
-                alert('لقد تم حظرك من اللعبة');
-                window.location.href = 'index.html';
-                return;
-            }
-
-            // Check if room is full
-            const playerCount = roomData.players ? Object.keys(roomData.players).length : 0;
-            if (playerCount >= 10 && !roomData.players?.[uid]) {
-                alert('الغرفة ممتلئة');
-                window.location.href = 'index.html';
-                return;
-            }
-
-            // Add player to room
-            const playerRef = ref(db, `rooms/${window.gameState.roomCode}/players/${uid}`);
-            await set(playerRef, {
-                username,
-                uid,
-                joinedAt: serverTimestamp(),
-                connected: true,
-                status: 'online'
-            });
-
-            // Setup disconnect handler
-            onDisconnect(playerRef).update({ connected: false, status: 'disconnected' });
-
-            // Check if host
-            window.gameState.isHost = roomData.hostId === uid;
-
-            // Update UI
-            document.getElementById('roomCodeDisplay').textContent = window.gameState.roomCode;
-            
-            if (window.gameState.isHost) {
-                document.getElementById('hostControls').classList.remove('hidden');
-                document.getElementById('startBtn').classList.remove('hidden');
-            } else {
-                document.getElementById('waitingMsg').classList.remove('hidden');
             }
         }
 
@@ -955,10 +1061,13 @@
             onValue(roomRef, (snapshot) => {
                 const roomData = snapshot.val();
                 if (!roomData) {
-                    alert('تم حذف الغرفة');
+                    console.error('Room was deleted or does not exist');
+                    alert('تم حذف الغرفة أو لم تعد موجودة');
                     window.location.href = 'index.html';
                     return;
                 }
+
+                console.log('Room data updated:', roomData);
 
                 window.gameState.players = roomData.players || {};
                 window.gameState.currentStatus = roomData.status || 'waiting';
@@ -975,10 +1084,15 @@
                 if (window.gameState.isHost) {
                     updateHostControls(roomData);
                 }
+            }, (error) => {
+                console.error('Error listening to room:', error);
+                alert('حدث خطأ في الاتصال بالغرفة: ' + error.message);
             });
         }
 
         function updateGameScreen(status) {
+            console.log('Updating game screen to status:', status);
+            
             // Hide all screens
             document.getElementById('waitingScreen').classList.add('hidden');
             document.getElementById('revealScreen').classList.add('hidden');
@@ -992,21 +1106,26 @@
             // Show current screen
             switch(status) {
                 case 'waiting':
+                    console.log('Showing waiting screen');
                     document.getElementById('waitingScreen').classList.remove('hidden');
                     break;
                 case 'revealing':
+                    console.log('Showing reveal screen');
                     document.getElementById('revealScreen').classList.remove('hidden');
                     handleRevealStatus();
                     break;
                 case 'discussion':
+                    console.log('Showing discussion screen');
                     document.getElementById('discussionScreen').classList.remove('hidden');
                     handleDiscussionStatus();
                     break;
                 case 'voting':
+                    console.log('Showing voting screen');
                     document.getElementById('votingScreen').classList.remove('hidden');
                     handleVotingStatus();
                     break;
                 case 'tie':
+                    console.log('Showing tie screen');
                     document.getElementById('tieScreen').classList.remove('hidden');
                     setTimeout(() => {
                         if (window.gameState.isHost) {
@@ -1015,16 +1134,22 @@
                     }, 3000);
                     break;
                 case 'spinner':
+                    console.log('Showing spinner screen');
                     document.getElementById('spinnerScreen').classList.remove('hidden');
                     break;
                 case 'spyGuess':
+                    console.log('Showing spy guess screen');
                     document.getElementById('spyGuessScreen').classList.remove('hidden');
                     handleSpyGuessStatus();
                     break;
                 case 'result':
+                    console.log('Showing result screen');
                     document.getElementById('resultScreen').classList.remove('hidden');
                     handleResultStatus();
                     break;
+                default:
+                    console.warn('Unknown status:', status, '- showing waiting screen');
+                    document.getElementById('waitingScreen').classList.remove('hidden');
             }
         }
 
@@ -1039,7 +1164,7 @@
             
             Object.entries(players).forEach(([uid, player]) => {
                 const isMe = uid === window.gameState.currentUser.uid;
-                const isHost = uid === Object.values(players).find(p => p.isHost)?.uid;
+                const isHost = window.gameState.isHost && isMe; // Only mark myself as host if I am the host
                 
                 const playerCard = document.createElement('div');
                 playerCard.className = `glass rounded-xl p-3 border-2 ${isMe ? 'border-primary' : 'border-white/10'} transition-all`;
