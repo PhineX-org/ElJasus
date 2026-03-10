@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="dialogs.js"></script>
     <script src="moderation.js"></script>
+    <script src="room-invites.js"></script>
+    <script src="friends-panel.js"></script>
     
     <style>
         :root { 
@@ -1305,7 +1307,7 @@
         // ── FIREBASE ─────────────────────────────────────────────────
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-        import { getDatabase, ref, set, onValue, update, get, remove, onDisconnect, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, get, remove, onDisconnect, push, serverTimestamp, onChildAdded } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
@@ -1323,6 +1325,10 @@
         const db   = getDatabase(app);
 
         window._firebaseFns = { ref, get, update, onValue, push, serverTimestamp };
+        window._firebaseFns.onChildAdded = onChildAdded;
+        window._fbAuth = { onAuthStateChanged };
+
+        let currentUser = null;
 
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
@@ -1333,6 +1339,18 @@
             }
 
             await loadCustomCategories();
+
+            if (window.FriendsPanel && user) {
+            FriendsPanel.init(db, user.uid, user.displayName || localStorage.getItem('eljasus_user_name') || 'لاعب');
+        }
+
+            if (window.RoomInvites && user) {
+                RoomInvites.init(db, auth, (roomCode) => {
+                    localStorage.setItem('currentRoom', roomCode);
+                    localStorage.setItem('isHost', 'false');
+                    window.location.href = `room.html?room=${roomCode}`;
+                });
+            }
         });
 
         // ── GAME DATA ────────────────────────────────────────────────
@@ -1576,7 +1594,7 @@
                 });
                 localStorage.setItem('currentRoom', myRoom);
                 localStorage.setItem('isHost', 'true');
-                window.location.href = 'room.html';
+                window.location.href = `room.html?room=${myRoom}`; 
             } catch (e) {
                 console.error('Create room error:', e);
                 alert('فشل إنشاء الغرفة: ' + e.message);
@@ -1624,7 +1642,7 @@
                 isHost = false;
                 localStorage.setItem('currentRoom', myRoom);
                 localStorage.setItem('isHost', 'false');
-                window.location.href = 'room.html';
+                window.location.href = `room.html?room=${myRoom}`;
             } catch (e) {
                 console.error('Join room error:', e);
                 alert('فشل الانضمام للغرفة: ' + e.message);
