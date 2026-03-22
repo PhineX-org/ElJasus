@@ -1067,11 +1067,11 @@ function renderReports() {
 
     tbody.innerHTML = reports.map(([id,r]) => `
         <tr>
-            <td style="font-weight:700;">${r.reportedUsername || '—'}</td>
+            <td style="font-weight:700;">${r.reportedUsername || status}</td>
             <td>${reasonAr(r.reason)}</td>
-            <td style="color:#888;font-size:11px;">${r.reportedByUsername||'—'}</td>
-            <td style="font-family:'Orbitron',sans-serif;font-size:11px;color:#555;">${r.roomCode||'—'}</td>
-            <td style="font-size:11px;color:#555;">${r.timestamp ? new Date(r.timestamp).toLocaleDateString('ar-SA') : '—'}</td>
+            <td style="color:#888;font-size:11px;">${r.reportedByUsername||title}</td>
+            <td style="font-family:'Orbitron',sans-serif;font-size:11px;color:#555;">${r.roomCode||r.description}</td>
+            <td style="font-size:11px;color:#555;">${r.timestamp ? new Date(r.timestamp).toLocaleDateString('ar-SA') : contact}</td>
             <td><span class="badge ${r.status==='pending'?'badge-pending':'badge-resolved'}">${r.status==='pending'?'معلق':'محلول'}</span></td>
             <td>
                 <div style="display:flex;gap:6px;">
