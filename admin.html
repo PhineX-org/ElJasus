@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ar-" dir="rtl">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة الإدارة | El Jasus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <link rel="icon" type="image/png" href="ElJasus2.png">
+    <link rel="icon" type="image/png" href="ElJasus.png">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -145,8 +145,6 @@
         }
     </style>
 </head>
-<script src="admin-diagnostics-v2.js"></script>
-
 <body>
 
 <!-- SIDEBAR -->
@@ -177,7 +175,7 @@
 
     <div style="flex:1;"></div>
     <div style="padding:16px 20px;border-top:1px solid rgba(255,255,255,.05);">
-        <a href="index.html" style="font-size:12px;color:#555;text-decoration:none;">← العودة للعبة</a>
+        <a href="home.html" style="font-size:12px;color:#555;text-decoration:none;">← العودة للعبة</a>
     </div>
 </nav>
 
@@ -237,17 +235,53 @@
 
     <!-- ── REPORTS ────────────────────────────── -->
     <section id="section-reports" class="section">
-        <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#ef4444;margin-bottom:24px;">البلاغات</h2>
-        <div class="flex gap-3 mb-4 flex-wrap">
-            <button class="btn-sm active-filter" onclick="filterReports('all',this)">الكل</button>
-            <button class="btn-sm" onclick="filterReports('pending',this)">معلقة</button>
-            <button class="btn-sm" onclick="filterReports('resolved',this)">محلولة</button>
+    <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#ef4444;margin-bottom:24px;">البلاغات</h2>
+    
+    <div class="flex gap-3 mb-4 flex-wrap">
+        <button class="btn-sm active-filter" onclick="filterReports('all',this)">الكل</button>
+        <button class="btn-sm" onclick="filterReports('pending',this)">معلقة</button>
+        <button class="btn-sm" onclick="filterReports('resolved',this)">محلولة</button>
+        <button class="btn-sm" onclick="filterReports('warned',this)">تم التحذير</button>
+        <button class="btn-sm" onclick="filterReports('banned',this)">تم الحظر</button>
+        <div style="margin-right:auto;display:flex;align-items:center;gap:8px;">
+            <input id="report-search" class="admin-input" type="text" placeholder="🔍 ابحث..."
+                style="max-width:200px;" oninput="searchReports(this.value)">
         </div>
-        <div class="glass" style="padding:20px;">
-            <table><thead><tr><th>المُبلَّغ عنه</th><th>السبب</th><th>من</th><th>الغرفة</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th></tr></thead>
-            <tbody id="reports-table"><tr><td colspan="7" style="text-align:center;padding:30px;color:#555;">جاري التحميل...</td></tr></tbody></table>
+    </div>
+
+    <div class="glass" style="padding:20px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>المُبلَّغ عنه</th>
+                    <th>السبب</th>
+                    <th>مخالفة القواعد</th>
+                    <th>من</th>
+                    <th>الغرفة</th>
+                    <th>التاريخ</th>
+                    <th>الحالة</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="reports-table">
+                <tr><td colspan="8" style="text-align:center;padding:30px;color:#555;">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div id="report-detail-modal" style="display:none;position:fixed;inset:0;z-index:9990;
+        background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
+        display:none;align-items:center;justify-content:center;padding:20px;">
+        <div class="glass" style="max-width:600px;width:100%;border-radius:20px;padding:28px;
+            max-height:90vh;overflow-y:auto;position:relative;">
+            <button onclick="closeReportDetail()"
+                style="position:absolute;top:16px;left:16px;background:none;border:none;
+                color:#555;cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px;">✕</button>
+            <div id="report-detail-content"></div>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- ── BANS ───────────────────────────────── -->
     <section id="section-bans" class="section">
@@ -256,38 +290,25 @@
         <!-- Ban form -->
         <div class="glass" style="padding:20px;margin-bottom:20px;">
             <h3 style="font-size:14px;font-weight:900;margin-bottom:16px;color:#f97316;">حظر لاعب جديد</h3>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-    <div>
-        <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">اسم المستخدم</label>
-        <input id="ban-username" class="admin-input" type="text" placeholder="أدخل اسم المستخدم">
-    </div>
-    <div>
-        <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">نوع المخالفة</label>
-        <select id="ban-category" class="admin-input">
-            <option value="admin_decision">🔨 قرار إداري</option>
-            <option value="profanity">🤬 ألفاظ نابية</option>
-            <option value="spam">📵 رسائل مزعجة</option>
-            <option value="hate_speech">🚫 خطاب كراهية</option>
-            <option value="threats">💀 تهديدات</option>
-            <option value="harassment">⚠️ تحرش وإيذاء</option>
-            <option value="cheating">🎰 غش في اللعبة</option>
-            <option value="permanent">⛔ حظر دائم</option>
-        </select>
-    </div>
-    <div>
-        <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">مدة الحظر</label>
-        <select id="ban-duration" class="admin-input">
-            <option value="86400000">24 ساعة</option>
-            <option value="604800000">أسبوع</option>
-            <option value="2592000000">شهر</option>
-            <option value="-1">دائم ⛔</option>
-        </select>
-    </div>
-    <div>
-        <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">السبب</label>
-        <input id="ban-reason" class="admin-input" type="text" placeholder="سبب الحظر">
-    </div>
-</div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">اسم المستخدم</label>
+                    <input id="ban-username" class="admin-input" type="text" placeholder="أدخل اسم المستخدم">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">مدة الحظر</label>
+                    <select id="ban-duration" class="admin-input">
+                        <option value="86400000">24 ساعة</option>
+                        <option value="604800000">أسبوع</option>
+                        <option value="2592000000">شهر</option>
+                        <option value="-1">دائم</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">السبب</label>
+                    <input id="ban-reason" class="admin-input" type="text" placeholder="سبب الحظر">
+                </div>
+            </div>
             <button class="btn-danger" onclick="banPlayer()">
                 <i class="fas fa-ban ml-2"></i>تطبيق الحظر
             </button>
@@ -304,6 +325,71 @@
     <!-- ── PLAYERS ────────────────────────────── -->
     <section id="section-players" class="section">
         <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#00f2ff;margin-bottom:24px;">اللاعبون</h2>
+
+        <!-- ── REPAIR TOOL ─────────────────────── -->
+        <div class="glass" style="padding:20px;margin-bottom:16px;border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.04);">
+            <p style="font-size:14px;font-weight:900;color:#fbbf24;margin-bottom:16px;">
+                <i class="fas fa-tools ml-2"></i>أدوات إصلاح البيانات
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Auto repair -->
+                <div style="border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:16px;">
+                    <p style="font-size:12px;font-weight:900;color:#fbbf24;margin-bottom:6px;">إصلاح تلقائي</p>
+                    <p style="font-size:11px;color:#888;margin-bottom:12px;line-height:1.6;">
+                        يُصلح الحقول المفقودة (uid, rank, coins...) ويضع اسماً مؤقتاً للسجلات بلا username.
+                        <strong style="color:#fbbf24;">البريد الإلكتروني لا يُسترد تلقائياً</strong> — استخدم الإصلاح اليدوي أدناه.
+                    </p>
+                    <button onclick="repairPlayerRecords()" class="btn-primary" style="background:linear-gradient(135deg,#f59e0b,#d97706);font-size:12px;">
+                        <i class="fas fa-wrench ml-2"></i>إصلاح تلقائي
+                    </button>
+                    <div id="repair-log" style="display:none;margin-top:12px;padding:10px;
+                        background:rgba(0,0,0,.3);border-radius:8px;font-size:11px;
+                        font-family:monospace;color:#aaa;max-height:120px;overflow-y:auto;direction:ltr;text-align:left;"></div>
+                </div>
+
+                <!-- Manual patch -->
+                <div style="border:1px solid rgba(0,242,255,.2);border-radius:12px;padding:16px;">
+                    <p style="font-size:12px;font-weight:900;color:#00f2ff;margin-bottom:6px;">إصلاح يدوي — تعديل بيانات لاعب</p>
+                    <p style="font-size:11px;color:#888;margin-bottom:12px;line-height:1.6;">
+                        أدخل الـ UID من Firebase Console ثم البيانات الصحيحة لهذا المستخدم.
+                        يمكنك نسخ الـ UID من صفحة
+                        <strong style="color:#00f2ff;">Authentication → Users</strong> في Firebase.
+                    </p>
+
+                    <!-- UID picker: dropdown of broken players OR manual input -->
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:10px;color:#666;font-weight:700;display:block;margin-bottom:4px;">اختر لاعباً من القائمة أو أدخل UID يدوياً</label>
+                        <select id="patch-uid-select" class="admin-input" style="margin-bottom:6px;" onchange="onPatchSelectChange(this.value)">
+                            <option value="">— اختر لاعباً —</option>
+                        </select>
+                        <input id="patch-uid" class="admin-input" placeholder="UID (من Firebase Auth)" style="font-family:monospace;font-size:11px;">
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:10px;color:#666;font-weight:700;display:block;margin-bottom:4px;">اسم المستخدم</label>
+                            <input id="patch-username" class="admin-input" placeholder="username">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;color:#666;font-weight:700;display:block;margin-bottom:4px;">الاسم الكامل</label>
+                            <input id="patch-fullname" class="admin-input" placeholder="الاسم الكامل">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:10px;color:#666;font-weight:700;display:block;margin-bottom:4px;">البريد الإلكتروني</label>
+                        <input id="patch-email" class="admin-input" placeholder="email@example.com" type="email">
+                    </div>
+
+                    <button onclick="manualPatchPlayer()" class="btn-primary" style="font-size:12px;">
+                        <i class="fas fa-save ml-2"></i>حفظ البيانات
+                    </button>
+                    <div id="patch-result" style="display:none;margin-top:10px;font-size:11px;font-weight:700;padding:8px 12px;border-radius:8px;"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="flex gap-3 mb-4">
             <input id="player-search" class="admin-input" type="text" placeholder="ابحث عن لاعب..." style="max-width:300px;" oninput="searchPlayers(this.value)">
         </div>
@@ -321,7 +407,7 @@
             <!-- Category selector -->
             <div class="glass" style="padding:20px;">
                 <h3 style="font-size:14px;font-weight:900;margin-bottom:16px;">الفئات</h3>
-                <div id="category-list" style="gap:8px;"></div>
+                <div id="category-list" style="space-y:8px;"></div>
                 <hr style="border:none;border-top:1px solid rgba(255,255,255,.07);margin:16px 0;">
                 <div>
                     <label style="font-size:11px;color:#666;font-weight:700;display:block;margin-bottom:6px;">فئة جديدة</label>
@@ -382,7 +468,7 @@
             <!-- Active announcements -->
             <div class="glass" style="padding:20px;">
                 <h3 style="font-size:14px;font-weight:900;margin-bottom:16px;">الإعلانات النشطة</h3>
-                <div id="active-announcements" style="gap:10px;"></div>
+                <div id="active-announcements" style="space-y:10px;"></div>
             </div>
         </div>
     </section>
@@ -587,8 +673,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-import { getDatabase, ref, get, set, update, remove, push, onValue, query, orderByChild, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+import { getDatabase, ref, get, set, update, remove, push, onValue, query, orderByChild } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
 
 const firebaseConfig = {
@@ -605,7 +690,6 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
-window._firebaseFns = { ref, get, update, onValue, push, serverTimestamp };
 
 // ADMIN ACCESS VIA CODE REDEMPTION
 const ADMIN_CODE = 'ADMIN26';
@@ -637,8 +721,7 @@ onAuthStateChanged(auth, async user => {
     // Admin verified - load dashboard
     document.getElementById('overview-date').textContent =
         new Date().toLocaleDateString('ar-SA', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
-        window._firebaseFns = { ref, get, update, onValue, push, set, remove };
-        await refreshAll();
+    await refreshAll();
 });
 
 // ── ADMIN CODE REDEMPTION ────────────────
@@ -699,7 +782,7 @@ function showAdminCodeModal() {
                     <i class="fas fa-check ml-2"></i>
                     تحقق
                 </button>
-                <button onclick="window.location.href='index.html'"
+                <button onclick="window.location.href='home.html'"
                     style="padding:14px 24px;border-radius:12px;
                     background:rgba(255,255,255,.08);
                     border:2px solid rgba(255,255,255,.1);
@@ -884,43 +967,23 @@ function renderRankDist() {
 // ── RECENT PLAYERS ────────────────────────
 function renderRecentPlayers() {
     const sorted = Object.values(allPlayers)
-        // FIX: new players have no stats.lastPlayed yet — use createdAt as fallback
-        .filter(p => p.username)
-        .sort((a, b) => {
-            const aTime = a.stats?.lastPlayed || a.createdAt || 0;
-            const bTime = b.stats?.lastPlayed || b.createdAt || 0;
-            return bTime - aTime;
-        })
+        .filter(p => p.username && p.stats?.lastPlayed)
+        .sort((a,b) => (b.stats.lastPlayed||0) - (a.stats.lastPlayed||0))
         .slice(0, 8);
 
-    document.getElementById('recent-players-list').innerHTML = sorted.map(p => {
-        // Show lastPlayed if exists, else createdAt as "انضم:", else "جديد"
-        let timeLabel;
-        if (p.stats?.lastPlayed) {
-            timeLabel = new Date(p.stats.lastPlayed).toLocaleDateString('ar-SA');
-        } else if (p.createdAt) {
-            timeLabel = 'انضم: ' + new Date(p.createdAt).toLocaleDateString('ar-SA');
-        } else {
-            timeLabel = 'جديد';
-        }
-
-        return `
-        <div style="display:flex;align-items:center;justify-content:space-between;
-            padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+    document.getElementById('recent-players-list').innerHTML = sorted.map(p => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);">
             <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;border-radius:50%;
-                    background:linear-gradient(135deg,#00f2ff,#7c30ff);
-                    display:flex;align-items:center;justify-content:center;font-size:12px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f2ff,#7c30ff);display:flex;align-items:center;justify-content:center;font-size:12px;">
                     <i class="fas fa-user" style="color:white;"></i>
                 </div>
                 <div>
                     <p style="font-size:12px;font-weight:700;">${p.username}</p>
-                    <p style="font-size:10px;color:#555;">${timeLabel}</p>
+                    <p style="font-size:10px;color:#555;">${new Date(p.stats.lastPlayed).toLocaleDateString('ar-SA')}</p>
                 </div>
             </div>
             <span style="font-size:11px;font-weight:900;color:#00f2ff;">${p.rank || 'Bronze'}</span>
-        </div>`;
-    }).join('') || '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا يوجد لاعبون</p>';
+        </div>`).join('') || '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا يوجد لاعبون</p>';
 }
 
 // ── ANALYTICS ────────────────────────────
@@ -975,14 +1038,12 @@ function loadAnalytics() {
         const total = p.stats?.totalGames||0;
         const wins  = (p.stats?.spyWins||0) + (p.stats?.innocentWins||0);
         const wr    = total ? Math.round(wins/total*100) : 0;
-        return `<tr>
-    <td style="color:#555;">${i+1}</td>
-    <td style="font-weight:700;">${p.username || '<span style="color:#555;font-style:italic;">غير معروف</span>'}</td>
-    <td><span class="badge badge-active">${p.rank || 'Bronze'}</span></td>
-    <td style="font-family:'Orbitron',sans-serif;color:#00f2ff;font-size:12px;">${p.rankPoints || 0}</td>
-    <td>${total}</td>
-    <td style="color:${wr >= 50 ? '#22c55e' : '#ef4444'};">${wr}%</td>
-</tr>`;
+        return `<tr><td style="color:#555;">${i+1}</td>
+            <td style="font-weight:700;">${p.username}</td>
+            <td><span class="badge badge-active">${p.rank||'Bronze'}</span></td>
+            <td style="font-family:'Orbitron',sans-serif;color:#00f2ff;font-size:12px;">${p.rankPoints||0}</td>
+            <td>${total}</td>
+            <td style="color:${wr>=50?'#22c55e':'#ef4444'};">${wr}%</td></tr>`;
     }).join('');
 }
 
@@ -1071,15 +1132,10 @@ window.banPlayer = async () => {
     const username = document.getElementById('ban-username').value.trim();
     const reason   = document.getElementById('ban-reason').value.trim();
     const duration = parseInt(document.getElementById('ban-duration').value);
-    const category = document.getElementById('ban-category')?.value || 'admin_decision';
+    if (!username) { await UIAlert('الرجاء إدخال اسم المستخدم', { title: 'حقل مطلوب', type: 'warning', icon: '✏️' }); return; }
 
-    if (!username) {
-        await UIAlert('الرجاء إدخال اسم المستخدم', { title: 'حقل مطلوب', type: 'warning', icon: '✏️' });
-        return;
-    }
-
-    // Find player UID by username
-    const snap = await get(ref(db, 'players'));
+    // Find player UID
+    const snap = await get(ref(db,'players'));
     if (!snap.exists()) return;
     const players = snap.val();
     let targetUid = null;
@@ -1087,85 +1143,246 @@ window.banPlayer = async () => {
         if (players[uid].username === username) { targetUid = uid; break; }
     }
 
-    if (!targetUid) {
-        await UIAlert('لا يوجد لاعب بهذا الاسم', { title: 'المستخدم غير موجود', type: 'error', icon: '🔍' });
-        return;
-    }
+    if (!targetUid) { await UIAlert('لا يوجد لاعب بهذا الاسم في قاعدة البيانات', { title: 'المستخدم غير موجود', type: 'error', icon: '🔍' }); return; }
 
-    const isPermanent = duration === -1;
-    const now = Date.now();
-    const previousBans = players[targetUid]?.totalBans ?? 0;
-
-    // Build ban object — same schema as moderation.js
-    const banObj = {
-        reason:      reason || 'قرار إداري',
-        category:    category,
-        bannedAt:    now,
-        expiresAt:   isPermanent ? -1 : now + duration,
-        durationMs:  isPermanent ? -1 : duration,
-        bannedBy:    auth.currentUser?.uid || 'admin',
-        isPermanent: isPermanent,
-        banCount:    previousBans + 1,
-        username:    username,
-        email:       players[targetUid]?.email || '',
-    };
-
-    // Write to THREE paths so both old panel and new ban screen work:
-    await Promise.all([
-        // 1. New path — moderation.js reads this to show ban screen
-        update(ref(db, `players/${targetUid}`), {
-            ban:      banObj,
-            totalBans: previousBans + 1,
-            [`banHistory/${now}`]: {
-                reason: banObj.reason, category: banObj.category,
-                bannedAt: now, expiresAt: banObj.expiresAt, durationMs: banObj.durationMs
-            }
-        }),
-        // 2. New path — banned_users list (for admin overview)
-        update(ref(db, `banned_users/${targetUid}`), banObj),
-        // 3. Old path — keeps bans table in this admin panel working
-        set(ref(db, `bans/${targetUid}`), {
-            username,
-            reason:    banObj.reason,
-            bannedAt:  now,
-            expiresAt: banObj.expiresAt,
-            permanent: isPermanent,
-            bannedByName: 'Admin',
-        }),
-    ]);
+    await set(ref(db, `bans/${targetUid}`), {
+        username,
+        reason: reason || 'مخالفة اللوائح',
+        bannedAt:  Date.now(),
+        expiresAt: duration === -1 ? null : Date.now() + duration,
+        permanent: duration === -1,
+        bannedByName: 'Admin'
+    });
 
     await UIAlert(`تم حظر ${username} بنجاح`, { title: '🚫 تم الحظر', type: 'success', icon: '✅' });
     document.getElementById('ban-username').value = '';
-    document.getElementById('ban-reason').value   = '';
+    document.getElementById('ban-reason').value = '';
     loadBans();
 };
 
-
 window.unban = async (uid) => {
-    const ok = await UIConfirm(
-        'هل أنت متأكد من رفع الحظر عن هذا اللاعب؟',
-        { title: 'رفع الحظر', type: 'warning', confirmText: 'رفع الحظر', icon: '✅' }
-    );
+    const ok = await UIConfirm('هل أنت متأكد من رفع الحظر عن هذا اللاعب؟', { title: 'رفع الحظر', type: 'warning', confirmText: 'رفع الحظر', icon: '✅' });
     if (!ok) return;
-
-    // Remove from ALL three paths so ban screen disappears live
-    await Promise.all([
-        update(ref(db, `players/${uid}`), { ban: null, moderationWarnings: 0 }),
-        remove(ref(db, `banned_users/${uid}`)),
-        remove(ref(db, `bans/${uid}`)),
-    ]);
-
-    await UIAlert('تم رفع الحظر بنجاح', { title: '✅ تم', type: 'success', icon: '' });
+    await remove(ref(db, `bans/${uid}`));
     loadBans();
 };
 
 // ── PLAYERS ──────────────────────────────
 let filteredPlayers = [];
 function loadPlayers() {
-    filteredPlayers = Object.values(allPlayers).filter(p => p.username);
+    // Show ALL players — including broken ones without username so admin can see them
+    filteredPlayers = Object.values(allPlayers);
     renderPlayersTable(filteredPlayers);
+    populatePatchDropdown();
 }
 window.loadPlayers = loadPlayers;
+
+// ── POPULATE BROKEN-PLAYERS DROPDOWN ─────
+function populatePatchDropdown() {
+    const select = document.getElementById('patch-uid-select');
+    if (!select) return;
+    const broken = Object.entries(allPlayers).filter(([uid, p]) =>
+        !p.username || p.username === 'undefined' || !p.email || p.email === 'undefined'
+    );
+    if (broken.length === 0) {
+        select.innerHTML = '<option value="">✅ لا يوجد سجلات فارغة</option>';
+        return;
+    }
+    select.innerHTML = '<option value="">— اختر لاعباً فارغاً —</option>' +
+        broken.map(([uid, p]) =>
+            `<option value="${uid}">${uid.slice(0,14)}... | username="${p.username || '?'}" | email="${p.email || '?'}"</option>`
+        ).join('');
+}
+
+window.onPatchSelectChange = function(uid) {
+    if (!uid) return;
+    document.getElementById('patch-uid').value = uid;
+    // Pre-fill known data
+    const p = allPlayers[uid];
+    if (p) {
+        if (p.username && p.username !== 'undefined')
+            document.getElementById('patch-username').value = p.username;
+        if (p.fullName)
+            document.getElementById('patch-fullname').value = p.fullName;
+        if (p.email && p.email !== 'undefined')
+            document.getElementById('patch-email').value = p.email;
+    }
+};
+
+// ── MANUAL PATCH ─────────────────────────
+window.manualPatchPlayer = async function() {
+    const uid      = document.getElementById('patch-uid').value.trim();
+    const username = document.getElementById('patch-username').value.trim();
+    const fullName = document.getElementById('patch-fullname').value.trim();
+    const email    = document.getElementById('patch-email').value.trim();
+    const resultEl = document.getElementById('patch-result');
+
+    const showResult = (msg, ok) => {
+        resultEl.textContent = msg;
+        resultEl.style.display = 'block';
+        resultEl.style.background  = ok ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.15)';
+        resultEl.style.border      = ok ? '1px solid rgba(34,197,94,.4)' : '1px solid rgba(239,68,68,.4)';
+        resultEl.style.color       = ok ? '#22c55e' : '#ef4444';
+    };
+
+    if (!uid)      { showResult('❌ الرجاء إدخال الـ UID', false); return; }
+    if (!username) { showResult('❌ الرجاء إدخال اسم المستخدم', false); return; }
+    if (!email)    { showResult('❌ الرجاء إدخال البريد الإلكتروني', false); return; }
+
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showResult('❌ البريد الإلكتروني غير صحيح', false); return;
+    }
+
+    // Check UID exists in DB
+    try {
+        const snap = await get(ref(db, `players/${uid}`));
+        if (!snap.exists()) {
+            showResult('❌ لا يوجد سجل بهذا الـ UID في قاعدة البيانات', false);
+            return;
+        }
+    } catch(e) {
+        showResult('❌ خطأ في القراءة: ' + e.message, false);
+        return;
+    }
+
+    // Check email not already used by another player
+    const emailLower = email.toLowerCase();
+    for (const [existingUid, p] of Object.entries(allPlayers)) {
+        if (existingUid !== uid && p.email?.toLowerCase() === emailLower) {
+            showResult(`❌ البريد الإلكتروني مستخدم بالفعل للاعب: ${p.username || existingUid}`, false);
+            return;
+        }
+    }
+
+    try {
+        const patch = { uid, username, email };
+        if (fullName) patch.fullName = fullName;
+
+        await update(ref(db, `players/${uid}`), patch);
+
+        // Update local cache
+        if (allPlayers[uid]) {
+            allPlayers[uid] = { ...allPlayers[uid], ...patch };
+        }
+
+        showResult(`✅ تم تحديث بيانات اللاعب بنجاح — ${username} (${email})`, true);
+
+        // Clear fields & refresh
+        document.getElementById('patch-uid').value       = '';
+        document.getElementById('patch-username').value  = '';
+        document.getElementById('patch-fullname').value  = '';
+        document.getElementById('patch-email').value     = '';
+        document.getElementById('patch-uid-select').value = '';
+
+        loadPlayers();
+        populatePatchDropdown();
+
+    } catch(e) {
+        showResult('❌ فشل الحفظ: ' + e.message, false);
+    }
+};
+
+// ── REPAIR PLAYER RECORDS ─────────────────
+// Fixes players whose username/email/uid are missing in the DB.
+// uid  → always patchable from the DB key
+// email & username → patchable only if the user logged in recently
+//   (ensurePlayerRecord in login.html will have written them)
+window.repairPlayerRecords = async function() {
+    const logEl  = document.getElementById('repair-log');
+    logEl.innerHTML = '';
+    logEl.style.display = 'block';
+
+    const log = (msg, color = '#aaa') => {
+        logEl.innerHTML += `<span style="color:${color}">${msg}</span>
+`;
+        logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    log('جاري قراءة جميع السجلات...', '#fbbf24');
+
+    let snap;
+    try {
+        snap = await get(ref(db, 'players'));
+    } catch(e) {
+        log('❌ فشل القراءة: ' + e.message, '#ef4444');
+        return;
+    }
+
+    if (!snap.exists()) { log('لا يوجد لاعبون في قاعدة البيانات.', '#888'); return; }
+
+    const players = snap.val();
+    let fixed = 0, skipped = 0, already = 0;
+
+    for (const [uid, p] of Object.entries(players)) {
+        const patch = {};
+        let needsFix = false;
+
+        // uid is ALWAYS the DB key — safe to patch unconditionally
+        if (!p.uid) {
+            patch.uid = uid;
+            needsFix = true;
+        }
+
+        // username: use displayName from Auth if missing
+        // We can't read OTHER users Auth directly from client,
+        // but if they logged in after our fix, it's already in DB.
+        // Fallback: mark as "مجهول_{short_uid}" so record is searchable
+        if (!p.username || p.username === 'undefined') {
+            patch.username = p.fullName || `مجهول_${uid.slice(0, 6)}`;
+            needsFix = true;
+        }
+
+        // email: if missing, we can't recover it without Auth Admin SDK
+        // Flag it so admin knows
+        if (!p.email || p.email === 'undefined') {
+            patch.email = '';   // empty string so search won't crash
+            needsFix = true;
+        }
+
+        // Ensure required fields exist
+        if (p.coins       == null) { patch.coins       = 100;     needsFix = true; }
+        if (p.hints       == null) { patch.hints       = 3;       needsFix = true; }
+        if (p.rankPoints  == null) { patch.rankPoints  = 0;       needsFix = true; }
+        if (!p.rank)               { patch.rank        = 'Bronze'; needsFix = true; }
+        if (!p.activeTheme)        { patch.activeTheme = 'cyan';  needsFix = true; }
+        if (!p.activeTitle)        { patch.activeTitle = 'rookie'; needsFix = true; }
+        if (!p.stats)              {
+            patch.stats = { totalGames:0, spyWins:0, innocentWins:0, currentStreak:0, longestWinStreak:0 };
+            needsFix = true;
+        }
+        if (p.moderationWarnings == null) { patch.moderationWarnings = 0; needsFix = true; }
+        if (p.totalBans          == null) { patch.totalBans          = 0; needsFix = true; }
+
+        if (needsFix) {
+            try {
+                await update(ref(db, `players/${uid}`), patch);
+                log(`✅ أصلح: ${uid.slice(0,12)}... → username="${patch.username || p.username}"`, '#22c55e');
+                fixed++;
+            } catch(e) {
+                log(`❌ فشل إصلاح ${uid.slice(0,12)}: ${e.message}`, '#ef4444');
+                skipped++;
+            }
+        } else {
+            already++;
+        }
+    }
+
+    log(`
+اكتمل: ${fixed} تم إصلاحه | ${already} سليم | ${skipped} فشل`, '#00f2ff');
+
+    if (fixed > 0) {
+        log('⚠️ ملاحظة: البريد الإلكتروني لا يمكن استرداده إلا عندما يُسجّل المستخدم الدخول مجدداً.', '#fbbf24');
+        // Reload players list
+        try {
+            const freshSnap = await get(ref(db, 'players'));
+            if (freshSnap.exists()) {
+                allPlayers = freshSnap.val();
+                loadPlayers();
+            }
+        } catch(e) {}
+    }
+};
 
 window.searchPlayers = (q) => {
     const results = filteredPlayers.filter(p => p.username?.toLowerCase().includes(q.toLowerCase()));
@@ -1178,13 +1395,21 @@ function renderPlayersTable(players) {
     const RANK_COLORS = {Diamond:'#00f2ff',Platinum:'#e5e4e2',Gold:'#ffd700',Silver:'#c0c0c0',Bronze:'#cd7f32'};
 
     tbody.innerHTML = players.sort((a,b)=>(b.rankPoints||0)-(a.rankPoints||0)).map((p,i) => {
-        const total = p.stats?.totalGames||0;
-        const wins  = (p.stats?.spyWins||0)+(p.stats?.innocentWins||0);
-        const wr    = total ? Math.round(wins/total*100) : 0;
-        const color = RANK_COLORS[p.rank] || '#888';
-        const last  = p.stats?.lastPlayed ? new Date(p.stats.lastPlayed).toLocaleDateString('ar-SA') : '—';
-        return `<tr>
-            <td style="font-weight:700;">${p.username}</td>
+        const total   = p.stats?.totalGames||0;
+        const wins    = (p.stats?.spyWins||0)+(p.stats?.innocentWins||0);
+        const wr      = total ? Math.round(wins/total*100) : 0;
+        const color   = RANK_COLORS[p.rank] || '#888';
+        const last    = p.stats?.lastPlayed ? new Date(p.stats.lastPlayed).toLocaleDateString('ar-SA') : '—';
+
+        // Detect broken/empty records
+        const isBroken = !p.username || p.username === 'undefined' || !p.email || p.email === 'undefined';
+        const rowStyle = isBroken ? 'background:rgba(251,191,36,.04);border-right:3px solid #fbbf24;' : '';
+        const nameDisplay = p.username && p.username !== 'undefined'
+            ? p.username
+            : `<span style="color:#fbbf24;font-style:italic;">⚠️ غير معروف (${p.uid?.slice(0,8) || '?'}...)</span>`;
+
+        return `<tr style="${rowStyle}">
+            <td style="font-weight:700;">${nameDisplay}</td>
             <td style="color:${color};font-weight:900;font-size:12px;">${p.rank||'Bronze'}</td>
             <td style="font-family:'Orbitron',sans-serif;font-size:11px;color:${color};">${p.rankPoints||0}</td>
             <td>${total}</td>
@@ -1192,8 +1417,11 @@ function renderPlayersTable(players) {
             <td style="font-size:11px;color:#555;">${last}</td>
             <td>
                 <div style="display:flex;gap:6px;">
-                    <button class="btn-sm" onclick="viewPlayer('${p.username}')">عرض</button>
-                    <button class="btn-danger" onclick="document.getElementById('ban-username').value='${p.username}';showSection('bans')">حظر</button>
+                    ${isBroken
+                        ? `<span style="font-size:10px;color:#fbbf24;font-weight:700;">يحتاج إصلاح</span>`
+                        : `<button class="btn-sm" onclick="viewPlayer('${p.username}')">عرض</button>
+                           <button class="btn-danger" onclick="document.getElementById('ban-username').value='${p.username}';showSection('bans')">حظر</button>`
+                    }
                 </div>
             </td>
         </tr>`;
@@ -1797,7 +2025,7 @@ window.runDiagnostics = async function() {
         diagResult('tests-integrity', 'pass', 'نظام الإشراف محمّل', 'MOD.checkAndHandleMessage متاح');
     } else {
         diagResult('tests-integrity', 'info', 'moderation.js غير نشط في هذه الصفحة',
-            'هذا طبيعي — الإشراف يعمل في room.html و index.html حيث يلعب المستخدمون');
+            'هذا طبيعي — الإشراف يعمل في room.html و home.html حيث يلعب المستخدمون');
     }
 
     diagSetDot('dot-integrity', '#22c55e');
@@ -1958,5 +2186,11 @@ window.showSection = function(name) {
 };
 
 </script>
+<script>
+    window.alert   = (msg)             => UIAlert(msg);
+    window.confirm = (msg)             => UIConfirm(msg);
+    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+</script>
+<script src="dialogs.js"></script>
 </body>
 </html>

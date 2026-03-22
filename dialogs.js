@@ -1,11 +1,6 @@
 // ============================================================
 // EL JASUS — CUSTOM DIALOG SYSTEM
 // Replaces browser alert / prompt / confirm with designed UI
-// API:
-//   await UIAlert(message, { title, icon, type })
-//   await UIPrompt(message, { title, placeholder, icon, defaultValue })
-//   await UIConfirm(message, { title, icon, confirmText, cancelText, type })
-// types: 'info' | 'success' | 'warning' | 'error'
 // ============================================================
 
 (function () {

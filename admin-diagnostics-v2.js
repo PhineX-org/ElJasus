@@ -438,7 +438,7 @@ const ElJasusDiagnostics = (() => {
         } else if (!wordsRes.exists) {
             record('منطق اللعبة', 'قوائم الكلمات في Firebase', STATUS.WARN,
                 'لا توجد قوائم كلمات في Firebase',
-                'اللعبة تعتمد على القوائم الثابتة في index.html فقط — استخدم import-words.html لرفعها');
+                'اللعبة تعتمد على القوائم الثابتة في home.html فقط — استخدم import-words.html لرفعها');
         } else {
             const lists = wordsRes.val;
             const categories = Object.keys(lists);

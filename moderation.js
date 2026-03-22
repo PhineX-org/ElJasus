@@ -1,163 +1,386 @@
 // ============================================================
-// EL JASUS — MODERATION SYSTEM v3  (complete rewrite)
-// Yellow Card / Red Card — Warn → Ban → Full Lockout
-// Uses Firebase Realtime Database for ban state and synchronization.
-// Features:
-//   To scan a chat message before sending:
-//     const blocked = await MOD.scan(messageText);
-//     if (blocked) return;   // don't send, warning/ban handled internally
-//
+// EL JASUS — JMS (El Jasus Moderation System) v3.0
 // ============================================================
 
 (function () {
 'use strict';
 
 // ══════════════════════════════════════════════════════════
-// BLOCKED WORDS  (Arabic + transliterated Latin)
-// Normaliser strips diacritics and unifies alef variants so
-// كِلٌبً  ==  كلب,  and  klab  ==  klab, etc.
+// SYMBOL SUBSTITUTION MAP
+// Normalizes common symbol tricks like k0s → كوس
 // ══════════════════════════════════════════════════════════
-const BLOCKED = [
-    // ── Arabic profanity (Direct & Regional) ──────────────────────────────────
-    'كس','كوس','بص','بصص','زبر','أير','اير','زب','لحس',
-    'فشخ','فشخك','يفشخ','تفشيخ','طيز','مكوة','خرق','سوءة',
-    'نيك','ينيك','انيك','تنيك','مناك','منيوك','تناك',
-    'شرموط','شرموطة','شرموته','عرص','عرصة','معرص','خول','خولة',
-    'قواد','قحبة','قحب','متناك','منيوكة','تناكة','عاهرة','مومس',
-    'وسخ','حقير','كلب','ابن كلب','ابن متناكة','ابن القحبة','ابن الشرموطة',
-    'يلعن','العن','لعنة','ملعون','تبا','جحش','خنزير','حمار',
-    'غبي','غبية','أهبل','عبيط','بهيمة','حيوان','زبالة','زبل','زق','خرا','خري',
-    'نعل','أبوك','أمك','أختك','ابن الـ','يبن الـ','يعرص','تعرص',
-    'لواط','لوطي','شاذ','منحرف','مخنث','ديوث','زامل','عطاي','طحان','لبوة',
-    'كسختك','كسمك','كسامك','مكوتك','طيزك','بزاز','حلمة',
-
-    // ── Arabic obfuscated / bypass attempts ────────────────────────────
-    'ك.س', 'خ.ول', 'ز.ب', 'ق.ح.ب.ة', 'ش.ر.م.و.ط', 'م.ت.ن.ا.ك', 'ع.ر.ص',
-    'ك_س', 'خ_ول', 'ز_ب', 'ك س', 'خ ول', 'ز ب', 'ق ح ب ة', 'ش ر م و ط',
-    'ك..س', 'ك/س', 'ك-س', 'ك~س',
-    'ك1س', 'ك0س', 'كوسمك', 'كـس', 'ز.ب.ر', 'ا.ي.ر', 'ن.ي.ك',
+const SYMBOL_MAP = {
+    // Numbers to letters
+    '0': ['o', 'ο', 'о', '٠'],
+    '1': ['i', 'l', '١'],
+    '3': ['e', '٣'],
+    '4': ['a', '٤'],
+    '5': ['s', '٥'],
+    '7': ['h', '٧'],
+    '8': ['b', '٨'],
+    '9': ['g', '٩'],
     
-    // ── Hate / discriminatory ────────────────────────────
-    'عبد','زنجي','متخلف','عنصري','بربري','همجي',
-
-    // ── Threats & Violence ──────────────────────────────────────────
-    'اقتلك','اقتله','اذبحك','اذبحه','سأقتلك','هاجمك','ارهابي','تفجير','اغتيال','ادعسك','امسحك',
-
-    // ── English profanity ────────────────────────────────
-    'fuck','fucking','fucker','fck','f*ck','f u c k','f.u.c.k',
-    'motherfucker','mofo','cocksucker',
-    'shit','sh*t','sh1t','bullshit','horseshit',
-    'bitch','bitches','b!tch','b1tch','b i t c h',
-    'ass','asshole','assholes','a$$','a$$hole',
-    'bastard','cunt','cock','dick','pussy','penis','vagina','twat',
-    'whore','slut','skank','nigger','nigga','n1gga','n!gga','faggot','fag','retard',
-    'wanker','prick','douche','douchebag','dipshit','dumbass','jackass','pedo','pedophile',
-
-    // ── English threats ──────────────────────────────────
-    'kill you','rape','murder','beat you','cut your', 'strangle',
-
-    // ── Transliterated bypass attempts (Franco-Arabic) ───────────────────
-    'kosomak','ksomak','ksmk','metnak','metnaka','sharmota','sharmouta','mnyok',
-    'mnywk','a7a','aha','khawal','khwal','ars','3ars','mo3ars','mzabber',
-    'zeby','zebby','tezy','teezy','qahba','kahba','kahba',
-];
-
-// دالة لتنظيف النص من الرموز والمسافات قبل فحصه
-function cleanText(text) {
-    // إزالة المسافات، النقاط، الشرطات، والرموز الخاصة
-    return text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~() ]/g, "").toLowerCase();
-}
-
-function containsProfanity(userInput) {
-    const cleanedInput = cleanText(userInput);
-    for (let word of BLOCKED) {
-        // فحص الكلمة الممنوعة بدون الرموز
-        const cleanedWord = cleanText(word);
-        if (cleanedInput.includes(cleanedWord)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Patterns: same char ×7 or more = spam
-const SPAM_PATTERN = /(.)\1{6,}/;
-
-// ── Word categories (for ban screen) ─────────────────────
-const CATEGORIES = {
-    profanity:      { ar: 'ألفاظ نابية',           icon: '🤬', color: '#f97316' },
-    spam:           { ar: 'رسائل مزعجة',            icon: '📵', color: '#8b5cf6' },
-    hate_speech:    { ar: 'خطاب كراهية / عنصرية',  icon: '🚫', color: '#dc2626' },
-    threats:        { ar: 'تهديدات',                icon: '💀', color: '#991b1b' },
-    harassment:     { ar: 'تحرش وإيذاء',            icon: '⚠️',  color: '#ef4444' },
-    cheating:       { ar: 'غش في اللعبة',           icon: '🎰', color: '#0891b2' },
-    admin_decision: { ar: 'قرار إداري',             icon: '🔨', color: '#1d4ed8' },
-    permanent:      { ar: 'حظر دائم',               icon: '⛔', color: '#000' },
+    // Symbols to letters
+    '$': ['s'],
+    '@': ['a'],
+    '!': ['i'],
+    '|': ['i', 'l'],
+    '&': ['and'],
+    '*': ['a', 'o'],
+    '#': ['h'],
+    '%': ['x'],
+    
+    // Special characters
+    '.': [''],
+    '-': [''],
+    '_': [''],
+    ' ': [''],
+    '/': [''],
+    '\\': [''],
+    '~': [''],
+    '+': [''],
 };
 
-// ── Thresholds ────────────────────────────────────────────
-const WARN_LIMIT          = 2;           // warnings before ban
-const BAN_DURATION_MS     = 7 * 864e5;  // 7 days default
-const PERM_BAN_THRESHOLD  = 3;          // bans before permanent
-const RECHECK_INTERVAL_MS = 30_000;     // re-check Firebase every 30 s
+// ══════════════════════════════════════════════════════════
+// 5-LEVEL VIOLATION CLASSIFICATION
+// Each level has: warnings threshold, ban duration, severity
+// ══════════════════════════════════════════════════════════
+const LEVELS = {
+    1: {
+        name: 'المستوى الأول',
+        nameEn: 'Level 1',
+        icon: '⚠️',
+        color: '#f59e0b',
+        warningsThreshold: 10,
+        banDuration: 3 * 864e5, // 3 days
+        severity: 'تحذير خفيف',
+    },
+    2: {
+        name: 'المستوى الثاني',
+        nameEn: 'Level 2',
+        icon: '🔶',
+        color: '#f97316',
+        warningsThreshold: 5,
+        banDuration: 1 * 864e5, // 1 day (24-48 hours average)
+        severity: 'حظر مؤقت خفيف',
+    },
+    3: {
+        name: 'المستوى الثالث',
+        nameEn: 'Level 3',
+        icon: '🔴',
+        color: '#ef4444',
+        warningsThreshold: 3,
+        banDuration: 10 * 864e5, // 10 days (7-14 average)
+        severity: 'حظر مؤقت شديد',
+    },
+    4: {
+        name: 'المستوى الرابع',
+        nameEn: 'Level 4',
+        icon: '🟣',
+        color: '#a855f7',
+        warningsThreshold: 1,
+        banDuration: 45 * 864e5, // 45 days (30-60 average)
+        severity: 'حظر طويل',
+    },
+    5: {
+        name: 'المستوى الخامس',
+        nameEn: 'Level 5',
+        icon: '☠️',
+        color: '#000000',
+        warningsThreshold: 0,
+        banDuration: -1, // Permanent
+        severity: 'حظر دائم',
+    },
+};
 
-// ── LocalStorage keys ─────────────────────────────────────
-const LS_BAN  = 'eljasus_ban_v3';
-const LS_WARN = 'eljasus_warnings_v3';
+// ══════════════════════════════════════════════════════════
+// BLOCKED WORDS BY LEVEL
+// ══════════════════════════════════════════════════════════
+const VIOLATIONS = {
+    // ── Level 1: Minor inappropriate language ────────────────
+    1: {
+    words: [
+        // ========== ARABIC (original + extensive additions) ==========
+        'غبي', 'غبية', 'أهبل', 'عبيط', 'حمار', 'جحش', 'بهيمة', 'حيوان',
+        'زبالة', 'وسخ', 'حقير', 'نعل', 'تبا', 'ملعون', 'لعنة', 'قذر',
+        'مقرف', 'سافل', 'تافه', 'سخيف', 'كلب', 'بقرة', 'ماعز', 'خنزير',
+        // Additional Arabic (minor profanity, insults, vulgar slang)
+        'أحمق', 'بليد', 'معتوه', 'مريض', 'خسيس', 'وضيع', 'دنيء', 'لئيم',
+        'فاشل', 'خايب', 'ساقط', 'نذل', 'رعاع', 'أوغاد', 'جبان', 'متخلف',
+        'جاهل', 'أبله', 'ساذج', 'مغفل', 'قبيح', 'بذيء', 'وقح', 'صفيق',
+        'كذاب', 'نصاب', 'مارق', 'فاجر', 'ماكر', 'حقود', 'حسود', 'أناني',
+        'مغرور', 'متكبر', 'فظ', 'غليظ', 'أخرق', 'أبكم', 'أطرش', 'أعمى',
+        'أعرج', 'أصلع', 'أقرع', 'أحدب', 'أشوه', 'أرعن', 'أرعن', 'أهوج',
+        'أحمق', 'أبله', 'أعور', 'أشل', 'أكمه', 'أصم', 'أبتر', 'أجدع',
+        'نكد', 'نكدي', 'زفت', 'زبالة', 'قمامة', 'عاهرة', 'قحبة', 'شرموطة',
+        'منيوك', 'ناكح', 'متناك', 'لحس', 'كس', 'كسي', 'طيز', 'مص', 'بوس',
+        'نياكة', 'لحس', 'خرا', 'خرة', 'خربان', 'خربوطي', 'مخرب', 'فاسد',
+        'منحط', 'ساقط', 'خنزير', 'كلب', 'ابن الكلب', 'بنت الكلب', 'أمك',
+        'أختك', 'دينك', 'عرضك', 'شرفك', 'كلبك', 'أبوك', 'أمك', 'بنت',
+        'شرموط', 'قواد', 'ديوث', 'داعر', 'فاجر', 'زاني', 'زانية', 'لوطي',
+        'لوطية', 'منكوح', 'منكوحة', 'متناكة', 'منيوكة', 'مصاص', 'مصاصة',
+        'نياك', 'نياكة', 'خول', 'خولة', 'خنيث', 'مخنث', 'لطي', 'لطية',
+        'قحبة', 'عاهرة', 'مومس', 'دعارة', 'زنا', 'زنى', 'سفاح', 'سفاحة',
+        'فاحشة', 'منكر', 'قذر', 'وسخ', 'نجس', 'نجاسة', 'رجيع', 'براز',
+        'بول', 'بائل', 'بولة', 'خراء', 'خرئ', 'خرة', 'خرية', 'عذرة',
+        'عذرة', 'غائط', 'غائطة', 'كخة', 'كخ', 'قرف', 'مقرف', 'مقزز',
+        'مقزز', 'كريه', 'مكروه', 'بغيض', 'مبغض', 'ممقوت', 'منفور', 'مكروه',
+        'حقير', 'تافه', 'سخيف', 'رذيل', 'دني', 'وضيع', 'سافل', 'خسيس',
+        'لئيم', 'ماكر', 'غدار', 'خائن', 'غاش', 'نصاب', 'محتال', 'مخادع',
+        'كذاب', 'زور', 'زوري', 'منافق', 'مرائي', 'مريب', 'مشبوه', 'مريب',
+        'مريض', 'معتوه', 'مجنون', 'مختل', 'ممسوخ', 'مشوه', 'مشكل', 'مشوش',
+        'فاشل', 'خاسر', 'خسران', 'خسرانه', 'بايع', 'بايع', 'خايب', 'خايبة',
+        'بايز', 'بايزة', 'باين', 'باينة', 'خربان', 'خربانة', 'مخرب', 'مخربة',
+        'فاسد', 'فاسدة', 'منحط', 'منحطة', 'ساقط', 'ساقطة', 'نذل', 'نذلة',
+        'وغد', 'وغدة', 'أرذل', 'أرذلة', 'أدنى', 'أدناء', 'أخس', 'أخساء',
+        'ألأم', 'ألئام', 'أوضاع', 'أوضاع', 'أرذال', 'أوغاد', 'أشقياء',
+        'أشرار', 'أشرار', 'أنجاس', 'أرجاس', 'أقذار', 'أوساخ',
+        // Additional variations / common insults
+        'يا حمار', 'يا كلب', 'يا خنزير', 'يا تيس', 'يا تيسة', 'يا ثور',
+        'يا ثور', 'يا جحش', 'يا بهيمة', 'يا حيوان', 'يا غبي', 'يا أهبل',
+        'يا عبيط', 'يا سافل', 'يا حقير', 'يا نذل', 'يا رعاع', 'يا زبالة',
+        'يا وسخ', 'يا قذر', 'يا مقرف', 'يا تافه', 'يا سخيف', 'يا فاشل',
+        'يا خايب', 'يا معتوه', 'يا مريض', 'يا مجنون', 'يا مختل', 'يا أحمق',
+        'يا بليد', 'يا أبله', 'يا ساذج', 'يا مغفل', 'يا قبيح', 'يا بذيء',
+        'يا وقح', 'يا صفيق', 'يا جبان', 'يا متخلف', 'يا جاهل', 'يا خسيس',
+        'يا وضيع', 'يا دنيء', 'يا لئيم', 'يا ماكر', 'يا غدار', 'يا خائن',
+        'يا غاش', 'يا نصاب', 'يا محتال', 'يا مخادع', 'يا كذاب', 'يا منافق',
+        'يا مرائي', 'يا مريب', 'يا مشبوه',
 
-// ── Internal state ────────────────────────────────────────
+        // ========== ENGLISH (original + extensive additions) ==========
+        // Original
+        'stupid', 'idiot', 'dumb', 'noob', 'loser', 'trash', 'garbage',
+        'fool', 'moron', 'dumbass', 'asshole', 'peace of shit', 'shit',
+        // Extensive additions (mild to moderate profanity, insults, gamer slang)
+        'dummy', 'imbecile', 'cretin', 'ignoramus', 'buffoon', 'jerk',
+        'crap', 'damn', 'hell', 'poop', 'butt', 'ass', 'idiotic',
+        'moronic', 'brainless', 'mindless', 'simpleton', 'n00b', 'newb',
+        'scrub', 'pleb', 'dickhead', 'jackass', 'douche', 'douchebag',
+        'bastard', 'bitch', 'wanker', 'prick', 'twat', 'cunt', 'fuck',
+        'fucker', 'motherfucker', 'mf', 'bullshit', 'horseshit', 'crap',
+        'damn', 'dammit', 'goddamn', 'goddam', 'goddammit', 'heck', 'frick',
+        'frig', 'freak', 'frigging', 'freaking', 'eff', 'effing', 'suck',
+        'sucks', 'sucker', 'sucka', 'chump', 'schmuck', 'putz', 'dweeb',
+        ],
+        patterns: [
+            /(.)\1{6,}/,  // Spam: same char 7+ times
+            /^\s*(.+?)\s*\1\s*\1/,  // Repeated words 3+ times
+        ],
+        category: 'minor_profanity',
+        description: 'ألفاظ غير لائقة خفيفة',
+    },
+
+    // ── Level 2: Moderate harassment ──────────────────────────
+    2: {
+        words: [
+            'عرص', 'عرصة', 'معرص', 'خول', 'خولة', 'كلب', 'ابن كلب',
+            'متخلف', 'بربري', 'همجي', 'زق', 'خرا', 'خري',
+            'ass', 'asshole', 'jerk', 'bastard', 'prick', 'douche',
+            'wanker', 'jackass', 'dipshit', 'arse',
+        ],
+        category: 'harassment',
+        description: 'تحرش لفظي وإزعاج',
+    },
+
+    // ── Level 3: Severe profanity ─────────────────────────────
+    3: {
+        words: [
+            'كس', 'كوس', 'بص', 'بصص', 'زبر', 'أير', 'اير', 'زب',
+            'نيك', 'ينيك', 'انيك', 'تنيك', 'مناك', 'منيوك', 'تناك',
+            'شرموط', 'شرموطة', 'شرموته', 'قحبة', 'قحب', 'متناك',
+            'فشخ', 'فشخك', 'يفشخ', 'تفشيخ', 'طيز', 'مكوة',
+            'كسمك', 'كسامك', 'مكوتك', 'طيزك', 'لحس',
+            'fuck', 'fucking', 'fucker', 'motherfucker', 'shit',
+            'bitch', 'pussy', 'dick', 'cock', 'cunt', 'twat',
+            // Franco-Arabic
+            'kosomak', 'ksomak', 'ksmk', 'metnak', 'metnaka',
+            'sharmota', 'sharmouta', 'mnyok', 'mnywk', 'a7a', 'aha',
+            'khawal', 'khwal', 'ars', '3ars', 'mo3ars',
+        ],
+        category: 'severe_profanity',
+        description: 'ألفاظ بذيئة شديدة',
+    },
+
+    // ── Level 4: Hate speech & threats ────────────────────────
+    4: {
+        words: [
+            // Hate speech
+            'عبد', 'زنجي', 'عنصري', 'nigger', 'nigga', 'n1gga',
+            'faggot', 'fag', 'retard',
+            // Sexual harassment
+            'عاهرة', 'مومس', 'قواد', 'ديوث', 'لواط', 'لوطي',
+            'شاذ', 'منحرف', 'مخنث', 'whore', 'slut', 'skank',
+            'pedo', 'pedophile', 'rape',
+            // Mild threats
+            'اقتلك', 'اقتله', 'اذبحك', 'اذبحه', 'سأقتلك',
+            'امسحك', 'ادعسك', 'kill you', 'beat you',
+        ],
+        category: 'hate_speech',
+        description: 'خطاب كراهية وتهديدات',
+    },
+
+    // ── Level 5: Severe threats ───────────────────────────────
+    5: {
+        words: [
+            'ارهابي', 'تفجير', 'اغتيال', 'اغتصاب',
+            'terrorist', 'bomb', 'murder', 'assassination',
+            'strangle', 'cut your throat',
+        ],
+        patterns: [
+            /(?:اعرف|عارف|موجود)\s*(?:في|ب)?(?:مكان|عنوان|بيت)/i,
+            /i\s*know\s*where\s*you\s*live/i,
+            /gonna\s*find\s*you/i,
+        ],
+        category: 'severe_threats',
+        description: 'تهديدات جسيمة',
+    },
+};
+
+// ══════════════════════════════════════════════════════════
+// CATEGORIES METADATA
+// ══════════════════════════════════════════════════════════
+const CATEGORIES = {
+    minor_profanity:    { ar: 'ألفاظ غير لائقة خفيفة',    icon: '⚠️',  color: '#f59e0b' },
+    harassment:         { ar: 'تحرش وإزعاج',              icon: '🔶', color: '#f97316' },
+    severe_profanity:   { ar: 'ألفاظ بذيئة شديدة',       icon: '🔴', color: '#ef4444' },
+    hate_speech:        { ar: 'خطاب كراهية وتهديدات',    icon: '🟣', color: '#a855f7' },
+    severe_threats:     { ar: 'تهديدات جسيمة',            icon: '☠️',  color: '#000000' },
+    spam:               { ar: 'رسائل مزعجة',              icon: '📵', color: '#8b5cf6' },
+    admin_decision:     { ar: 'قرار إداري',               icon: '🔨', color: '#1d4ed8' },
+    permanent:          { ar: 'حظر دائم',                 icon: '⛔', color: '#000' },
+};
+
+// ══════════════════════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════════════════════
+const PERM_BAN_THRESHOLD  = 3;           // Total bans before permanent
+const RECHECK_INTERVAL_MS = 30_000;      // Re-check Firebase every 30s
+
+// LocalStorage keys
+const LS_BAN  = 'eljasus_ban_v4';
+const LS_WARN = 'eljasus_warnings_v4';
+
+// Internal state
 let _db          = null;
-let _user        = null;      // full Firebase user object
-let _unsubBan    = null;      // Firebase onValue unsubscribe
+let _user        = null;
+let _unsubBan    = null;
 let _recheckTimer = null;
 let _screenShown = false;
 let _navLocked   = false;
 
 // ══════════════════════════════════════════════════════════
-// TEXT NORMALISER
+// TEXT NORMALIZATION
 // ══════════════════════════════════════════════════════════
-function norm(s) {
+function normArabic(s) {
     return s
         .toLowerCase()
-        .replace(/[\u064b-\u065f\u0670]/g, '')  // diacritics
+        .replace(/[\u064b-\u065f\u0670]/g, '')  // Remove diacritics
         .replace(/[أإآٱ]/g, 'ا')
         .replace(/ة/g, 'ه')
         .replace(/ى/g, 'ي')
-        .replace(/\s+/g, ' ')
         .trim();
 }
 
-function classify(text) {
-    const n = norm(text);
-    if (SPAM_PATTERN.test(n)) return 'spam';
-
-    const THREAT_WORDS = ['اقتلك','اقتله','اذبحك','اذبحه','سأقتلك','kill you','murder','rape'];
-    if (THREAT_WORDS.some(w => n.includes(norm(w)))) return 'threats';
-
-    const HATE_WORDS = ['عبد','زنجي','متخلف','nigger','nigga','faggot'];
-    if (HATE_WORDS.some(w => n.includes(norm(w)))) return 'hate_speech';
-
-    return 'profanity';
+function expandSymbols(text) {
+    // Generate all possible combinations by expanding symbols
+    const chars = text.toLowerCase().split('');
+    let results = [''];
+    
+    for (let char of chars) {
+        const replacements = SYMBOL_MAP[char] || [char];
+        const newResults = [];
+        for (let result of results) {
+            for (let replacement of replacements) {
+                newResults.push(result + replacement);
+            }
+        }
+        results = newResults;
+        // Limit combinations to prevent explosion
+        if (results.length > 100) {
+            results = results.slice(0, 100);
+        }
+    }
+    
+    return results;
 }
 
-function isBlocked(text) {
-    const n = norm(text);
-    if (SPAM_PATTERN.test(n)) return true;
-    return BLOCKED.some(w => n.includes(norm(w)));
+function cleanText(text) {
+    // Remove spaces, dots, dashes, special chars
+    return text
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()\[\]'"<>|\\+ ]/g, '')
+        .toLowerCase();
+}
+
+function normalizeText(text) {
+    const cleaned = cleanText(text);
+    const arabicNorm = normArabic(cleaned);
+    
+    // Generate variations with symbol expansion
+    const variations = new Set([
+        cleaned,
+        arabicNorm,
+        ...expandSymbols(cleaned),
+    ]);
+    
+    return Array.from(variations);
+}
+
+// ══════════════════════════════════════════════════════════
+// VIOLATION DETECTION
+// Returns { level, category, word } or null
+// ══════════════════════════════════════════════════════════
+function detectViolation(text) {
+    const variations = normalizeText(text);
+    
+    // Check each level from most severe (5) to least (1)
+    for (let level = 5; level >= 1; level--) {
+        const violation = VIOLATIONS[level];
+        
+        // Check patterns first (for level 1 spam and level 5 threats)
+        if (violation.patterns) {
+            for (let pattern of violation.patterns) {
+                if (pattern.test(text)) {
+                    return {
+                        level,
+                        category: violation.category,
+                        word: '<pattern match>',
+                        description: violation.description,
+                    };
+                }
+            }
+        }
+        
+        // Check words
+        for (let badWord of violation.words) {
+            const normalizedBadWord = cleanText(normArabic(badWord));
+            
+            for (let variant of variations) {
+                if (variant.includes(normalizedBadWord)) {
+                    return {
+                        level,
+                        category: violation.category,
+                        word: badWord,
+                        description: violation.description,
+                    };
+                }
+            }
+        }
+    }
+    
+    return null;
 }
 
 // ══════════════════════════════════════════════════════════
 // FIREBASE HELPERS
-// Works with both modular v9 (window._firebaseFns) and compat
 // ══════════════════════════════════════════════════════════
 function fbFns() {
-    // Prefer injected helpers (set in room.html / index.html)
     if (window._firebaseFns) return window._firebaseFns;
-    // Compat SDK fallback
     if (window.firebase?.database) return {
         ref:      (db, path) => firebase.database().ref(path),
         get:      r          => r.once('value'),
         update:   (r, v)     => r.update(v),
+        set:      (r, v)     => r.set(v),
+        remove:   r          => r.remove(),
         onValue:  (r, cb)    => { r.on('value', cb); return () => r.off('value', cb); },
         serverTimestamp: ()  => firebase.database.ServerValue.TIMESTAMP,
     };
@@ -175,8 +398,13 @@ async function dbUpdate(path, value) {
     try { await f.update(f.ref(_db, path), value); } catch(e) { console.warn('[MOD] update failed', e); }
 }
 
+async function dbSet(path, value) {
+    const f = fbFns(); if (!f || !_db) return;
+    try { await f.set(f.ref(_db, path), value); } catch(e) { console.warn('[MOD] set failed', e); }
+}
+
 // ══════════════════════════════════════════════════════════
-// LOCAL STORAGE  (offline fallback — Firebase is source of truth)
+// LOCAL STORAGE
 // ══════════════════════════════════════════════════════════
 function lsBan(obj) {
     if (obj === null) { localStorage.removeItem(LS_BAN); return; }
@@ -189,20 +417,19 @@ function lsWarnings()  { return parseInt(localStorage.getItem(LS_WARN) || '0', 1
 function lsSetWarn(n)  { localStorage.setItem(LS_WARN, String(n)); }
 
 // ══════════════════════════════════════════════════════════
-// WARNINGS
-// Firebase is the master. LocalStorage is cache only.
+// WARNINGS MANAGEMENT
 // ══════════════════════════════════════════════════════════
 async function getWarnings() {
     if (!_user) return lsWarnings();
     const fb = await dbGet(`players/${_user.uid}/moderationWarnings`);
     const count = fb ?? 0;
-    lsSetWarn(count);   // keep local in sync
+    lsSetWarn(count);
     return count;
 }
 
 async function addWarning() {
     const current = await getWarnings();
-    const next    = current + 1;
+    const next = current + 1;
     lsSetWarn(next);
     if (_user) await dbUpdate(`players/${_user.uid}`, { moderationWarnings: next });
     return next;
@@ -214,33 +441,25 @@ async function resetWarnings() {
 }
 
 // ══════════════════════════════════════════════════════════
-// BAN OBJECT SCHEMA
-// {
-//   reason:      string,
-//   category:    keyof CATEGORIES,
-//   bannedAt:    timestamp ms,
-//   expiresAt:   timestamp ms  | -1 for permanent,
-//   durationMs:  number | -1,
-//   bannedBy:    'system' | admin_uid,
-//   isPermanent: bool,
-//   banCount:    number   (how many bans this user has had total)
-// }
+// BAN OBJECT CREATION
 // ══════════════════════════════════════════════════════════
-async function buildBanObj(reason, category, durationMs, bannedBy) {
-    // Check how many previous bans this user has
+async function buildBanObj(reason, category, level, bannedBy) {
     let banCount = 1;
     if (_user) {
         banCount = (await dbGet(`players/${_user.uid}/totalBans`) ?? 0) + 1;
     }
-    const isPermanent = (durationMs === -1) || (banCount >= PERM_BAN_THRESHOLD);
-    const expiresAt   = isPermanent ? -1 : Date.now() + (durationMs ?? BAN_DURATION_MS);
+    
+    const levelConfig = LEVELS[level] || LEVELS[3];
+    const isPermanent = (levelConfig.banDuration === -1) || (banCount >= PERM_BAN_THRESHOLD);
+    const expiresAt = isPermanent ? -1 : Date.now() + levelConfig.banDuration;
 
     return {
-        reason:      reason   || 'انتهاك قواعد المجتمع',
-        category:    category || 'profanity',
+        reason,
+        category,
+        level,
         bannedAt:    Date.now(),
         expiresAt,
-        durationMs:  isPermanent ? -1 : (durationMs ?? BAN_DURATION_MS),
+        durationMs:  isPermanent ? -1 : levelConfig.banDuration,
         bannedBy:    bannedBy || 'system',
         isPermanent,
         banCount,
@@ -248,28 +467,29 @@ async function buildBanObj(reason, category, durationMs, bannedBy) {
 }
 
 // ══════════════════════════════════════════════════════════
-// BAN / LIFT BAN
+// BAN MANAGEMENT
 // ══════════════════════════════════════════════════════════
-async function issueBan(reason, category, durationMs, bannedBy) {
-    const ban = await buildBanObj(reason, category, durationMs, bannedBy);
+async function issueBan(reason, category, level, bannedBy) {
+    const ban = await buildBanObj(reason, category, level, bannedBy);
 
-    // Save to Firebase (three paths: per-player + ban history + global banned_users)
     if (_user) {
-        // Also write to banHistory so fetchOffenseHistory() detects repeat offenders
-        // even after their active ban expires and is cleared from players/{uid}/ban
+        // Save to ban history
         const histKey = `players/${_user.uid}/banHistory/${ban.bannedAt}`;
-        await dbUpdate(histKey, {
+        await dbSet(histKey, {
             reason:    ban.reason,
             category:  ban.category,
+            level:     ban.level,
             bannedAt:  ban.bannedAt,
             expiresAt: ban.expiresAt,
             durationMs: ban.durationMs,
         });
+        
         await dbUpdate(`players/${_user.uid}`, {
-            ban:       ban,
+            ban,
             totalBans: ban.banCount,
         });
-        await dbUpdate(`banned_users/${_user.uid}`, {
+        
+        await dbSet(`banned_users/${_user.uid}`, {
             ...ban,
             uid:      _user.uid,
             username: _user.displayName || localStorage.getItem('eljasus_user_name') || 'مجهول',
@@ -277,40 +497,32 @@ async function issueBan(reason, category, durationMs, bannedBy) {
         });
     }
 
-    // Save locally
     lsBan(ban);
     await resetWarnings();
-
-    // Show screen immediately
     showBanScreen(ban);
 }
 
 async function liftBan() {
-    // Called when ban expired or admin removed it
     lsBan(null);
     lsSetWarn(0);
     if (_user) {
-        await dbUpdate(`players/${_user.uid}`,   { ban: null, moderationWarnings: 0 });
-        await dbUpdate(`banned_users/${_user.uid}`, null);
+        await dbUpdate(`players/${_user.uid}`, { ban: null, moderationWarnings: 0 });
+        await dbSet(`banned_users/${_user.uid}`, null);
     }
     removeBanScreen();
 }
 
 // ══════════════════════════════════════════════════════════
-// BAN CHECK  (returns ban obj or null)
-// Priority: Firebase > localStorage
+// BAN CHECK
 // ══════════════════════════════════════════════════════════
 async function fetchActiveBan() {
     let ban = null;
 
-    // 1. Try Firebase
     if (_user) {
         ban = await dbGet(`players/${_user.uid}/ban`);
     }
 
-    // 2. Fallback to local
     if (!ban) ban = lsGetBan();
-
     if (!ban) return null;
 
     // Check expiry
@@ -319,20 +531,17 @@ async function fetchActiveBan() {
         return null;
     }
 
-    // Keep local in sync
     lsBan(ban);
     return ban;
 }
 
 // ══════════════════════════════════════════════════════════
 // NAVIGATION LOCKOUT
-// Intercepts back/forward, popstate, beforeunload, hashchange
 // ══════════════════════════════════════════════════════════
 function lockNavigation() {
     if (_navLocked) return;
     _navLocked = true;
 
-    // Push a dummy history state so back button stays on this page
     history.pushState({ banned: true }, '', location.href);
 
     const blockNav = (e) => {
@@ -341,21 +550,14 @@ function lockNavigation() {
         return false;
     };
 
-    window.addEventListener('popstate',    blockNav);
-    window.addEventListener('hashchange',  blockNav);
-    window.addEventListener('beforeunload', (e) => {
-        // Don't block actual page unload, just re-show ban on return
-        // (localStorage ensures ban screen returns on next load)
-    });
+    window.addEventListener('popstate', blockNav);
+    window.addEventListener('hashchange', blockNav);
 
-    // Override history methods
-    const _pushState    = history.pushState.bind(history);
+    const _pushState = history.pushState.bind(history);
     const _replaceState = history.replaceState.bind(history);
 
     history.pushState = function(state, title, url) {
-        // Allow only same-page state changes (our own lockout pushes)
         if (state?.banned) return _pushState(state, title, url);
-        // Block all other navigation attempts
         console.warn('[MOD] Navigation blocked — user is banned');
     };
 
@@ -372,12 +574,10 @@ function fmtDuration(ms) {
     if (ms === -1 || ms === Infinity) return 'دائم ♾️';
     const d = Math.floor(ms / 864e5);
     const h = Math.floor((ms % 864e5) / 36e5);
-    const m = Math.floor((ms % 36e5)  / 6e4);
     const parts = [];
     if (d > 0) parts.push(`${d} يوم`);
     if (h > 0) parts.push(`${h} ساعة`);
-    if (m > 0) parts.push(`${m} دقيقة`);
-    return parts.join(' و ') || 'أقل من دقيقة';
+    return parts.join(' و ') || 'أقل من ساعة';
 }
 
 function fmtDate(ts) {
@@ -396,20 +596,18 @@ function fmtRemaining(expiresAt) {
 }
 
 // ══════════════════════════════════════════════════════════
-// BAN SCREEN
-// Full-page overlay — no escape, no back button
+// ENHANCED BAN SCREEN UI
 // ══════════════════════════════════════════════════════════
 function showBanScreen(ban) {
-    // Lock scrolling & interaction on everything beneath
     document.documentElement.style.cssText += ';overflow:hidden!important';
-    document.body.style.cssText            += ';overflow:hidden!important;pointer-events:none!important';
+    document.body.style.cssText += ';overflow:hidden!important;pointer-events:none!important';
 
     lockNavigation();
-
-    // Remove stale screen if re-showing (e.g. after an update)
     document.getElementById('_ej_ban')?.remove();
 
-    const cat   = CATEGORIES[ban.category] || CATEGORIES.profanity;
+    const level = ban.level || 3;
+    const levelConfig = LEVELS[level] || LEVELS[3];
+    const cat = CATEGORIES[ban.category] || CATEGORIES.severe_profanity;
     const isPerm = ban.isPermanent || ban.expiresAt === -1;
 
     const overlay = document.createElement('div');
@@ -429,151 +627,170 @@ function showBanScreen(ban) {
     @keyframes _bpulse{0%,100%{opacity:.03}50%{opacity:.09}}
     @keyframes _bspin {from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     @keyframes _bfade {from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes _bglow {0%,100%{box-shadow:0 0 20px ${levelConfig.color}40}50%{box-shadow:0 0 40px ${levelConfig.color}80}}
     #_ej_ban *{box-sizing:border-box}
     #_ej_ban a:hover{opacity:.85}
 </style>
 
 <div style="
-    max-width:520px;width:100%;
+    max-width:560px;width:100%;
     background:linear-gradient(160deg,rgba(25,4,10,.98) 0%,rgba(12,4,20,.98) 100%);
-    border:2px solid rgba(239,68,68,.45);border-radius:28px;
-    padding:36px 28px 28px;text-align:center;
-    box-shadow:0 0 80px rgba(239,68,68,.25),0 0 160px rgba(139,0,0,.15),inset 0 1px 0 rgba(255,255,255,.06);
+    border:3px solid ${levelConfig.color}70;border-radius:32px;
+    padding:40px 32px 32px;text-align:center;
+    box-shadow:0 0 100px ${levelConfig.color}40,0 0 200px rgba(139,0,0,.2),inset 0 2px 0 rgba(255,255,255,.08);
     position:relative;overflow:hidden;
-    animation:_bfade .6s ease both;">
+    animation:_bfade .6s ease both, _bglow 3s ease-in-out infinite;">
 
-    <!-- animated background pulse -->
-    <div style="position:absolute;inset:0;border-radius:28px;
-        background:rgba(239,68,68,.04);animation:_bpulse 2.5s ease-in-out infinite;pointer-events:none;"></div>
+    <!-- Animated background -->
+    <div style="position:absolute;inset:0;border-radius:32px;
+        background:${levelConfig.color}08;animation:_bpulse 2.5s ease-in-out infinite;pointer-events:none;"></div>
 
-    <!-- spinning ring decoration -->
-    <div style="position:absolute;top:-60px;right:-60px;width:180px;height:180px;border-radius:50%;
-        border:2px solid rgba(239,68,68,.08);animation:_bspin 18s linear infinite;pointer-events:none;"></div>
-    <div style="position:absolute;bottom:-40px;left:-40px;width:120px;height:120px;border-radius:50%;
-        border:2px solid rgba(239,68,68,.06);animation:_bspin 12s linear infinite reverse;pointer-events:none;"></div>
+    <!-- Spinning rings -->
+    <div style="position:absolute;top:-80px;right:-80px;width:220px;height:220px;border-radius:50%;
+        border:3px solid ${levelConfig.color}15;animation:_bspin 20s linear infinite;pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-60px;left:-60px;width:160px;height:160px;border-radius:50%;
+        border:3px solid ${levelConfig.color}12;animation:_bspin 15s linear infinite reverse;pointer-events:none;"></div>
 
-    <!-- icon -->
-    <div style="font-size:72px;margin-bottom:10px;line-height:1;
-        filter:drop-shadow(0 0 24px rgba(239,68,68,.7));">🚫</div>
-
-    <!-- title -->
-    <h1 style="font-family:'Orbitron',sans-serif;font-size:clamp(18px,5vw,26px);
-        font-weight:900;color:#ef4444;margin:0 0 4px;
-        text-shadow:0 0 24px rgba(239,68,68,.8);">تم حظر حسابك</h1>
-    <p style="font-family:'Orbitron',sans-serif;font-size:10px;color:rgba(239,68,68,.5);
-        letter-spacing:.25em;text-transform:uppercase;margin:0 0 24px;">ACCOUNT BANNED</p>
-
-    <!-- category badge -->
-    <div style="display:inline-flex;align-items:center;gap:8px;
-        background:${cat.color}18;border:1.5px solid ${cat.color}55;
-        border-radius:30px;padding:6px 16px;margin-bottom:20px;">
-        <span style="font-size:18px;">${cat.icon}</span>
-        <span style="font-size:13px;font-weight:900;color:${cat.color};">${cat.ar}</span>
+    <!-- Level indicator -->
+    <div style="display:inline-flex;align-items:center;justify-content:center;gap:8px;
+        background:${levelConfig.color}20;border:2px solid ${levelConfig.color}60;
+        border-radius:50px;padding:8px 20px;margin-bottom:16px;
+        box-shadow:0 0 20px ${levelConfig.color}30;">
+        <span style="font-size:28px;">${levelConfig.icon}</span>
+        <div style="text-align:right;">
+            <p style="font-size:11px;font-weight:900;color:${levelConfig.color};margin:0;line-height:1.2;">
+                ${levelConfig.name}
+            </p>
+            <p style="font-size:9px;color:${levelConfig.color}90;margin:0;line-height:1;">
+                ${levelConfig.severity}
+            </p>
+        </div>
     </div>
 
-    <!-- reason -->
-    <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);
-        border-radius:14px;padding:16px 18px;margin-bottom:16px;">
-        <p style="font-size:10px;color:rgba(255,255,255,.3);font-family:'Orbitron',sans-serif;
-            letter-spacing:.15em;margin:0 0 6px;">سبب الحظر</p>
-        <p style="font-size:15px;font-weight:900;color:#fff;margin:0;line-height:1.5;">
+    <!-- Main icon -->
+    <div style="font-size:90px;margin-bottom:12px;line-height:1;
+        filter:drop-shadow(0 0 30px ${levelConfig.color});">🚫</div>
+
+    <!-- Title -->
+    <h1 style="font-family:'Orbitron',sans-serif;font-size:clamp(20px,5.5vw,30px);
+        font-weight:900;color:#ef4444;margin:0 0 6px;
+        text-shadow:0 0 30px rgba(239,68,68,.9);">تم حظر حسابك</h1>
+    <p style="font-family:'Orbitron',sans-serif;font-size:11px;color:rgba(239,68,68,.6);
+        letter-spacing:.3em;text-transform:uppercase;margin:0 0 28px;">ACCOUNT BANNED</p>
+
+    <!-- Category badge -->
+    <div style="display:inline-flex;align-items:center;gap:10px;
+        background:${cat.color}20;border:2px solid ${cat.color}60;
+        border-radius:35px;padding:8px 20px;margin-bottom:24px;">
+        <span style="font-size:22px;">${cat.icon}</span>
+        <span style="font-size:14px;font-weight:900;color:${cat.color};">${cat.ar}</span>
+    </div>
+
+    <!-- Reason -->
+    <div style="background:rgba(239,68,68,.09);border:2px solid rgba(239,68,68,.25);
+        border-radius:18px;padding:18px 20px;margin-bottom:20px;">
+        <p style="font-size:11px;color:rgba(255,255,255,.35);font-family:'Orbitron',sans-serif;
+            letter-spacing:.18em;margin:0 0 8px;">سبب الحظر</p>
+        <p style="font-size:16px;font-weight:900;color:#fff;margin:0;line-height:1.6;">
             ${ban.reason}
         </p>
     </div>
 
-    <!-- time grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-
-        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-            border-radius:12px;padding:13px 10px;">
-            <p style="font-size:9px;color:rgba(255,255,255,.3);font-family:'Orbitron',sans-serif;
-                letter-spacing:.12em;margin:0 0 5px;">تاريخ الحظر</p>
-            <p style="font-size:12px;font-weight:700;color:rgba(255,255,255,.75);margin:0;line-height:1.4;">
+    <!-- Time grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
+            border-radius:14px;padding:14px 12px;">
+            <p style="font-size:10px;color:rgba(255,255,255,.35);font-family:'Orbitron',sans-serif;
+                letter-spacing:.15em;margin:0 0 6px;">تاريخ الحظر</p>
+            <p style="font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin:0;line-height:1.4;">
                 ${fmtDate(ban.bannedAt)}
             </p>
         </div>
 
-        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-            border-radius:12px;padding:13px 10px;">
-            <p style="font-size:9px;color:rgba(255,255,255,.3);font-family:'Orbitron',sans-serif;
-                letter-spacing:.12em;margin:0 0 5px;">ينتهي في</p>
-            <p style="font-size:12px;font-weight:700;color:${isPerm ? '#ef4444' : 'rgba(255,255,255,.75)'};margin:0;line-height:1.4;">
+        <div style="background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
+            border-radius:14px;padding:14px 12px;">
+            <p style="font-size:10px;color:rgba(255,255,255,.35);font-family:'Orbitron',sans-serif;
+                letter-spacing:.15em;margin:0 0 6px;">ينتهي في</p>
+            <p style="font-size:13px;font-weight:700;color:${isPerm ? '#ef4444' : 'rgba(255,255,255,.8)'};margin:0;line-height:1.4;">
                 ${isPerm ? '♾️ دائم' : fmtDate(ban.expiresAt)}
             </p>
         </div>
 
-        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-            border-radius:12px;padding:13px 10px;">
-            <p style="font-size:9px;color:rgba(255,255,255,.3);font-family:'Orbitron',sans-serif;
-                letter-spacing:.12em;margin:0 0 5px;">مدة الحظر</p>
-            <p style="font-size:12px;font-weight:700;color:rgba(255,255,255,.75);margin:0;line-height:1.4;">
+        <div style="background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
+            border-radius:14px;padding:14px 12px;">
+            <p style="font-size:10px;color:rgba(255,255,255,.35);font-family:'Orbitron',sans-serif;
+                letter-spacing:.15em;margin:0 0 6px;">مدة الحظر</p>
+            <p style="font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin:0;line-height:1.4;">
                 ${fmtDuration(ban.durationMs)}
             </p>
         </div>
 
-        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-            border-radius:12px;padding:13px 10px;">
-            <p style="font-size:9px;color:rgba(255,255,255,.3);font-family:'Orbitron',sans-serif;
-                letter-spacing:.12em;margin:0 0 5px;">نفّذه</p>
-            <p style="font-size:12px;font-weight:700;color:rgba(255,255,255,.75);margin:0;">
-                ${ban.bannedBy === 'system' ? '🤖 النظام التلقائي' : '👤 الإدارة'}
+        <div style="background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
+            border-radius:14px;padding:14px 12px;">
+            <p style="font-size:10px;color:rgba(255,255,255,.35);font-family:'Orbitron',sans-serif;
+                letter-spacing:.15em;margin:0 0 6px;">نفّذه</p>
+            <p style="font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin:0;">
+                ${ban.bannedBy === 'system' ? '🤖 النظام' : '👤 الإدارة'}
             </p>
         </div>
     </div>
 
-    <!-- live countdown -->
+    <!-- Live countdown -->
     ${isPerm ? `
-    <div style="background:rgba(0,0,0,.4);border:2px solid rgba(239,68,68,.2);
-        border-radius:16px;padding:16px;margin-bottom:20px;">
-        <p style="font-size:11px;color:rgba(239,68,68,.6);font-family:'Orbitron',sans-serif;
-            letter-spacing:.15em;margin:0 0 6px;">نوع الحظر</p>
-        <p style="font-size:22px;font-weight:900;font-family:'Orbitron',sans-serif;
-            color:#ef4444;text-shadow:0 0 16px rgba(239,68,68,.6);margin:0;">⛔ دائم</p>
+    <div style="background:rgba(0,0,0,.5);border:3px solid rgba(239,68,68,.3);
+        border-radius:20px;padding:20px;margin-bottom:24px;">
+        <p style="font-size:12px;color:rgba(239,68,68,.7);font-family:'Orbitron',sans-serif;
+            letter-spacing:.18em;margin:0 0 8px;">نوع الحظر</p>
+        <p style="font-size:28px;font-weight:900;font-family:'Orbitron',sans-serif;
+            color:#ef4444;text-shadow:0 0 20px rgba(239,68,68,.8);margin:0;">⛔ دائم</p>
     </div>
     ` : `
-    <div style="background:rgba(0,0,0,.4);border:2px solid rgba(239,68,68,.25);
-        border-radius:16px;padding:16px;margin-bottom:20px;">
-        <p style="font-size:10px;color:rgba(239,68,68,.55);font-family:'Orbitron',sans-serif;
-            letter-spacing:.15em;margin:0 0 8px;">الوقت المتبقي</p>
+    <div style="background:rgba(0,0,0,.5);border:3px solid ${levelConfig.color}40;
+        border-radius:20px;padding:20px;margin-bottom:24px;">
+        <p style="font-size:11px;color:${levelConfig.color};font-family:'Orbitron',sans-serif;
+            letter-spacing:.18em;margin:0 0 10px;">الوقت المتبقي</p>
         <div id="${remainingId}" style="font-family:'Orbitron',sans-serif;
-            font-size:clamp(16px,4.5vw,24px);font-weight:900;color:#ef4444;
-            text-shadow:0 0 16px rgba(239,68,68,.6);letter-spacing:.05em;">
+            font-size:clamp(18px,5vw,28px);font-weight:900;color:${levelConfig.color};
+            text-shadow:0 0 20px ${levelConfig.color}90;letter-spacing:.05em;">
             ${fmtRemaining(ban.expiresAt)}
         </div>
     </div>
     `}
 
-    <!-- ban count (if more than 1) -->
+    <!-- Ban count warning -->
     ${ban.banCount > 1 ? `
-    <p style="font-size:11px;color:rgba(239,68,68,.5);margin:0 0 16px;">
-        هذا حظرك رقم <strong style="color:#ef4444;">${ban.banCount}</strong>
-        ${ban.banCount >= PERM_BAN_THRESHOLD ? ' — الحظر التالي سيكون دائماً' : ''}
-    </p>` : ''}
+    <div style="background:rgba(239,68,68,.12);border:2px solid rgba(239,68,68,.3);
+        border-radius:16px;padding:14px;margin-bottom:20px;">
+        <p style="font-size:13px;color:#ef4444;font-weight:700;margin:0;line-height:1.6;">
+            ⚠️ هذا حظرك رقم <strong style="font-size:18px;">${ban.banCount}</strong> من أصل ${PERM_BAN_THRESHOLD}
+            ${ban.banCount >= PERM_BAN_THRESHOLD ? '<br><strong>الحظر التالي سيكون دائماً ⛔</strong>' : ''}
+        </p>
+    </div>` : ''}
 
-    <!-- note -->
-    <p style="font-size:12px;color:rgba(255,255,255,.3);line-height:1.8;margin:0 0 20px;">
-        لا يمكنك اللعب أونلاين أو محلياً خلال فترة الحظر.<br>
-        إذا اعتقدت أن هذا خطأ تواصل معنا عبر ديسكورد.
+    <!-- Note -->
+    <p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.9;margin:0 0 24px;">
+        لا يمكنك اللعب خلال فترة الحظر.<br>
+        للاستئناف أو الإبلاغ عن خطأ تواصل معنا.
     </p>
 
-    <!-- discord appeal -->
+    <!-- Discord appeal -->
     <a href="https://discord.gg/xBQ3ewVVHk" target="_blank" rel="noopener" style="
-        display:inline-flex;align-items:center;gap:8px;
-        padding:11px 26px;border-radius:12px;text-decoration:none;
-        background:rgba(88,101,242,.12);border:2px solid rgba(88,101,242,.35);
-        color:#fff;font-weight:900;font-size:13px;font-family:'Cairo',sans-serif;
-        transition:opacity .2s;">
-        <svg width="18" height="18" viewBox="0 0 71 55" fill="none">
+        display:inline-flex;align-items:center;gap:10px;
+        padding:14px 30px;border-radius:16px;text-decoration:none;
+        background:rgba(88,101,242,.15);border:3px solid rgba(88,101,242,.4);
+        color:#fff;font-weight:900;font-size:14px;font-family:'Cairo',sans-serif;
+        transition:all .3s;box-shadow:0 4px 20px rgba(88,101,242,.2);">
+        <svg width="20" height="20" viewBox="0 0 71 55" fill="none">
             <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.44077 45.4204 0.52529C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.52529C25.5141 0.44359 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4377C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.4349C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978Z" fill="#5865F2"/>
         </svg>
-        استأنف قرار الحظر
+        استأنف الحظر
     </a>
 </div>`;
 
     document.body.appendChild(overlay);
     _screenShown = true;
 
-    // Live countdown ticker
+    // Live countdown
     if (!isPerm) {
         const el = document.getElementById(remainingId);
         if (el) {
@@ -581,13 +798,11 @@ function showBanScreen(ban) {
                 const rem = ban.expiresAt - Date.now();
                 if (rem <= 0) {
                     el.textContent = '⏳ انتهى — جارٍ التحقق...';
-                    // Re-check Firebase (admin might have extended ban)
                     fetchActiveBan().then(b => {
                         if (!b) {
                             removeBanScreen();
                             location.reload();
                         } else {
-                            // Ban was extended — refresh screen
                             showBanScreen(b);
                         }
                     });
@@ -595,8 +810,8 @@ function showBanScreen(ban) {
                 }
                 const d = Math.floor(rem / 864e5);
                 const h = Math.floor((rem % 864e5) / 36e5);
-                const m = Math.floor((rem % 36e5)  / 6e4);
-                const s = Math.floor((rem % 6e4)   / 1e3);
+                const m = Math.floor((rem % 36e5) / 6e4);
+                const s = Math.floor((rem % 6e4) / 1e3);
                 el.textContent = d > 0
                     ? `${d}ي ${h}س ${m}د ${s}ث`
                     : `${h}س ${m}د ${s}ث`;
@@ -611,77 +826,69 @@ function removeBanScreen() {
     document.getElementById('_ej_ban')?.remove();
     _screenShown = false;
     document.documentElement.style.overflow = '';
-    document.body.style.overflow        = '';
-    document.body.style.pointerEvents   = '';
+    document.body.style.overflow = '';
+    document.body.style.pointerEvents = '';
     _navLocked = false;
 }
 
 // ══════════════════════════════════════════════════════════
-// YELLOW CARD TOAST  (warning notice)
+// WARNING TOAST
 // ══════════════════════════════════════════════════════════
-function showWarningToast(warningNumber, isLastWarning) {
+function showWarningToast(level, warningNum, maxWarnings) {
     document.querySelectorAll('._ej_warn').forEach(e => e.remove());
+
+    const levelConfig = LEVELS[level];
+    const isLastWarning = warningNum >= maxWarnings - 1;
 
     const toast = document.createElement('div');
     toast.className = '_ej_warn';
     toast.style.cssText = `
-        position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);
+        position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-24px);
         z-index:2147483646;font-family:'Cairo',sans-serif;text-align:center;
         background:${isLastWarning
-            ? 'linear-gradient(135deg,rgba(239,68,68,.22),rgba(180,0,0,.18))'
-            : 'linear-gradient(135deg,rgba(245,158,11,.2),rgba(200,100,0,.15))'};
-        border:2px solid ${isLastWarning ? 'rgba(239,68,68,.6)' : 'rgba(245,158,11,.55)'};
-        border-radius:20px;padding:14px 22px;
-        box-shadow:0 8px 40px rgba(0,0,0,.55);backdrop-filter:blur(16px);
-        min-width:260px;max-width:90vw;
+            ? 'linear-gradient(135deg,rgba(239,68,68,.25),rgba(180,0,0,.2))'
+            : `linear-gradient(135deg,${levelConfig.color}30,${levelConfig.color}20)`};
+        border:3px solid ${isLastWarning ? 'rgba(239,68,68,.7)' : `${levelConfig.color}80`};
+        border-radius:24px;padding:16px 26px;
+        box-shadow:0 10px 50px rgba(0,0,0,.6);backdrop-filter:blur(20px);
+        min-width:300px;max-width:90vw;
         transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .4s;`;
 
-    const cardIcons = warningNumber === 1
-        ? '🟨'
-        : isLastWarning
-            ? '🟥'
-            : '🟨🟨';
-
     toast.innerHTML = `
-        <div style="font-size:30px;margin-bottom:6px;line-height:1;">${cardIcons}</div>
-        <p style="font-size:15px;font-weight:900;
-            color:${isLastWarning ? '#ef4444' : '#f59e0b'};margin:0 0 4px;">
-            ${isLastWarning ? '🚨 آخر تحذير قبل الحظر!' : `بطاقة صفراء — تحذير ${warningNumber}`}
+        <div style="font-size:36px;margin-bottom:8px;line-height:1;">${levelConfig.icon}</div>
+        <p style="font-size:17px;font-weight:900;
+            color:${isLastWarning ? '#ef4444' : levelConfig.color};margin:0 0 6px;">
+            ${isLastWarning ? '🚨 آخر تحذير!' : `${levelConfig.name}`}
         </p>
-        <p style="font-size:12px;color:rgba(255,255,255,.65);margin:0;line-height:1.6;">
-            رسالتك تحتوي على كلمات محظورة وتم حذفها.<br>
+        <p style="font-size:13px;color:rgba(255,255,255,.7);margin:0;line-height:1.7;">
+            رسالتك تحتوي على محتوى محظور وتم حذفها<br>
             ${isLastWarning
-                ? '<strong style="color:#ef4444;">التحذير التالي سيتسبب في حظرك فوراً.</strong>'
-                : `${warningNumber} من ${WARN_LIMIT} تحذيرات مسموحة.`
+                ? '<strong style="color:#ef4444;">المخالفة التالية ستؤدي للحظر فوراً</strong>'
+                : `تحذير ${warningNum} من ${maxWarnings}`
             }
         </p>`;
 
     document.body.appendChild(toast);
 
-    // Animate in
     requestAnimationFrame(() => {
         toast.style.transform = 'translateX(-50%) translateY(0)';
     });
 
-    // Auto-dismiss after 4s
     setTimeout(() => {
-        toast.style.opacity   = '0';
-        toast.style.transform = 'translateX(-50%) translateY(-20px)';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-24px)';
         setTimeout(() => toast.remove(), 400);
-    }, 4000);
+    }, 5000);
 }
 
 // ══════════════════════════════════════════════════════════
-// REAL-TIME BAN LISTENER
-// If admin removes ban from Firebase console → screen disappears live
-// If admin adds ban → screen appears live
+// REAL-TIME LISTENER
 // ══════════════════════════════════════════════════════════
 function startRealtimeListener() {
     if (!_user) return;
     const f = fbFns();
     if (!f?.onValue || !_db) return;
 
-    // Unsubscribe previous if any
     if (_unsubBan) { try { _unsubBan(); } catch {} }
 
     const banRef = f.ref(_db, `players/${_user.uid}/ban`);
@@ -689,29 +896,26 @@ function startRealtimeListener() {
         const ban = snap?.val?.() ?? snap?.exists?.() ? snap.val() : null;
 
         if (!ban) {
-            // Ban removed or never existed
             if (_screenShown) {
                 lsBan(null);
                 removeBanScreen();
-                location.reload(); // fresh start
+                location.reload();
             }
             return;
         }
 
-        // Ban exists — check expiry
         if (!ban.isPermanent && ban.expiresAt !== -1 && Date.now() >= ban.expiresAt) {
             liftBan();
             return;
         }
 
-        // Show/refresh ban screen
         lsBan(ban);
         showBanScreen(ban);
     });
 }
 
 // ══════════════════════════════════════════════════════════
-// PERIODIC RE-CHECK  (belt-and-suspenders for offline/missed events)
+// PERIODIC RE-CHECK
 // ══════════════════════════════════════════════════════════
 function startPeriodicCheck() {
     if (_recheckTimer) clearInterval(_recheckTimer);
@@ -726,186 +930,119 @@ function startPeriodicCheck() {
 }
 
 // ══════════════════════════════════════════════════════════
+// OFFENSE HISTORY
+// ══════════════════════════════════════════════════════════
+async function fetchOffenseHistory() {
+    let currentWarnings = 0;
+    let previousBans = 0;
+
+    if (_user) {
+        const playerData = await dbGet(`players/${_user.uid}`);
+        currentWarnings = playerData?.moderationWarnings ?? 0;
+        previousBans = playerData?.totalBans ?? 0;
+    } else {
+        currentWarnings = lsWarnings();
+        const localBan = lsGetBan();
+        if (localBan) previousBans = 1;
+    }
+
+    return { currentWarnings, previousBans };
+}
+
+// ══════════════════════════════════════════════════════════
 // PUBLIC API
 // ══════════════════════════════════════════════════════════
 
-/**
- * init(db, user)
- * Call right after onAuthStateChanged gives you a user.
- * db   = getDatabase(app)
- * user = Firebase User object
- */
 async function init(db, user) {
-    _db   = db;
+    _db = db;
     _user = user;
 
-    // Inject Firebase fns into window._firebaseFns if not already there
-    // (some pages set this, others don't — we handle both)
-
-    // 1. Check for existing ban immediately
     const ban = await fetchActiveBan();
     if (ban) {
         showBanScreen(ban);
     }
 
-    // 2. Start real-time listener (handles admin ban/unban live)
     startRealtimeListener();
-
-    // 3. Start periodic re-check (fallback)
     startPeriodicCheck();
 }
 
-// ══════════════════════════════════════════════════════════
-// OFFENSE HISTORY
-// Reads the player's full record: current warnings + previous
-// bans (even expired ones) from Firebase/localStorage.
-// This determines whether a new violation is a first-time
-// yellow card or an instant ban.
-// ══════════════════════════════════════════════════════════
-async function fetchOffenseHistory() {
-    let currentWarnings = 0;
-    let previousBans    = 0;
-    let lastBanReason   = null;
-    let lastBanDate     = null;
-
-    if (_user) {
-        // Firebase is source of truth
-        const playerData = await dbGet(`players/${_user.uid}`);
-        currentWarnings  = playerData?.moderationWarnings ?? 0;
-        previousBans     = playerData?.totalBans          ?? 0;
-        // grab last ban record even if it's expired/cleared
-        // Check active ban first, then banHistory for any past bans (even expired)
-        const activeBan  = playerData?.ban;
-        const banHistory = playerData?.banHistory;
-        const histEntries = banHistory ? Object.values(banHistory) : [];
-        const lastRecord  = activeBan || (histEntries.length
-            ? histEntries.sort((a,b) => b.bannedAt - a.bannedAt)[0]
-            : null);
-        if (lastRecord) {
-            lastBanReason = lastRecord.reason;
-            lastBanDate   = lastRecord.bannedAt;
-        }
-        // totalBans from Firebase counts ALL bans including expired
-        previousBans = playerData?.totalBans ?? histEntries.length ?? 0;
-    } else {
-        // Offline fallback — localStorage
-        currentWarnings = lsWarnings();
-        // If there was ever a ban stored locally, count it
-        const localBan  = lsGetBan();
-        if (localBan) { previousBans = 1; lastBanReason = localBan.reason; lastBanDate = localBan.bannedAt; }
-    }
-
-    return { currentWarnings, previousBans, lastBanReason, lastBanDate };
-}
-
-/**
- * scan(text)
- * Call before sending ANY chat message, at any point in the game.
- * Returns true  → message BLOCKED  (warn/ban handled internally, do NOT send)
- * Returns false → message is CLEAN (safe to send)
- *
- * Decision tree:
- *   Clean text                              → false  (send normally)
- *   Bad word + no history at all            → 🟨 yellow card warning
- *   Bad word + already has 1 warning        → 🟥 red card → ban immediately
- *   Bad word + has any previous ban         → 🟥 red card → ban immediately (zero tolerance)
- *   Bad word + both warning AND prev ban    → 🟥 permanent ban
- */
 async function scan(text) {
-    if (!isBlocked(text)) return false; // ✅ clean — nothing to do
+    const violation = detectViolation(text);
+    
+    if (!violation) return false; // Clean message
 
-    const category = classify(text);
+    const level = violation.level;
+    const levelConfig = LEVELS[level];
+    const { currentWarnings, previousBans } = await fetchOffenseHistory();
 
-    // ── Pull full history before deciding anything ────────
-    const { currentWarnings, previousBans, lastBanReason, lastBanDate } =
-        await fetchOffenseHistory();
-
-    // ── Zero-tolerance condition ──────────────────────────
-    // User goes straight to ban if they have ANY previous ban
-    // OR already have at least one active warning.
-    const hasAnyWarning  = currentWarnings >= 1;
-    const hasAnyPrevBan  = previousBans    >= 1;
-    const zerotoleranceUser = hasAnyWarning || hasAnyPrevBan;
-
-    if (zerotoleranceUser) {
-        // Build an informative reason that includes the history
-        let reasonParts = ['كتابة كلمات محظورة'];
-        if (hasAnyWarning) reasonParts.push(`سبق إنذاره ${currentWarnings} ${currentWarnings === 1 ? 'مرة' : 'مرات'}`);
-        if (hasAnyPrevBan) {
-            const prevBanInfo = lastBanDate
-                ? `(آخر حظر: ${new Date(lastBanDate).toLocaleDateString('ar-SA')} — ${lastBanReason || 'انتهاك سابق'})`
-                : 'سبق حظره من قبل';
-            reasonParts.push(prevBanInfo);
-        }
-        const reason = reasonParts.join(' — ');
-
-        // Permanent ban if they have BOTH a warning AND a previous ban
-        const isPermanentNow = hasAnyWarning && hasAnyPrevBan;
-        const duration       = isPermanentNow ? -1 : BAN_DURATION_MS;
-
-        // Flash the red card toast for 800ms so they see WHY before the screen locks
-        showWarningToast(WARN_LIMIT, true);
-        await new Promise(r => setTimeout(r, 800));
-
-        await issueBan(reason, category, duration, 'system');
-        return true; // BLOCKED
-    }
-
-    // ── First-ever offense: yellow card ───────────────────
-    const newWarningCount = await addWarning();
-    showWarningToast(newWarningCount, newWarningCount >= WARN_LIMIT - 1);
-
-    // Edge case: if WARN_LIMIT is 1, one offense = immediate ban
-    if (newWarningCount >= WARN_LIMIT) {
+    // Level 5: Instant permanent ban
+    if (level === 5) {
         await new Promise(r => setTimeout(r, 800));
         await issueBan(
-            `كتابة كلمات محظورة (${newWarningCount} تحذير)`,
-            category, BAN_DURATION_MS, 'system'
+            `${violation.description}: ${violation.word}`,
+            violation.category,
+            5,
+            'system'
         );
+        return true;
     }
 
-    return true; // BLOCKED (but only warned, not banned yet)
+    // If user has previous bans: reduce tolerance
+    const adjustedThreshold = previousBans > 0 
+        ? Math.max(1, Math.floor(levelConfig.warningsThreshold / 2))
+        : levelConfig.warningsThreshold;
+
+    // Check if should ban now
+    if (currentWarnings >= adjustedThreshold) {
+        showWarningToast(level, currentWarnings, adjustedThreshold);
+        await new Promise(r => setTimeout(r, 800));
+        await issueBan(
+            `${violation.description} (${currentWarnings} تحذيرات)`,
+            violation.category,
+            level,
+            'system'
+        );
+        return true;
+    }
+
+    // Issue warning
+    const newWarnings = await addWarning();
+    const isLast = newWarnings >= adjustedThreshold - 1;
+    showWarningToast(level, newWarnings, adjustedThreshold);
+
+    return true; // Message blocked
 }
 
-/**
- * banUserManual(uid, reason, category, durationMs)
- * For admin panel use — ban any user directly.
- */
-async function banUserManual(targetUid, reason, category, durationMs) {
-    // If banning current user, issueBan() handles it
-    if (_user && targetUid === _user.uid) {
-        await issueBan(reason, category, durationMs, 'admin');
-        return;
-    }
-    // Otherwise write directly to Firebase for the target user
+// Admin functions
+async function banUserManual(targetUid, reason, category, level) {
+    const levelConfig = LEVELS[level] || LEVELS[3];
     const ban = {
-        reason:      reason || 'قرار إداري',
-        category:    category || 'admin_decision',
-        bannedAt:    Date.now(),
-        expiresAt:   durationMs === -1 ? -1 : Date.now() + (durationMs ?? BAN_DURATION_MS),
-        durationMs:  durationMs ?? BAN_DURATION_MS,
-        bannedBy:    _user?.uid || 'admin',
-        isPermanent: durationMs === -1,
-        banCount:    1,
+        reason: reason || 'قرار إداري',
+        category: category || 'admin_decision',
+        level,
+        bannedAt: Date.now(),
+        expiresAt: levelConfig.banDuration === -1 ? -1 : Date.now() + levelConfig.banDuration,
+        durationMs: levelConfig.banDuration,
+        bannedBy: _user?.uid || 'admin',
+        isPermanent: levelConfig.banDuration === -1,
+        banCount: 1,
     };
+    
     if (_db) {
         const f = fbFns();
         if (f) {
             await f.update(f.ref(_db, `players/${targetUid}`), { ban });
-            await f.update(f.ref(_db, `banned_users/${targetUid}`), ban);
+            await f.set(f.ref(_db, `banned_users/${targetUid}`), ban);
         }
     }
 }
 
-/**
- * liftBanManual(targetUid)
- * Admin removes a ban.
- */
 async function liftBanManual(targetUid) {
     if (!_db) return;
-    const f = fbFns(); if (!f) return;
+    const f = fbFns();
+    if (!f) return;
     await f.update(f.ref(_db, `players/${targetUid}`), { ban: null, moderationWarnings: 0 });
-    await f.update(f.ref(_db, `banned_users/${targetUid}`), null);
+    await f.set(f.ref(_db, `banned_users/${targetUid}`), null);
     if (_user && targetUid === _user.uid) {
         lsBan(null);
         lsSetWarn(0);
@@ -913,20 +1050,22 @@ async function liftBanManual(targetUid) {
     }
 }
 
-// Expose globals
+// Export
 window.MOD = {
     init,
     scan,
     banUserManual,
     liftBanManual,
-    isBlocked,        // utility — check without side effects
-    showBanScreen,    // utility — render a ban object directly
-    CATEGORIES,       // useful for admin dropdowns
+    detectViolation,
+    showBanScreen,
+    CATEGORIES,
+    LEVELS,
 };
 
-// Provide legacy alias (old code called MOD.checkAndHandleMessage)
-window.MOD.checkAndHandleMessage = async (text) => window.MOD.scan(text);
-window.MOD.checkOnLoad = () => {}; // handled inside init() now
-window.MOD.banUser     = (r, d)   => issueBan(r, 'admin_decision', d, 'admin');
+// Legacy support
+window.moderateMessage = async (text) => {
+    const blocked = await scan(text);
+    return { allowed: !blocked, message: blocked ? 'رسالتك تحتوي على محتوى محظور' : null };
+};
 
 })();

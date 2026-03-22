@@ -6,7 +6,7 @@
 const CACHE_NAME    = 'eljasus-v1';
 const STATIC_ASSETS = [
     '/',
-    '/index.html',
+    '/home.html',
     '/login.html',
     '/signup.html',
     '/onlinerooms.html',
@@ -25,7 +25,7 @@ const STATIC_ASSETS = [
     '/qr-notifications.js',
     '/voice-chat.js',
     '/screenshot.js',
-    '/ElJasus2.png',
+    '/ElJasus.png',
     '/manifest.json',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap',
@@ -80,7 +80,7 @@ self.addEventListener('fetch', event => {
             }).catch(() => {
                 // Offline fallback
                 if (event.request.destination === 'document') {
-                    return caches.match('/index.html');
+                    return caches.match('/home.html');
                 }
             });
         })
@@ -93,8 +93,8 @@ self.addEventListener('push', event => {
     event.waitUntil(
         self.registration.showNotification(data.title || 'El Jasus', {
             body:    data.body || 'إشعار جديد',
-            icon:    '/ElJasus2.png',
-            badge:   '/ElJasus2.png',
+            icon:    '/ElJasus.png',
+            badge:   '/ElJasus.png',
             tag:     data.tag || 'eljasus',
             data:    { url: data.url || '/' },
             actions: data.actions || []

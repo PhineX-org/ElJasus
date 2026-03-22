@@ -22,7 +22,7 @@ const firebaseConfig = {
 
 # Files that contain Firebase config
 FILES_TO_UPDATE = [
-    'index.html',
+    'home.html',
     'room.html',
     'login.html',
     'signup.html',

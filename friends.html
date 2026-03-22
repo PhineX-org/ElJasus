@@ -10,11 +10,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الأصدقاء | El Jasus</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" href="ElJasus2.png">
+    <link rel="icon" type="image/png" href="ElJasus.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="dialogs.js"></script>
+    <script src="moderation.js"></script>
+    <script src="friend-invite.js" defer></script>
     
     <style>
         :root { 
@@ -22,7 +25,6 @@
             --primary-color: #00f2ff;
             --secondary-color: #7c30ff;
         }
-        
         body { 
             font-family: 'Cairo', sans-serif; 
             background: linear-gradient(135deg, #0a0e1a 0%, #1a1535 50%, #0f0c1d 100%);
@@ -32,99 +34,91 @@
             position: relative;
             overflow-x: hidden;
         }
-
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
                 linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
             background-size: 50px 50px;
             animation: gridMove 20s linear infinite;
-            pointer-events: none;
-            z-index: 0;
+            pointer-events: none; z-index: 0;
         }
-
         @keyframes gridMove {
             0% { transform: translateY(0); }
             100% { transform: translateY(50px); }
         }
-        
         .glass { 
             background: linear-gradient(135deg, rgba(15, 20, 35, 0.9), rgba(25, 30, 50, 0.8));
             backdrop-filter: blur(20px);
             border: 2px solid;
             border-image: linear-gradient(135deg, rgba(0, 242, 255, 0.3), rgba(124, 48, 255, 0.3)) 1;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                0 0 30px rgba(0, 242, 255, 0.1);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 30px rgba(0, 242, 255, 0.1);
+            position: relative; overflow: hidden;
         }
-
-        .glass::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(0, 242, 255, 0.05), transparent);
-            animation: shimmer 3s infinite;
-            pointer-events: none;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-
         .neon-text {
             font-family: 'Orbitron', sans-serif;
             text-shadow: 0 0 10px rgba(0, 242, 255, 0.8), 0 0 20px rgba(0, 242, 255, 0.6);
         }
-
-        .online-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #00ff00;
-            box-shadow: 0 0 10px #00ff00;
-            animation: pulse 2s infinite;
+        .online-indicator { width:12px; height:12px; border-radius:50%; background:#00ff00; box-shadow:0 0 10px #00ff00; animation:pulse 2s infinite; }
+        .offline-indicator { width:12px; height:12px; border-radius:50%; background:#666; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        @keyframes slideInDown { from{transform:translate(-50%,-100%);opacity:0;} to{transform:translate(-50%,0);opacity:1;} }
+        @keyframes slideOutUp  { from{transform:translate(-50%,0);opacity:1;} to{transform:translate(-50%,-100%);opacity:0;} }
+        .tab-btn { position:relative; transition:all .3s; border:2px solid transparent; }
+        .tab-btn.active {
+            background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));
+            border-color:var(--primary-color); box-shadow:0 0 20px rgba(0,242,255,0.5);
         }
 
-        .offline-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #666;
+        /* ── INVITE MODAL ────────────────── */
+        #invite-modal-overlay {
+            display:none; position:fixed; inset:0; z-index:9998;
+            background:rgba(0,0,0,.85); backdrop-filter:blur(12px);
+            align-items:center; justify-content:center; padding:20px;
         }
+        #invite-modal-overlay.open { display:flex; }
+        #invite-modal {
+            background:linear-gradient(135deg,rgba(15,20,35,.98),rgba(25,30,50,.98));
+            border:2px solid rgba(0,242,255,.4); border-radius:24px;
+            padding:32px 28px; max-width:440px; width:100%;
+            font-family:'Cairo',sans-serif;
+            box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 30px rgba(0,242,255,.1);
+            animation:inviteIn .3s ease;
+        }
+        @keyframes inviteIn { from{opacity:0;transform:scale(.95);} to{opacity:1;transform:scale(1);} }
+        #invite-modal h3 { font-family:'Orbitron',sans-serif; font-size:18px; font-weight:900; color:#00f2ff; margin-bottom:6px; }
+        #invite-modal p  { font-size:13px; color:rgba(255,255,255,.5); margin-bottom:20px; }
+        .inv-field-label { font-size:10px; font-weight:900; color:#666; text-transform:uppercase; letter-spacing:.1em; display:block; margin-bottom:5px; }
+        .inv-input {
+            width:100%; padding:11px 14px; border-radius:12px;
+            background:rgba(255,255,255,.05); border:1px solid rgba(0,242,255,.25);
+            color:#fff; font-family:'Cairo',sans-serif; font-size:13px;
+            outline:none; margin-bottom:14px; transition:border .2s; box-sizing:border-box;
+        }
+        .inv-input:focus { border-color:rgba(0,242,255,.6); }
+        select.inv-input { cursor:pointer; }
+        .inv-btn {
+            flex:1; padding:12px; border-radius:12px; font-family:'Cairo',sans-serif;
+            font-weight:900; font-size:13px; cursor:pointer; transition:all .2s; border:2px solid;
+        }
+        .inv-btn-send {
+            background:linear-gradient(135deg,#00f2ff,#7c30ff); border-color:transparent; color:#fff;
+        }
+        .inv-btn-send:hover { opacity:.88; }
+        .inv-btn-cancel {
+            background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.12); color:#888;
+        }
+        .inv-btn-cancel:hover { background:rgba(255,255,255,.1); }
+        .inv-btn:disabled { opacity:.5; cursor:not-allowed; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        @keyframes slideInDown {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
-        }
-
-        @keyframes slideOutUp {
-            from { transform: translate(-50%, 0); opacity: 1; }
-            to { transform: translate(-50%, -100%); opacity: 0; }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
+        /* Sending status */
+        #inv-status { font-size:12px; font-weight:700; padding:8px 12px; border-radius:10px; margin-bottom:12px; display:none; }
+        .inv-status-creating { background:rgba(0,242,255,.08); border:1px solid rgba(0,242,255,.2); color:#00f2ff; }
+        .inv-status-sending   { background:rgba(0,242,255,.08); border:1px solid rgba(0,242,255,.2); color:#00f2ff; }
+        .inv-status-success   { background:rgba(34,197,94,.1);  border:1px solid rgba(34,197,94,.4); color:#22c55e; }
+        .inv-status-error     { background:rgba(239,68,68,.1);  border:1px solid rgba(239,68,68,.4); color:#ef4444; }
     </style>
 </head>
 <body class="p-4">
@@ -133,16 +127,14 @@
         
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
-            <a href="index.html" class="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-all hover:translate-x-1">
+            <a href="home.html" class="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-all hover:translate-x-1">
                 <i class="fas fa-arrow-right text-xl"></i>
                 <span class="text-sm font-bold">رجوع</span>
             </a>
-            
             <div class="text-center flex-1">
                 <h1 class="text-3xl font-black uppercase tracking-tight neon-text">الأصدقاء</h1>
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1" style="font-family: 'Orbitron', sans-serif;">FRIENDS</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1" style="font-family:'Orbitron',sans-serif;">FRIENDS</p>
             </div>
-
             <button id="addFriendBtn" class="px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-cyan-500/30 rounded-xl text-cyan-400 font-bold text-sm transition-all">
                 <i class="fas fa-user-plus ml-1"></i>
                 إضافة صديق
@@ -155,31 +147,29 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-bold opacity-50 uppercase tracking-wider mb-1">إجمالي الأصدقاء</p>
-                        <h3 id="totalFriends" class="text-3xl font-black text-cyan-400" style="font-family: 'Orbitron', sans-serif;">0</h3>
+                        <h3 id="totalFriends" class="text-3xl font-black text-cyan-400" style="font-family:'Orbitron',sans-serif;">0</h3>
                     </div>
                     <div class="w-16 h-16 rounded-full bg-cyan-500/20 border-2 border-cyan-500/30 flex items-center justify-center">
                         <i class="fas fa-users text-2xl text-cyan-400"></i>
                     </div>
                 </div>
             </div>
-
             <div class="glass rounded-2xl p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-bold opacity-50 uppercase tracking-wider mb-1">متصل الآن</p>
-                        <h3 id="onlineFriends" class="text-3xl font-black text-green-400" style="font-family: 'Orbitron', sans-serif;">0</h3>
+                        <h3 id="onlineFriends" class="text-3xl font-black text-green-400" style="font-family:'Orbitron',sans-serif;">0</h3>
                     </div>
                     <div class="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500/30 flex items-center justify-center">
                         <i class="fas fa-circle text-2xl text-green-400"></i>
                     </div>
                 </div>
             </div>
-
             <div class="glass rounded-2xl p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-bold opacity-50 uppercase tracking-wider mb-1">طلبات معلقة</p>
-                        <h3 id="pendingRequests" class="text-3xl font-black text-yellow-400" style="font-family: 'Orbitron', sans-serif;">0</h3>
+                        <h3 id="pendingRequests" class="text-3xl font-black text-yellow-400" style="font-family:'Orbitron',sans-serif;">0</h3>
                     </div>
                     <div class="w-16 h-16 rounded-full bg-yellow-500/20 border-2 border-yellow-500/30 flex items-center justify-center">
                         <i class="fas fa-clock text-2xl text-yellow-400"></i>
@@ -192,16 +182,13 @@
         <div class="glass rounded-2xl p-2 mb-6 animate__animated animate__fadeIn">
             <div class="grid grid-cols-3 gap-2">
                 <button onclick="switchTab('friends')" id="tab-friends" class="tab-btn active px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-users ml-2"></i>
-                    الأصدقاء
+                    <i class="fas fa-users ml-2"></i>الأصدقاء
                 </button>
                 <button onclick="switchTab('online')" id="tab-online" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-circle ml-2"></i>
-                    متصل
+                    <i class="fas fa-circle ml-2"></i>متصل
                 </button>
                 <button onclick="switchTab('requests')" id="tab-requests" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-envelope ml-2"></i>
-                    الطلبات
+                    <i class="fas fa-envelope ml-2"></i>الطلبات
                 </button>
             </div>
         </div>
@@ -210,9 +197,7 @@
         <div id="friends-tab" class="tab-content">
             <div class="glass rounded-2xl p-6">
                 <h2 class="text-xl font-black mb-4 neon-text">جميع الأصدقاء</h2>
-                <div id="friendsList" class="space-y-3">
-                    <!-- Friends will be loaded here -->
-                </div>
+                <div id="friendsList" class="space-y-3"></div>
             </div>
         </div>
 
@@ -220,9 +205,7 @@
         <div id="online-tab" class="tab-content hidden">
             <div class="glass rounded-2xl p-6">
                 <h2 class="text-xl font-black mb-4 neon-text">الأصدقاء المتصلون</h2>
-                <div id="onlineList" class="space-y-3">
-                    <!-- Online friends will be loaded here -->
-                </div>
+                <div id="onlineList" class="space-y-3"></div>
             </div>
         </div>
 
@@ -230,26 +213,20 @@
         <div id="requests-tab" class="tab-content hidden">
             <div class="glass rounded-2xl p-6">
                 <h2 class="text-xl font-black mb-4 neon-text">طلبات الصداقة</h2>
-                <div id="requestsList" class="space-y-3">
-                    <!-- Requests will be loaded here -->
-                </div>
+                <div id="requestsList" class="space-y-3"></div>
             </div>
         </div>
     </div>
 
-    <!-- Add Friend Modal -->
+    <!-- ══════════════════════════════════════════
+         ADD FRIEND MODAL
+    ══════════════════════════════════════════ -->
     <div id="addFriendModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div class="glass rounded-3xl p-8 max-w-md w-full animate__animated animate__zoomIn">
             <h2 class="text-2xl font-black neon-text mb-4">إضافة صديق</h2>
             <p class="text-gray-400 text-sm mb-4">أدخل اسم المستخدم أو البريد الإلكتروني</p>
-            
-            <input 
-                type="text" 
-                id="friendUsername" 
-                placeholder="اسم المستخدم"
-                class="w-full p-4 rounded-xl bg-white/5 border-2 border-cyan-500/30 text-white outline-none mb-4"
-            >
-            
+            <input type="text" id="friendUsername" placeholder="اسم المستخدم"
+                class="w-full p-4 rounded-xl bg-white/5 border-2 border-cyan-500/30 text-white outline-none mb-4">
             <div class="flex gap-3">
                 <button id="sendRequestBtn" class="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 py-3 rounded-xl font-black text-sm uppercase">
                     إرسال طلب
@@ -261,37 +238,143 @@
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════
+         INVITE TO ROOM MODAL  (NEW)
+    ══════════════════════════════════════════ -->
+    <div id="invite-modal-overlay">
+        <div id="invite-modal">
+            <h3 id="inv-friend-name">دعوة صديق</h3>
+            <p>ستُنشئ غرفة جديدة وتُرسَل دعوة للصديق تلقائياً</p>
+
+            <div id="inv-status"></div>
+
+            <label class="inv-field-label">فئة اللعب</label>
+            <select class="inv-input" id="inv-category">
+                <option value="places">🌍 أماكن سياحية</option>
+                <option value="food">🍕 أكلات مصرية</option>
+                <option value="jobs">🛠️ مهن ووظائف</option>
+                <option value="companies">🏢 شركات عالمية</option>
+                <option value="football_teams">⚽ أندية ومنتخبات كورة</option>
+            </select>
+
+            <div style="display:flex;gap:12px;">
+                <button class="inv-btn inv-btn-send" id="inv-send-btn" onclick="doSendInvite()">
+                    <i class="fas fa-paper-plane ml-2"></i>إنشاء غرفة ودعوة
+                </button>
+                <button class="inv-btn inv-btn-cancel" onclick="closeInviteModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-        import { getDatabase, ref, get, set, update, onValue, push, remove } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+        import { getDatabase, ref, get, set, update, onValue, push, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
-        
-const firebaseConfig = {
-  apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
-  authDomain: "el-jasus.firebaseapp.com",
-  databaseURL: "https://el-jasus-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "el-jasus",
-  storageBucket: "el-jasus.firebasestorage.app",
-  messagingSenderId: "415659587906",
-  appId: "1:415659587906:web:782f7940176ea4097eb0db",
-  measurementId: "G-N4K79FP56N"
-};
-
-        const app = initializeApp(firebaseConfig);
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
+            authDomain: "el-jasus.firebaseapp.com",
+            databaseURL: "https://el-jasus-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "el-jasus",
+            storageBucket: "el-jasus.firebasestorage.app",
+            messagingSenderId: "415659587906",
+            appId: "1:415659587906:web:782f7940176ea4097eb0db",
+            measurementId: "G-N4K79FP56N"
+        };
+        const app  = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getDatabase(app);
+        const db   = getDatabase(app);
+
+        // Expose to inline scripts
+        window._db = db; window._auth = auth;
+        window._dbFns = { ref, get, set, update, push, remove };
 
         let currentUser = null;
-        let friends = {};
+        let friends     = {};
         let friendRequests = {};
+
+        // ── Invite modal state ───────────────────────
+        let _inviteTargetUid = '';
+        let _inviteTargetName = '';
+
+        window.openInviteModal = function(uid, name) {
+            _inviteTargetUid  = uid;
+            _inviteTargetName = name;
+            document.getElementById('inv-friend-name').textContent = `دعوة: ${name}`;
+            document.getElementById('inv-status').style.display = 'none';
+            document.getElementById('inv-send-btn').disabled = false;
+            document.getElementById('inv-send-btn').innerHTML = '<i class="fas fa-paper-plane ml-2"></i>إنشاء غرفة ودعوة';
+            document.getElementById('invite-modal-overlay').classList.add('open');
+        };
+
+        window.closeInviteModal = function() {
+            document.getElementById('invite-modal-overlay').classList.remove('open');
+        };
+
+        window.doSendInvite = async function() {
+            if (!currentUser) { alert('يجب تسجيل الدخول'); return; }
+            const btn = document.getElementById('inv-send-btn');
+            const statusEl = document.getElementById('inv-status');
+            const category = document.getElementById('inv-category').value;
+            const myName = currentUser.displayName || localStorage.getItem('eljasus_user_name') || 'لاعب';
+
+            btn.disabled = true;
+
+            function setStatus(msg, cls) {
+                statusEl.className = `inv-status-${cls}`;
+                statusEl.textContent = msg;
+                statusEl.style.display = 'block';
+            }
+
+            try {
+                // 1. Create room
+                setStatus('⏳ جاري إنشاء الغرفة...', 'creating');
+                const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+                await set(ref(db, `rooms/${roomCode}`), {
+                    host:       myName,
+                    status:     'waiting',
+                    players:    [myName],
+                    turn:       0,
+                    category,
+                    visibility: 'private',
+                    secret:     null,
+                    spyIdx:     null,
+                    createdAt:  Date.now(),
+                });
+
+                // 2. Send invite via FI (friend-invite.js)
+                setStatus('📨 جاري إرسال الدعوة...', 'sending');
+                const INVITE_TTL = 5 * 60 * 1000;
+                await push(ref(db, `invites/${_inviteTargetUid}`), {
+                    fromUid:   currentUser.uid,
+                    fromName:  myName,
+                    roomCode,
+                    timestamp: Date.now(),
+                    expiresAt: Date.now() + INVITE_TTL,
+                    status:    'pending',
+                });
+
+                // 3. Navigate to room as host
+                setStatus(`✅ تم! كود الغرفة: ${roomCode}`, 'success');
+                localStorage.setItem('currentRoom', roomCode);
+                localStorage.setItem('isHost', 'true');
+                localStorage.setItem('eljasus_user_name', myName);
+
+                btn.innerHTML = `<i class="fas fa-check ml-2"></i>تم — الانتقال للغرفة...`;
+                setTimeout(() => { window.location.href = 'room.html'; }, 1200);
+
+            } catch(e) {
+                setStatus('❌ خطأ: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane ml-2"></i>إنشاء غرفة ودعوة';
+            }
+        };
 
         // Tab switching
         window.switchTab = (tab) => {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
-
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById(`${tab}-tab`).classList.remove('hidden');
         };
 
@@ -299,165 +382,138 @@ const firebaseConfig = {
         document.getElementById('addFriendBtn').addEventListener('click', () => {
             document.getElementById('addFriendModal').classList.remove('hidden');
         });
-
         document.getElementById('cancelAddBtn').addEventListener('click', () => {
             document.getElementById('addFriendModal').classList.add('hidden');
         });
 
         // Auth check
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                loadFriends();
-                setupPresence();
-            } else {
-                window.location.href = 'login.html';
-            }
+            if (user) { currentUser = user; loadFriends(); setupPresence(); }
+            else { window.location.href = 'login.html'; }
         });
 
         // Load friends
         async function loadFriends() {
-            const friendsRef = ref(db, `players/${currentUser.uid}/friends`);
-            const requestsRef = ref(db, `players/${currentUser.uid}/friendRequests`);
-
-            // Listen to friends
-            onValue(friendsRef, async (snapshot) => {
-                friends = snapshot.val() || {};
+            onValue(ref(db, `players/${currentUser.uid}/friends`), async (snap) => {
+                friends = snap.val() || {};
                 await renderFriends();
             });
-
-            // Listen to friend requests
-            onValue(requestsRef, (snapshot) => {
-                friendRequests = snapshot.val() || {};
+            onValue(ref(db, `players/${currentUser.uid}/friendRequests`), (snap) => {
+                friendRequests = snap.val() || {};
                 renderRequests();
             });
         }
 
-        // Render friends
         async function renderFriends() {
             const friendsList = document.getElementById('friendsList');
-            const onlineList = document.getElementById('onlineList');
-            
+            const onlineList  = document.getElementById('onlineList');
+            const spinner = `<p class="text-gray-400 text-center py-8"><i class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</p>`;
+            friendsList.innerHTML = spinner; onlineList.innerHTML = spinner;
+
             const friendIds = Object.keys(friends);
-            
-            if (friendIds.length === 0) {
+            if (!friendIds.length) {
                 friendsList.innerHTML = '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء بعد</p>';
-                onlineList.innerHTML = '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء متصلون</p>';
+                onlineList.innerHTML  = '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء متصلون</p>';
                 document.getElementById('totalFriends').innerText = '0';
                 document.getElementById('onlineFriends').innerText = '0';
                 return;
             }
 
-            const friendsData = [];
-            const onlineFriendsData = [];
-
-            for (const friendId of friendIds) {
-                const friendRef = ref(db, `players/${friendId}`);
-                const snapshot = await get(friendRef);
-                
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    const isOnline = data.presence?.online || false;
-                    
-                    const friendInfo = {
-                        uid: friendId,
-                        username: data.username || 'مجهول',
-                        online: isOnline
-                    };
-                    
-                    friendsData.push(friendInfo);
-                    if (isOnline) onlineFriendsData.push(friendInfo);
+            const friendsData = [], onlineFriendsData = [];
+            for (const fid of friendIds) {
+                const snap = await get(ref(db, `players/${fid}`));
+                if (snap.exists()) {
+                    const d = snap.val();
+                    const info = { uid: fid, username: d.username||'مجهول', online: d.presence?.online||false, inGame: d.presence?.inGame||false };
+                    friendsData.push(info);
+                    if (info.online) onlineFriendsData.push(info);
                 }
             }
-
-            // Update stats
-            document.getElementById('totalFriends').innerText = friendsData.length;
+            document.getElementById('totalFriends').innerText  = friendsData.length;
             document.getElementById('onlineFriends').innerText = onlineFriendsData.length;
 
-            // Render all friends
-            friendsList.innerHTML = friendsData.map(friend => createFriendCard(friend)).join('');
-            
-            // Render online friends
-            if (onlineFriendsData.length === 0) {
-                onlineList.innerHTML = '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء متصلون</p>';
-            } else {
-                onlineList.innerHTML = onlineFriendsData.map(friend => createFriendCard(friend, true)).join('');
-            }
+            friendsList.innerHTML = friendsData.length
+                ? friendsData.map(f => createFriendCard(f)).join('')
+                : '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء</p>';
+
+            onlineList.innerHTML = onlineFriendsData.length
+                ? onlineFriendsData.map(f => createFriendCard(f, true)).join('')
+                : '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء متصلون</p>';
         }
 
-        // Create friend card
         function createFriendCard(friend, showInvite = false) {
+            const statusDot = friend.online
+                ? `<div class="online-indicator absolute bottom-0 right-0"></div>`
+                : `<div class="offline-indicator absolute bottom-0 right-0"></div>`;
+
+            const gameStatus = friend.inGame
+                ? `<span style="font-size:10px;color:#f59e0b;font-weight:700;background:rgba(245,158,11,.1);padding:2px 6px;border-radius:4px;margin-right:4px;">🎮 يلعب</span>`
+                : '';
+
             return `
-                <div class="bg-white/5 rounded-xl p-4 border-2 border-cyan-500/20 hover:border-cyan-500/50 transition-all">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="relative">
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center">
-                                    <i class="fas fa-user text-white"></i>
-                                </div>
-                                <div class="${friend.online ? 'online-indicator' : 'offline-indicator'} absolute bottom-0 right-0"></div>
+            <div class="bg-white/5 rounded-xl p-4 border-2 border-cyan-500/20 hover:border-cyan-500/50 transition-all">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center">
+                                <i class="fas fa-user text-white"></i>
                             </div>
-                            <div>
-                                <h3 class="font-black text-white">${friend.username}</h3>
+                            ${statusDot}
+                        </div>
+                        <div>
+                            <h3 class="font-black text-white">${friend.username}</h3>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                ${gameStatus}
                                 <p class="text-xs text-gray-400">${friend.online ? 'متصل الآن' : 'غير متصل'}</p>
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            ${showInvite ? `
-                                <button class="px-4 py-2 bg-cyan-500/20 border-2 border-cyan-500/30 rounded-lg text-cyan-400 text-xs font-bold">
-                                    <i class="fas fa-envelope ml-1"></i>
-                                    دعوة
-                                </button>
-                            ` : ''}
-                            <button onclick="removeFriend('${friend.uid}')" class="px-4 py-2 bg-red-500/20 border-2 border-red-500/30 rounded-lg text-red-400 text-xs font-bold">
-                                <i class="fas fa-user-minus ml-1"></i>
-                                إزالة
-                            </button>
-                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        ${friend.online ? `
+                        <button onclick="openInviteModal('${friend.uid}','${friend.username}')"
+                            class="px-3 py-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border-2 border-cyan-500/40 rounded-lg text-cyan-400 text-xs font-bold hover:from-cyan-500/30 hover:to-purple-500/30 transition-all">
+                            <i class="fas fa-gamepad ml-1"></i>دعوة للعب
+                        </button>` : ''}
+                        <button onclick="removeFriend('${friend.uid}')"
+                            class="px-3 py-2 bg-red-500/20 border-2 border-red-500/30 rounded-lg text-red-400 text-xs font-bold">
+                            <i class="fas fa-user-minus ml-1"></i>إزالة
+                        </button>
                     </div>
                 </div>
-            `;
+            </div>`;
         }
 
-        // Render requests
         function renderRequests() {
             const requestsList = document.getElementById('requestsList');
             const requests = Object.keys(friendRequests);
-
             document.getElementById('pendingRequests').innerText = requests.length;
+            if (!requests.length) { requestsList.innerHTML = '<p class="text-gray-400 text-center py-8">لا توجد طلبات معلقة</p>'; return; }
 
-            if (requests.length === 0) {
-                requestsList.innerHTML = '<p class="text-gray-400 text-center py-8">لا توجد طلبات معلقة</p>';
-                return;
-            }
-
-            requestsList.innerHTML = requests.map(requestId => {
-                const request = friendRequests[requestId];
+            requestsList.innerHTML = requests.map(rid => {
+                const r = friendRequests[rid];
+                const fromUsername = r?.from?.username || r?.from?.uid || 'مستخدم';
                 return `
-                    <div class="bg-white/5 rounded-xl p-4 border-2 border-yellow-500/20">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
-                                    <i class="fas fa-user text-white"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-black text-white">${request.from.username}</h3>
-                                    <p class="text-xs text-gray-400">طلب صداقة</p>
-                                </div>
+                <div class="bg-white/5 rounded-xl p-4 border-2 border-yellow-500/20">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                                <i class="fas fa-user text-white"></i>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="acceptRequest('${requestId}')" class="px-4 py-2 bg-green-500/20 border-2 border-green-500/30 rounded-lg text-green-400 text-xs font-bold">
-                                    <i class="fas fa-check ml-1"></i>
-                                    قبول
-                                </button>
-                                <button onclick="rejectRequest('${requestId}')" class="px-4 py-2 bg-red-500/20 border-2 border-red-500/30 rounded-lg text-red-400 text-xs font-bold">
-                                    <i class="fas fa-times ml-1"></i>
-                                    رفض
-                                </button>
+                            <div>
+                                <h3 class="font-black text-white">${fromUsername}</h3>
+                                <p class="text-xs text-gray-400">طلب صداقة</p>
                             </div>
                         </div>
+                        <div class="flex gap-2">
+                            <button onclick="acceptRequest('${rid}')" class="px-4 py-2 bg-green-500/20 border-2 border-green-500/30 rounded-lg text-green-400 text-xs font-bold">
+                                <i class="fas fa-check ml-1"></i>قبول
+                            </button>
+                            <button onclick="rejectRequest('${rid}')" class="px-4 py-2 bg-red-500/20 border-2 border-red-500/30 rounded-lg text-red-400 text-xs font-bold">
+                                <i class="fas fa-times ml-1"></i>رفض
+                            </button>
+                        </div>
                     </div>
-                `;
+                </div>`;
             }).join('');
         }
 
@@ -465,205 +521,109 @@ const firebaseConfig = {
         document.getElementById('sendRequestBtn').addEventListener('click', async () => {
             const username = document.getElementById('friendUsername').value.trim();
             const btn = document.getElementById('sendRequestBtn');
-            
-            if (!username) {
-                showMessage('⚠️ الرجاء إدخال اسم المستخدم أو البريد الإلكتروني', 'warning');
-                return;
-            }
-
-            // Disable button during processing
+            if (!username) { showMessage('⚠️ الرجاء إدخال اسم المستخدم', 'warning'); return; }
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i>جاري الإرسال...';
 
             try {
-                // Find user by username or email
-                const playersRef = ref(db, 'players');
-                const snapshot = await get(playersRef);
-                
+                let snapshot;
+                try { snapshot = await get(ref(db, 'players')); } catch(e) {
+                    showMessage('❌ خطأ في قراءة البيانات: ' + e.message, 'error');
+                    btn.disabled=false; btn.innerHTML='إرسال طلب'; return;
+                }
+
                 let foundUser = null;
                 if (snapshot.exists()) {
                     const players = snapshot.val();
+                    const sl = username.toLowerCase().trim();
                     for (const uid in players) {
-                        if (uid === currentUser.uid) continue; // Skip self
-                        
-                        const matchUsername = players[uid].username?.toLowerCase() === username.toLowerCase();
-                        const matchEmail = players[uid].email?.toLowerCase() === username.toLowerCase();
-                        
-                        if (matchUsername || matchEmail) {
-                            foundUser = { uid, ...players[uid] };
-                            break;
+                        if (uid === currentUser.uid) continue;
+                        if ((players[uid].username||'').toLowerCase().trim() === sl ||
+                            (players[uid].email||'').toLowerCase().trim() === sl) {
+                            foundUser = { uid, ...players[uid] }; break;
                         }
                     }
                 }
 
-                if (!foundUser) {
-                    showMessage('❌ اسم المستخدم أو البريد الإلكتروني غير موجود', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-user-plus ml-2"></i>إرسال طلب';
-                    return;
-                }
+                if (!foundUser) { showMessage('❌ اسم المستخدم غير موجود', 'error'); btn.disabled=false; btn.innerHTML='إرسال طلب'; return; }
 
-                // Check if already friends
-                const friendsSnap = await get(ref(db, `players/${currentUser.uid}/friends/${foundUser.uid}`));
-                if (friendsSnap.exists()) {
-                    showMessage('ℹ️ أنت بالفعل صديق لهذا المستخدم!', 'info');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-user-plus ml-2"></i>إرسال طلب';
-                    return;
-                }
+                const alreadyFriend = await get(ref(db, `players/${currentUser.uid}/friends/${foundUser.uid}`));
+                if (alreadyFriend.exists()) { showMessage('ℹ️ أنتما أصدقاء بالفعل', 'info'); btn.disabled=false; btn.innerHTML='إرسال طلب'; return; }
 
-                // Check if request already sent
-                const existingRequestSnap = await get(ref(db, `players/${foundUser.uid}/friendRequests/${currentUser.uid}`));
-                if (existingRequestSnap.exists()) {
-                    showMessage('ℹ️ لقد أرسلت طلب صداقة بالفعل لهذا المستخدم. الرجاء انتظار الرد.', 'info');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-user-plus ml-2"></i>إرسال طلب';
-                    return;
-                }
-
-                // Check if they sent you a request (so you can just accept it)
-                const incomingRequestSnap = await get(ref(db, `players/${currentUser.uid}/friendRequests/${foundUser.uid}`));
-                if (incomingRequestSnap.exists()) {
-                    showMessage('ℹ️ هذا المستخدم أرسل لك طلباً بالفعل! يمكنك قبوله من قسم "الطلبات المعلقة"', 'info');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-user-plus ml-2"></i>إرسال طلب';
-                    return;
-                }
-
-                // Send request
-                const requestRef = ref(db, `players/${foundUser.uid}/friendRequests/${currentUser.uid}`);
-                await set(requestRef, {
-                    from: {
-                        uid: currentUser.uid,
-                        username: currentUser.displayName || 'مجهول'
-                    },
+                const mySnap = await get(ref(db, `players/${currentUser.uid}/username`));
+                await set(ref(db, `players/${foundUser.uid}/friendRequests/${currentUser.uid}`), {
+                    from: { uid: currentUser.uid, username: mySnap.val() || currentUser.displayName || 'مجهول' },
                     timestamp: Date.now()
                 });
 
-                showMessage(`✅ تم إرسال طلب الصداقة إلى ${foundUser.username || 'المستخدم'} بنجاح!`, 'success');
+                showMessage(`✅ تم إرسال طلب الصداقة إلى ${foundUser.username}`, 'success');
                 document.getElementById('addFriendModal').classList.add('hidden');
                 document.getElementById('friendUsername').value = '';
-                
-                // Play sound effect
-                if (window.SND) window.SND.play('message');
-                
-            } catch (error) {
-                console.error('Friend request error:', error);
-                showMessage('❌ حدث خطأ أثناء إرسال الطلب: ' + error.message, 'error');
+            } catch(e) {
+                showMessage('❌ خطأ: ' + e.message, 'error');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-user-plus ml-2"></i>إرسال طلب';
+                btn.disabled=false;
+                btn.innerHTML='إرسال طلب';
             }
         });
 
-        // Helper function to show messages
-        function showMessage(text, type = 'info') {
-            // Remove existing message if any
+        function showMessage(text, type='info') {
             const existing = document.getElementById('friend-message');
             if (existing) existing.remove();
-
             const msg = document.createElement('div');
             msg.id = 'friend-message';
             msg.textContent = text;
-            
             const colors = {
-                success: 'background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.5);color:#22c55e;',
-                error: 'background:rgba(239,68,68,.15);border:2px solid rgba(239,68,68,.5);color:#ef4444;',
-                warning: 'background:rgba(251,191,36,.15);border:2px solid rgba(251,191,36,.5);color:#fbbf24;',
-                info: 'background:rgba(59,130,246,.15);border:2px solid rgba(59,130,246,.5);color:#3b82f6;'
+                success:'background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.5);color:#22c55e;',
+                error:'background:rgba(239,68,68,.15);border:2px solid rgba(239,68,68,.5);color:#ef4444;',
+                warning:'background:rgba(251,191,36,.15);border:2px solid rgba(251,191,36,.5);color:#fbbf24;',
+                info:'background:rgba(59,130,246,.15);border:2px solid rgba(59,130,246,.5);color:#3b82f6;'
             };
-            
             msg.style.cssText = `position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;
                 padding:16px 28px;border-radius:16px;font-family:'Cairo',sans-serif;font-weight:700;
                 font-size:14px;text-align:center;backdrop-filter:blur(12px);
                 box-shadow:0 8px 32px rgba(0,0,0,.5);animation:slideInDown .5s ease;
                 max-width:90%;${colors[type]}`;
-            
             document.body.appendChild(msg);
-            
-            setTimeout(() => {
-                msg.style.animation = 'slideOutUp .5s ease';
-                setTimeout(() => msg.remove(), 500);
-            }, 4000);
+            setTimeout(() => { msg.style.animation='slideOutUp .5s ease'; setTimeout(()=>msg.remove(),500); }, 4000);
         }
 
-
-        // Accept request
         window.acceptRequest = async (friendId) => {
-            // Add to both friends lists
             await set(ref(db, `players/${currentUser.uid}/friends/${friendId}`), true);
             await set(ref(db, `players/${friendId}/friends/${currentUser.uid}`), true);
-            
-            // Remove request
             await remove(ref(db, `players/${currentUser.uid}/friendRequests/${friendId}`));
-            
-            alert('تم قبول الطلب');
+            showMessage('✅ تم قبول طلب الصداقة', 'success');
         };
 
-        // Reject request
         window.rejectRequest = async (friendId) => {
             await remove(ref(db, `players/${currentUser.uid}/friendRequests/${friendId}`));
-            alert('تم رفض الطلب');
         };
 
-        // Remove friend
         window.removeFriend = async (friendId) => {
-            if (!confirm('هل أنت متأكد من إزالة هذا الصديق؟')) return;
-            
+            const ok = await UIConfirm('هل أنت متأكد من إزالة هذا الصديق؟', { title:'إزالة صديق', type:'warning', confirmText:'إزالة', icon:'⚠️' });
+            if (!ok) return;
             await remove(ref(db, `players/${currentUser.uid}/friends/${friendId}`));
             await remove(ref(db, `players/${friendId}/friends/${currentUser.uid}`));
-            
-            alert('تم إزالة الصديق');
+            showMessage('تم إزالة الصديق', 'info');
         };
 
-        // Setup presence
         function setupPresence() {
             const presenceRef = ref(db, `players/${currentUser.uid}/presence`);
-            
-            set(presenceRef, {
-                online: true,
-                lastSeen: Date.now()
-            });
-
-            // Update on disconnect
-            onValue(ref(db, '.info/connected'), (snapshot) => {
-                if (snapshot.val() === true) {
-                    update(presenceRef, { online: true });
-                } else {
-                    update(presenceRef, {
-                        online: false,
-                        lastSeen: Date.now()
-                    });
-                }
+            onValue(ref(db, '.info/connected'), async (snap) => {
+                if (snap.val() !== true) return;
+                await onDisconnect(presenceRef).update({ online:false, lastSeen:Date.now() });
+                await update(presenceRef, { online:true, lastSeen:Date.now() });
             });
         }
-
-        // Tab button styles
-        const style = document.createElement('style');
-        style.textContent = `
-            .tab-btn {
-                position: relative;
-                transition: all 0.3s ease;
-                border: 2px solid transparent;
-            }
-
-            .tab-btn.active {
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                border-color: var(--primary-color);
-                box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
-            }
-        `;
-        document.head.appendChild(style);
     </script>
+
     <link rel="stylesheet" href="mobile.css">
     <script src="sound-system.js" defer></script>
-    <script src="qr-notifications.js" defer></script>
-    <script src="dialogs.js"></script>
-<script>
-    window.alert   = (msg)             => UIAlert(msg);
-    window.confirm = (msg)             => UIConfirm(msg);
-    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
-</script>
+    <script>
+        window.alert   = (msg)             => UIAlert(msg);
+        window.confirm = (msg)             => UIConfirm(msg);
+        window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+    </script>
     <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
 </body>
 </html>

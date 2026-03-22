@@ -9,18 +9,13 @@
     <meta name="theme-color" content="#0a0e1a">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب | El Jasus</title>
-    <link rel="icon" type="image/png" href="ElJasus2.png">
+    <link rel="icon" type="image/png" href="ElJasus.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="mobile.css">
-    <script src="sound-system.js" defer></script>
-    <script src="qr-notifications.js" defer></script>
-    <script src="dialogs.js"></script>
-    <script src="moderation.js"></script>
 
     <style>
         * {
@@ -42,6 +37,7 @@
             overflow-x: hidden;
         }
 
+        /* Animated Background Grid */
         body::before {
             content: '';
             position: fixed;
@@ -113,6 +109,7 @@
             opacity: 0.8;
         }
 
+        /* Glass Registration Box */
         .registration-box {
             background: linear-gradient(135deg, rgba(15, 20, 35, 0.9), rgba(25, 30, 50, 0.8));
             backdrop-filter: blur(20px);
@@ -136,7 +133,12 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(0, 242, 255, 0.05), transparent);
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(0, 242, 255, 0.05),
+                transparent
+            );
             animation: shimmer 3s infinite;
             pointer-events: none;
         }
@@ -208,6 +210,7 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
+        /* Custom Checkbox */
         .checkbox-container {
             display: flex;
             align-items: center;
@@ -261,12 +264,12 @@
         }
 
         .checkbox-label {
-            color: rgba(255, 255, 255, 0.55);
-            font-size: 13px;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
         }
 
+        /* Buttons */
         .btn-primary {
             width: 100%;
             padding: 16px;
@@ -286,9 +289,31 @@
             font-family: 'Orbitron', sans-serif;
         }
 
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-primary:hover::before {
+            width: 300%;
+            height: 300%;
+        }
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 0 30px rgba(0, 242, 255, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
         }
 
         .btn-primary:disabled {
@@ -296,6 +321,7 @@
             cursor: not-allowed;
         }
 
+        /* Footer Links */
         .footer-links {
             text-align: center;
             margin-top: 20px;
@@ -315,6 +341,7 @@
             text-decoration: underline;
         }
 
+        /* Return Home Button with Blue/Skyblue Animated Border */
         .return-home-btn {
             margin-top: 30px;
             padding: 15px 30px;
@@ -346,7 +373,9 @@
 
         .return-home-btn::before {
             content: '';
-            background: linear-gradient(45deg, #00d4ff, #0099ff, #00e5ff, #00bfff, #0080ff, #0099ff, #00d4ff, #00e5ff);
+            background: linear-gradient(45deg, 
+                #00d4ff, #0099ff, #00e5ff, #00bfff, 
+                #0080ff, #0099ff, #00d4ff, #00e5ff);
             position: absolute;
             top: -3px;
             left: -3px;
@@ -388,60 +417,31 @@
             box-shadow: 0 5px 30px rgba(0, 212, 255, 0.4);
         }
 
-        .community-link {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 13px;
-            font-weight: 900;
-            font-family: 'Cairo', sans-serif;
-            color: #00f2ff;
-            text-decoration: none;
-            padding: 1px 6px 1px 4px;
-            border-radius: 5px;
-            background: rgba(0, 242, 255, 0.07);
-            border: 1px solid rgba(0, 242, 255, 0.25);
-            transition: all 0.25s ease;
-            white-space: nowrap;
+        .return-home-btn:active {
+            transform: translateY(-1px);
         }
 
-        .community-link::before {
-            content: '🛡️';
-            font-size: 11px;
-            line-height: 1;
-        }
-
-        .link-underline {
-            position: absolute;
-            bottom: -1px;
-            right: 0;
-            height: 1px;
-            width: 0%;
-            background: linear-gradient(90deg, transparent, #00f2ff);
-            border-radius: 99px;
-            transition: width 0.3s ease;
-        }
-
-        .community-link:hover {
-            color: #fff;
-            background: rgba(0, 242, 255, 0.15);
-            border-color: rgba(0, 242, 255, 0.6);
-            box-shadow: 0 0 12px rgba(0, 242, 255, 0.3), inset 0 0 10px rgba(0, 242, 255, 0.05);
-        }
-
-        .community-link:hover .link-underline {
-            width: 100%;
-        }
-
+        /* Animations */
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -450,7 +450,7 @@
     <div class="container">
         <!-- Logo Section -->
         <div class="logo-section">
-            <img src="ElJasus2.png" alt="El Jasus Logo">
+            <img src="ElJasus.png" alt="El Jasus Logo">
             <h1>EL-JASUS</h1>
             <p>The Ultimate Edition</p>
         </div>
@@ -500,13 +500,69 @@
                 </label>
                 
                 <label class="checkbox-container">
-                    <input type="checkbox" required>
+                    <input type="checkbox" id="dontShowAgain" required>
                     <span class="custom-checkbox"></span>
-                    <span class="checkbox-label">أوافق على </span>
-                    <a href="community.html" class="community-link">
-                        شروط و معايير المجتمع
-                        <span class="link-underline"></span>
-                    </a>
+                    <span class="checkbox-label">أوافق على </span><a href="community.html" class="community-link">شروط و معايير المجتمع<span class="link-underline"></span></a>
+
+<style>
+.checkbox-label {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+}
+
+.community-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 900;
+    font-family: 'Cairo', sans-serif;
+    color: #00f2ff;
+    text-decoration: none;
+    padding: 1px 6px 1px 4px;
+    border-radius: 5px;
+    background: rgba(0, 242, 255, 0.07);
+    border: 1px solid rgba(0, 242, 255, 0.25);
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+/* shield icon via pseudo */
+.community-link::before {
+    content: '🛡️';
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* animated underline */
+.link-underline {
+    position: absolute;
+    bottom: -1px;
+    right: 0;
+    height: 1px;
+    width: 0%;
+    background: linear-gradient(90deg, transparent, #00f2ff);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.community-link:hover {
+    color: #fff;
+    background: rgba(0, 242, 255, 0.15);
+    border-color: rgba(0, 242, 255, 0.6);
+    box-shadow:
+        0 0 12px rgba(0, 242, 255, 0.3),
+        inset 0 0 10px rgba(0, 242, 255, 0.05);
+    text-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
+}
+
+.community-link:hover .link-underline {
+    width: 100%;
+}
+</style>
                 </label>
 
                 <button type="submit" class="btn-primary" id="registerBtn">
@@ -520,121 +576,128 @@
         </div>
 
         <!-- Return Home Button -->
-        <a href="index.html" class="return-home-btn">
+        <a href="home.html" class="return-home-btn">
             <i class="fas fa-home"></i>
             العودة للرئيسية
         </a>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
-            authDomain: "el-jasus.firebaseapp.com",
-            databaseURL: "https://el-jasus-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "el-jasus",
-            storageBucket: "el-jasus.firebasestorage.app",
-            messagingSenderId: "415659587906",
-            appId: "1:415659587906:web:782f7940176ea4097eb0db",
-            measurementId: "G-N4K79FP56N"
-        };
         
-        window._firebaseFns = { ref, get, update, onValue, push, serverTimestamp };
+const firebaseConfig = {
+  apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
+  authDomain: "el-jasus.firebaseapp.com",
+  databaseURL: "https://el-jasus-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "el-jasus",
+  storageBucket: "el-jasus.firebasestorage.app",
+  messagingSenderId: "415659587906",
+  appId: "1:415659587906:web:782f7940176ea4097eb0db",
+  measurementId: "G-N4K79FP56N"
+};
+        
         firebase.initializeApp(firebaseConfig);
-        window._firebaseFns = {
-        ref:             (db, path) => firebase.database().ref(path),
-        get:             (r)        => r.once('value'),
-        update:          (r, v)     => r.update(v),
-        onValue:         (r, cb)    => { r.on('value', s => cb(s)); return () => r.off('value'); },
-        push:            (r, v)     => r.push(v),
-        serverTimestamp: ()         => firebase.database.ServerValue.TIMESTAMP,
-    };
 
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const usernameValue = document.getElementById('username').value.trim();
-            const email         = document.getElementById('email').value.trim();
-            const password      = document.getElementById('regPassword').value;
-            const confirmPass   = document.getElementById('confirmPassword').value;
-            const btn           = document.getElementById('registerBtn');
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('registerBtn');
 
             // Validation
-            if (!usernameValue) { alert('الرجاء إدخال اسم المستخدم'); return; }
-            if (!email)         { alert('الرجاء إدخال البريد الإلكتروني'); return; }
+            if (!usernameValue) {
+                alert('الرجاء إدخال اسم المستخدم');
+                return;
+            }
 
+            if (!email) {
+                alert('الرجاء إدخال البريد الإلكتروني');
+                return;
+            }
+
+            // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) { alert('الرجاء إدخال بريد إلكتروني صحيح'); return; }
-            if (!password)              { alert('الرجاء إدخال كلمة المرور'); return; }
-            if (password.length < 6)    { alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
-            if (password !== confirmPass){ alert('كلمات المرور غير متطابقة!'); return; }
+            if (!emailRegex.test(email)) {
+                alert('الرجاء إدخال بريد إلكتروني صحيح');
+                return;
+            }
+
+            if (!password) {
+                alert('الرجاء إدخال كلمة المرور');
+                return;
+            }
+
+            // Password validation
+            if (password.length < 6) {
+                alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                return;
+            }
+
+            if (password !== confirmPass) {
+                alert('كلمات المرور غير متطابقة!');
+                return;
+            }
 
             btn.innerHTML = '<span style="position: relative; z-index: 1;">جاري المعالجة...</span>';
             btn.disabled = true;
 
+            const fullNameValue = document.getElementById('fullName') 
+                ? document.getElementById('fullName').value.trim() 
+                : '';
+
             firebase.auth().createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-
                     return user.updateProfile({ displayName: usernameValue }).then(() => user);
                 })
-                then(async (user) => {
-    try {
-        const db  = firebase.database();
-        const ref = db.ref("players/" + user.uid);
+                .then(async (user) => {
+                    // Save all player data to Realtime Database using compat SDK
+                    try {
+                        await firebase.database()
+                            .ref("players/" + user.uid)
+                            .set({
+                                uid:         user.uid,
+                                username:    usernameValue,
+                                fullName:    fullNameValue,
+                                email:       user.email,
+                                coins:       100,
+                                hints:       3,
+                                rankPoints:  0,
+                                rank:        "Bronze",
+                                activeTheme: "cyan",
+                                activeTitle: "rookie",
+                                inventory:   { themes: ["cyan"], titles: ["rookie"] },
+                                stats: {
+                                    totalGames: 0, spyWins: 0, innocentWins: 0,
+                                    currentStreak: 0, longestWinStreak: 0
+                                },
+                                moderationWarnings: 0,
+                                totalBans:          0,
+                                createdAt:   Date.now()
+                            });
+                        console.log('[signup] ✅ Player saved — uid:', user.uid, '| username:', usernameValue);
+                    } catch(e) {
+                        console.error('[signup] DB write error:', e);
+                        // Do NOT block the user — just log the error
+                    }
 
-        await ref.set({
-            username:    usernameValue,
-            email:       user.email,
-            coins:       100,
-            hints:       3,
-            rankPoints:  0,
-            rank:        "Bronze",
-            activeTheme: "cyan",
-            activeTitle: "rookie",
-            inventory: {
-                themes: ["cyan"],
-                titles: ["rookie"]
-            },
-            stats: {
-                totalGames:        0,
-                spyWins:           0,
-                innocentWins:      0,
-                currentStreak:     0,
-                longestWinStreak:  0
-            },
-            moderationWarnings: 0,
-            totalBans:          0,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-        });
+                    localStorage.setItem('eljasus_user_name',       usernameValue);
+                    localStorage.setItem('eljasus_user_full_name',  fullNameValue);
+                    localStorage.setItem('eljasus_user_email',      user.email);
+                    localStorage.setItem('eljasus_user_uid',        user.uid);
+                    localStorage.setItem('eljasus_welcome',         '1');
 
-        console.log('[signup] ✅ Player record saved for uid:', user.uid, '| username:', usernameValue);
-
-    } catch (dbErr) {
-        console.error('[signup] DB write error:', dbErr);
-    }
-
-    if (window.MOD) {
-        const compatDb = firebase.database();
-        await MOD.init(compatDb, user);
-        if (document.getElementById('_ej_ban')) return; // Banned — stop
-    }
-
-    localStorage.setItem('eljasus_user_name', usernameValue);
-    localStorage.setItem('eljasus_welcome', '1');
-    
-    setTimeout(async () => {
-        await UIAlert('🎉 تم إنشاء الحساب! مرحباً، ' + usernameValue);
-    }, 3000);
-    UIAlert('سيتم تحويلك إلى الصفحة الرئيسي...');
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 5000);
-})
+                    alert('🎉 تم إنشاء الحساب! مرحباً، ' + usernameValue);
+                    setTimeout(() => { window.location.href = 'home.html'; }, 1500);
+                })
                 .catch((error) => {
                     console.error('Signup Error:', error);
                     
                     let errorMessage = '';
-                    switch (error.code) {
+                    
+                    switch(error.code) {
                         case 'auth/email-already-in-use':
                             errorMessage = 'هذا البريد الإلكتروني مستخدم بالفعل. يرجى تسجيل الدخول أو استخدام بريد آخر';
                             break;
@@ -657,11 +720,23 @@
                 });
         });
     </script>
+    <link rel="stylesheet" href="mobile.css">
+    <script src="sound-system.js" defer></script>
+    <script src="qr-notifications.js" defer></script>
+    <script src="dialogs.js"></script>
     <script>
-        window.alert   = (msg)             => UIAlert(msg);
-        window.confirm = (msg)             => UIConfirm(msg);
-        window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
-    </script>
-    <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
+    window.alert   = (msg)             => UIAlert(msg);
+    window.confirm = (msg)             => UIConfirm(msg);
+    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+</script>
+    <script>
+    if(
+        'serviceWorker' in navigator
+        )
+        {
+            window.addEventListener(
+                'load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+            }
+</script>
 </body>
 </html>
