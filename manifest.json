@@ -2,7 +2,7 @@
   "name": "El Jasus — الجاسوس",
   "short_name": "الجاسوس",
   "description": "لعبة الجاسوس الاجتماعية متعددة اللاعبين",
-  "start_url": "./home.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
