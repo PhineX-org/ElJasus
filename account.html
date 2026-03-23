@@ -11,10 +11,8 @@
     <title>الحساب | El Jasus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" href="ElJasus.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root { 
@@ -121,6 +119,19 @@
             0%, 100% { box-shadow: 0 0 20px rgba(0, 242, 255, 0.5); }
             50% { box-shadow: 0 0 40px rgba(0, 242, 255, 0.8); }
         }
+
+        .animate__animated {
+            animation-duration: 0.5s;
+        }
+
+        .animate__fadeIn {
+            animation-name: fadeIn;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body class="p-4">
@@ -128,13 +139,17 @@
     <!-- Not Logged In Screen -->
     <div id="notLoggedIn" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
         <div class="text-center animate__animated animate__fadeIn">
-            <i class="fas fa-user-lock text-8xl text-cyan-400 mb-6 opacity-50"></i>
+            <svg class="w-32 h-32 text-cyan-400 opacity-50 mx-auto mb-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+            </svg>
             <h2 class="text-3xl font-black mb-4 neon-text">يجب تسجيل الدخول أولاً</h2>
             <p class="text-gray-400 mb-8">للوصول إلى حسابك، يجب عليك تسجيل الدخول</p>
             
             <div class="flex flex-col gap-4 max-w-sm mx-auto">
-                <a href="login.html" class="btn-primary py-4 px-8 rounded-xl font-black text-lg uppercase tracking-wider inline-block">
-                    <i class="fas fa-sign-in-alt ml-2"></i>
+                <a href="login.html" class="btn-primary py-4 px-8 rounded-xl font-black text-lg uppercase tracking-wider inline-flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                    </svg>
                     تسجيل الدخول
                 </a>
                 
@@ -155,7 +170,9 @@
         <header class="max-w-4xl mx-auto mb-6 relative z-10">
             <div class="flex items-center justify-between">
                 <a href="home.html" class="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-all hover:translate-x-1">
-                    <i class="fas fa-arrow-right text-xl"></i>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
                     <span class="text-sm font-bold">رجوع</span>
                 </a>
                 
@@ -164,8 +181,10 @@
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1" style="font-family: 'Orbitron', sans-serif;">MY ACCOUNT</p>
                 </div>
 
-                <button id="logoutBtn" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/30 rounded-xl text-red-400 font-bold text-sm transition-all">
-                    <i class="fas fa-sign-out-alt ml-1"></i>
+                <button id="logoutBtn" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/30 rounded-xl text-red-400 font-bold text-sm transition-all flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
                     تسجيل الخروج
                 </button>
             </div>
@@ -180,7 +199,9 @@
                     <!-- Avatar -->
                     <div class="flex-shrink-0">
                         <div class="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center avatar-ring border-4 border-cyan-500/30">
-                            <i class="fas fa-user text-6xl text-white"></i>
+                            <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            </svg>
                         </div>
                     </div>
 
@@ -215,13 +236,17 @@
                 <a href="username.html" class="glass rounded-2xl p-6 animate__animated animate__fadeIn hover:border-cyan-500/50 transition-all group cursor-pointer block">
                     <div class="flex items-center gap-4">
                         <div class="w-14 h-14 rounded-lg bg-cyan-500/20 border-2 border-cyan-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <i class="fas fa-user-edit text-cyan-400 text-2xl"></i>
+                            <svg class="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                            </svg>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-lg font-black mb-1 group-hover:text-cyan-400 transition-colors">تغيير اسم المستخدم</h3>
                             <p class="text-xs text-gray-400">قم بتحديث اسم المستخدم الخاص بك</p>
                         </div>
-                        <i class="fas fa-chevron-left text-gray-500 group-hover:text-cyan-400 group-hover:translate-x-[-3px] transition-all"></i>
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-cyan-400 group-hover:translate-x-[-3px] transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
                     </div>
                 </a>
 
@@ -229,13 +254,17 @@
                 <a href="password.html" class="glass rounded-2xl p-6 animate__animated animate__fadeIn hover:border-purple-500/50 transition-all group cursor-pointer block">
                     <div class="flex items-center gap-4">
                         <div class="w-14 h-14 rounded-lg bg-purple-500/20 border-2 border-purple-500/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <i class="fas fa-key text-purple-400 text-2xl"></i>
+                            <svg class="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
+                            </svg>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-lg font-black mb-1 group-hover:text-purple-400 transition-colors">تغيير كلمة المرور</h3>
                             <p class="text-xs text-gray-400">قم بتحديث كلمة المرور الخاصة بك</p>
                         </div>
-                        <i class="fas fa-chevron-left text-gray-500 group-hover:text-purple-400 group-hover:translate-x-[-3px] transition-all"></i>
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-purple-400 group-hover:translate-x-[-3px] transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
                     </div>
                 </a>
 
@@ -243,15 +272,27 @@
                 <div class="glass rounded-2xl p-6 animate__animated animate__fadeIn cursor-pointer hover:border-red-500/50 transition-all group">
                     <div class="flex items-center gap-4">
                         <div class="w-14 h-14 rounded-lg bg-red-500/20 border-2 border-red-500/30 flex items-center justify-center">
-                            <i class="fab fa-google text-red-400 text-2xl"></i>
+                            <svg class="w-8 h-8" viewBox="0 0 48 48">
+                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                                <path fill="none" d="M0 0h48v48H0z"/>
+                            </svg>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-lg font-black mb-1">التحقق عبر Google</h3>
                             <p class="text-xs text-gray-400">قم بإعادة التحقق من حسابك للعمليات الحساسة</p>
                         </div>
                     </div>
-                    <button id="googleReauthBtn" class="w-full bg-white/5 hover:bg-white/10 border-2 border-white/10 py-3 rounded-xl font-black text-sm transition-all mt-4">
-                        <i class="fab fa-google ml-2 text-red-400"></i>
+                    <button id="googleReauthBtn" class="w-full bg-white/5 hover:bg-white/10 border-2 border-white/10 py-3 rounded-xl font-black text-sm transition-all mt-4 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" viewBox="0 0 48 48">
+                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                            <path fill="none" d="M0 0h48v48H0z"/>
+                        </svg>
                         التحقق الآن
                     </button>
                 </div>
@@ -260,7 +301,9 @@
                 <div class="glass rounded-2xl p-6 border-red-500/30 animate__animated animate__fadeIn">
                     <div class="flex items-center gap-4 mb-4">
                         <div class="w-14 h-14 rounded-lg bg-red-500/20 border-2 border-red-500/30 flex items-center justify-center">
-                            <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
+                            <svg class="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-lg font-black text-red-400 mb-1">منطقة الخطر</h3>
@@ -268,8 +311,10 @@
                         </div>
                     </div>
                     
-                    <button id="deleteAccountBtn" class="w-full bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 text-red-400 py-3 rounded-xl font-black text-sm transition-all uppercase tracking-wider">
-                        <i class="fas fa-trash-alt ml-2"></i>
+                    <button id="deleteAccountBtn" class="w-full bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/50 text-red-400 py-3 rounded-xl font-black text-sm transition-all uppercase tracking-wider flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
                         حذف الحساب نهائياً
                     </button>
                 </div>
@@ -297,7 +342,7 @@ const firebaseConfig = {
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
-        window._firebaseFns = { ref, get, update, onValue, push, serverTimestamp };
+        window._firebaseFns = { ref, get, remove };
 
         let currentUser = null;
 
@@ -313,39 +358,53 @@ const firebaseConfig = {
                 document.getElementById('notLoggedIn').classList.remove('hidden');
                 document.getElementById('loggedInContent').classList.add('hidden');
             }
-            await MOD.init(db, user);
-            if (document.getElementById('_ej_ban')) return;
+            
+            // Load moderation if available
+            if (typeof MOD !== 'undefined' && MOD.init) {
+                await MOD.init(db, user);
+                if (document.getElementById('_ej_ban')) return;
+            }
         });
-
 
         // Load User Data
         async function loadUserData(uid) {
-            const userRef = ref(db, `players/${uid}`);
-            const snapshot = await get(userRef);
-            
-            let username = 'مجهول';
-            let email = currentUser.email || 'لا يوجد بريد';
-            
-            
-            // Load coin balance for display
-            get(ref(db, `players/${uid}/coins`)).then(coinSnap => {
-                const el = document.getElementById('coinCount');
-                if (el) el.textContent = coinSnap.val() || 0;
-            }).catch(() => {});
-            
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                username = data.username || currentUser.displayName || 'مجهول';
+            try {
+                const userRef = ref(db, `players/${uid}`);
+                const snapshot = await get(userRef);
                 
-                document.getElementById('statSpyWins').innerText = data.stats?.spyWins || 0;
-                document.getElementById('statInnocentWins').innerText = data.stats?.innocentWins || 0;
-                document.getElementById('statTotalGames').innerText = data.stats?.totalGames || 0;
-            } else if (currentUser.displayName) {
-                username = currentUser.displayName;
+                let username = 'مجهول';
+                let email = currentUser.email || 'لا يوجد بريد';
+                
+                // Load coin balance for display (if element exists)
+                const coinEl = document.getElementById('coinCount');
+                if (coinEl) {
+                    try {
+                        const coinSnap = await get(ref(db, `players/${uid}/coins`));
+                        coinEl.textContent = coinSnap.val() || 0;
+                    } catch (error) {
+                        console.log('Could not load coins:', error);
+                    }
+                }
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    username = data.username || currentUser.displayName || 'مجهول';
+                    
+                    document.getElementById('statSpyWins').innerText = data.stats?.spyWins || 0;
+                    document.getElementById('statInnocentWins').innerText = data.stats?.innocentWins || 0;
+                    document.getElementById('statTotalGames').innerText = data.stats?.totalGames || 0;
+                } else if (currentUser.displayName) {
+                    username = currentUser.displayName;
+                }
+                
+                document.getElementById('displayUsername').innerText = username;
+                document.getElementById('displayEmail').innerText = email;
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                // Set fallback values
+                document.getElementById('displayUsername').innerText = currentUser.displayName || 'مجهول';
+                document.getElementById('displayEmail').innerText = currentUser.email || 'لا يوجد بريد';
             }
-            
-            document.getElementById('displayUsername').innerText = username;
-            document.getElementById('displayEmail').innerText = email;
         }
 
         // Google Re-authentication
@@ -355,7 +414,7 @@ const firebaseConfig = {
                 await reauthenticateWithPopup(currentUser, provider);
                 alert('تم التحقق بنجاح!');
             } catch (error) {
-                console.error(error);
+                console.error('Reauth error:', error);
                 alert('فشل التحقق: ' + error.message);
             }
         });
@@ -384,7 +443,7 @@ const firebaseConfig = {
                 alert('تم حذف الحساب بنجاح');
                 window.location.href = 'home.html';
             } catch (error) {
-                console.error(error);
+                console.error('Delete error:', error);
                 
                 if (error.code === 'auth/requires-recent-login') {
                     alert('يجب إعادة تسجيل الدخول قبل حذف الحساب. الرجاء تسجيل الخروج ثم الدخول مرة أخرى.');
@@ -402,7 +461,7 @@ const firebaseConfig = {
                 localStorage.removeItem('eljasus_user_email');
                 window.location.href = 'login.html';
             } catch (error) {
-                console.error(error);
+                console.error('Logout error:', error);
                 alert('فشل تسجيل الخروج: ' + error.message);
             }
         });
@@ -412,9 +471,9 @@ const firebaseConfig = {
     <script src="qr-notifications.js" defer></script>
     <script src="dialogs.js"></script>
 <script>
-    window.alert   = (msg)             => UIAlert(msg);
-    window.confirm = (msg)             => UIConfirm(msg);
-    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+    window.alert   = (msg)             => UIAlert ? UIAlert(msg) : alert(msg);
+    window.confirm = (msg)             => UIConfirm ? UIConfirm(msg) : confirm(msg);
+    window.prompt  = (msg, defaultVal) => UIPrompt ? UIPrompt(msg, { defaultValue: defaultVal }) : prompt(msg, defaultVal);
 </script>
     <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
     <script src="moderation.js"></script>

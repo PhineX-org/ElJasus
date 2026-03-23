@@ -1198,13 +1198,13 @@
                         <img src="ElJasus.png" alt="El Jasus" class="footer-logo">
                         <h3>الجاسوس</h3>
                         <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">
-                            لعبة جماعية مثيرة تجمع الأصدقاء في تجربة مليئة بالتشويق والإثارة
+                            لعبة جماعية بسيطة وممتعه تجمع الأصدقاء والعائلة في تجربة مليئة بالتشويق والمتعه
                         </p>
                         <div class="social-links" style="margin-top: 1.5rem;">
                             <a href="https://discord.gg/xBQ3ewVVHk" target="_blank" class="social-link">
                                 <i class="fab fa-discord"></i>
                             </a>
-                            <a href="https://github.com/ahmedelgoharymessi-dot" target="_blank" class="social-link">
+                            <a href="https://github.com/PhineX-org" target="_blank" class="social-link">
                                 <i class="fab fa-github"></i>
                             </a>
                             <a href="https://www.youtube.com/channel/UCslNCf9VtxpFH_gtA1VHFyQ" target="_blank" class="social-link">
@@ -1230,7 +1230,7 @@
                         <ul>
                             <li><a href="https://discord.gg/xBQ3ewVVHk" target="_blank">Discord</a></li>
                             <li><a href="bugreport.html">الإبلاغ عن مشكلة</a></li>
-                            <li><a href="https://phinex-org.github.io/PhineX/" target="_blank">PhineX</a></li>
+                            <li><a href="https://phinex-org.github.io/PhineX" target="_blank">PhineX</a></li>
                         </ul>
                     </div>
                 </div>
@@ -1378,5 +1378,22 @@
         window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
     </script>
     <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
+    <script>
+// Force service worker update on page load
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+            registration.update(); // Force check for updates
+            // Optionally unregister to force fresh install
+            // registration.unregister();
+        });
+    });
+    
+    // Listen for new service worker
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+    });
+}
+</script>
 </body>
 </html>

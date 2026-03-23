@@ -14,7 +14,6 @@
     <link rel="icon" type="image/png" href="ElJasus.png">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
     <style>
         :root{--primary:#00f2ff;--secondary:#7c30ff;}
@@ -44,7 +43,9 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
         <a href="account.html" class="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-all">
-            <i class="fas fa-arrow-right text-xl"></i>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
             <span class="text-sm font-bold">رجوع</span>
         </a>
         <div class="text-center">
@@ -58,19 +59,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="glass rounded-2xl p-5">
             <p class="text-xs text-gray-400 uppercase font-bold mb-2">إجمالي المباريات</p>
-            <p id="kpi-total"   class="stat-num text-cyan-400">0</p>
+            <p id="kpi-total" class="stat-num text-cyan-400">0</p>
         </div>
         <div class="glass rounded-2xl p-5">
             <p class="text-xs text-gray-400 uppercase font-bold mb-2">نسبة الفوز</p>
-            <p id="kpi-wr"      class="stat-num text-green-400">0%</p>
+            <p id="kpi-wr" class="stat-num text-green-400">0%</p>
         </div>
         <div class="glass rounded-2xl p-5">
             <p class="text-xs text-gray-400 uppercase font-bold mb-2">انتصارات جاسوس</p>
-            <p id="kpi-spy"     class="stat-num text-red-400">0</p>
+            <p id="kpi-spy" class="stat-num text-red-400">0</p>
         </div>
         <div class="glass rounded-2xl p-5">
             <p class="text-xs text-gray-400 uppercase font-bold mb-2">أطول سلسلة</p>
-            <p id="kpi-streak"  class="stat-num text-orange-400">0</p>
+            <p id="kpi-streak" class="stat-num text-orange-400">0</p>
         </div>
     </div>
 
@@ -111,7 +112,9 @@
     <div class="glass rounded-2xl p-6" style="border-image:linear-gradient(135deg,rgba(239,68,68,.4),rgba(239,68,68,.1)) 1;">
         <div class="flex items-center gap-3 mb-5">
             <div class="w-12 h-12 rounded-xl bg-red-500/20 border-2 border-red-500/30 flex items-center justify-center">
-                <i class="fas fa-flag text-red-400 text-xl"></i>
+                <svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
+                </svg>
             </div>
             <div>
                 <h3 class="text-lg font-black text-red-400">الإبلاغ عن لاعب</h3>
@@ -152,9 +155,11 @@
                 style="font-family:'Cairo',sans-serif;"></textarea>
         </div>
 
-        <button onclick="submitReport()" class="mt-4 px-8 py-3 rounded-xl font-black text-sm uppercase"
+        <button onclick="submitReport()" class="mt-4 px-8 py-3 rounded-xl font-black text-sm uppercase flex items-center gap-2"
             style="background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 0 20px rgba(239,68,68,.4);">
-            <i class="fas fa-flag ml-2"></i>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
+            </svg>
             إرسال البلاغ
         </button>
     </div>
@@ -163,8 +168,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-import { getDatabase, ref, get, push, set } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
-
+import { getDatabase, ref, get, push } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
@@ -177,19 +181,22 @@ const firebaseConfig = {
   measurementId: "G-N4K79FP56N"
 };
 
-
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
-window._firebaseFns = { ref, get, update, onValue, push, serverTimestamp };
+window._firebaseFns = { ref, get, push };
 
 let currentUser = null;
 let selectedReason = '';
 let userData = {};
 
 window.selectReason = (el, reason) => {
-    document.querySelectorAll('.report-tag').forEach(t => t.style.fontWeight = '700');
-    el.style.fontWeight = '900'; el.style.boxShadow = '0 0 12px currentColor';
+    document.querySelectorAll('.report-tag').forEach(t => {
+        t.style.fontWeight = '700';
+        t.style.boxShadow = '';
+    });
+    el.style.fontWeight = '900';
+    el.style.boxShadow = '0 0 12px currentColor';
     selectedReason = reason;
 };
 
@@ -201,23 +208,28 @@ window.submitReport = async () => {
     if (!username) { alert('الرجاء إدخال اسم المستخدم'); return; }
     if (!selectedReason) { alert('الرجاء اختيار سبب البلاغ'); return; }
 
-    await push(ref(db, 'reports'), {
-        reportedUsername: username,
-        reportedBy: currentUser.uid,
-        reportedByUsername: currentUser.displayName || 'مجهول',
-        reason: selectedReason,
-        description: desc,
-        roomCode: room || null,
-        timestamp: Date.now(),
-        status: 'pending'
-    });
+    try {
+        await push(ref(db, 'reports'), {
+            reportedUsername: username,
+            reportedBy: currentUser.uid,
+            reportedByUsername: currentUser.displayName || 'مجهول',
+            reason: selectedReason,
+            description: desc,
+            roomCode: room || null,
+            timestamp: Date.now(),
+            status: 'pending'
+        });
 
-    alert('تم إرسال البلاغ. شكراً لمساعدتنا في الحفاظ على بيئة لعب جيدة!');
-    document.getElementById('report-username').value = '';
-    document.getElementById('report-room').value = '';
-    document.getElementById('report-desc').value = '';
-    selectedReason = '';
-    document.querySelectorAll('.report-tag').forEach(t => t.style.boxShadow = '');
+        alert('تم إرسال البلاغ. شكراً لمساعدتنا في الحفاظ على بيئة لعب جيدة!');
+        document.getElementById('report-username').value = '';
+        document.getElementById('report-room').value = '';
+        document.getElementById('report-desc').value = '';
+        selectedReason = '';
+        document.querySelectorAll('.report-tag').forEach(t => t.style.boxShadow = '');
+    } catch (error) {
+        console.error('Error submitting report:', error);
+        alert('حدث خطأ أثناء إرسال البلاغ. يرجى المحاولة مرة أخرى.');
+    }
 };
 
 // ── LOAD ANALYTICS ────────────────────────
@@ -226,8 +238,13 @@ onAuthStateChanged(auth, async user => {
     currentUser = user;
     const snap = await get(ref(db, `players/${user.uid}`));
     if (!snap.exists()) return;
-    await MOD.init(db, user);
-    if (document.getElementById('_ej_ban')) return;
+    
+    // Load moderation if available
+    if (typeof MOD !== 'undefined' && MOD.init) {
+        await MOD.init(db, user);
+        if (document.getElementById('_ej_ban')) return;
+    }
+    
     userData = snap.val();
     const stats = userData.stats || {};
     renderKPIs(stats);
@@ -326,9 +343,9 @@ function renderHistory(history) {
     <link rel="stylesheet" href="mobile.css">
     <script src="dialogs.js"></script>
 <script>
-    window.alert   = (msg)             => UIAlert(msg);
-    window.confirm = (msg)             => UIConfirm(msg);
-    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+    window.alert   = (msg)             => UIAlert ? UIAlert(msg) : alert(msg);
+    window.confirm = (msg)             => UIConfirm ? UIConfirm(msg) : confirm(msg);
+    window.prompt  = (msg, defaultVal) => UIPrompt ? UIPrompt(msg, { defaultValue: defaultVal }) : prompt(msg, defaultVal);
 </script>
     <script src="sound-system.js" defer></script>
     <script src="qr-notifications.js" defer></script>

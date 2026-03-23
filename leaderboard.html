@@ -11,10 +11,8 @@
     <title>لوحة المتصدرين | El Jasus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" href="ElJasus.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="mobile.css">
     <script src="sound-system.js" defer></script>
     <script src="qr-notifications.js" defer></script>
@@ -282,14 +280,18 @@
         <div class="flex items-center justify-between">
             <!-- Back Button -->
             <a href="home.html" class="flex items-center gap-2 text-gray-400 hover:text-cyan-400 transition-all hover:translate-x-1">
-                <i class="fas fa-arrow-right text-xl"></i>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
                 <span class="text-sm font-bold">رجوع</span>
             </a>
             
             <!-- Title -->
             <div class="text-center flex-1">
                 <div class="flex items-center justify-center gap-3 mb-2">
-                    <i class="fas fa-trophy text-4xl text-yellow-500 trophy-icon"></i>
+                    <svg class="w-10 h-10 text-yellow-500 trophy-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                    </svg>
                 </div>
                 <h1 class="text-3xl font-black uppercase tracking-tight neon-text">
                     لوحة المتصدرين
@@ -299,7 +301,9 @@
 
             <!-- Refresh Button -->
             <button id="refreshBtn" class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border-2 border-cyan-500/30 flex items-center justify-center hover:scale-110 transition-all group">
-                <i class="fas fa-sync-alt text-cyan-400 group-hover:rotate-180 transition-transform duration-500"></i>
+                <svg class="w-5 h-5 text-cyan-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
             </button>
         </div>
     </header>
@@ -307,7 +311,7 @@
     <div class="max-w-6xl mx-auto relative z-10">
         
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate__animated animate__fadeIn">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             
             <!-- Total Players -->
             <div class="glass rounded-2xl p-5 stat-card">
@@ -317,7 +321,9 @@
                         <h3 id="totalPlayers" class="text-3xl font-black text-cyan-400" style="font-family: 'Orbitron', sans-serif;">0</h3>
                     </div>
                     <div class="w-16 h-16 rounded-full bg-cyan-500/20 border-2 border-cyan-500/30 flex items-center justify-center">
-                        <i class="fas fa-users text-2xl text-cyan-400"></i>
+                        <svg class="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -330,7 +336,9 @@
                         <h3 id="totalGames" class="text-3xl font-black text-purple-400" style="font-family: 'Orbitron', sans-serif;">0</h3>
                     </div>
                     <div class="w-16 h-16 rounded-full bg-purple-500/20 border-2 border-purple-500/30 flex items-center justify-center">
-                        <i class="fas fa-gamepad text-2xl text-purple-400"></i>
+                        <svg class="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z"/>
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -343,36 +351,46 @@
                         <h3 id="bestSpy" class="text-lg font-black text-red-400 truncate max-w-[150px]">---</h3>
                     </div>
                     <div class="w-16 h-16 rounded-full bg-red-500/20 border-2 border-red-500/30 flex items-center justify-center">
-                        <i class="fas fa-user-secret text-2xl text-red-400"></i>
+                        <svg class="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Tabs Navigation -->
-        <div class="glass rounded-2xl p-2 mb-6 animate__animated animate__fadeIn">
+        <div class="glass rounded-2xl p-2 mb-6">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <button onclick="switchTab('spy')" id="tab-spy" class="tab-btn active px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-user-secret ml-2"></i>
+                <button onclick="switchTab('spy')" id="tab-spy" class="tab-btn active px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
                     انتصارات الجواسيس
                 </button>
-                <button onclick="switchTab('innocent')" id="tab-innocent" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-shield-alt ml-2"></i>
+                <button onclick="switchTab('innocent')" id="tab-innocent" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
                     انتصارات الأبرياء
                 </button>
-                <button onclick="switchTab('total')" id="tab-total" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-trophy ml-2"></i>
+                <button onclick="switchTab('total')" id="tab-total" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                    </svg>
                     الإجمالي
                 </button>
-                <button onclick="switchTab('rank')" id="tab-rank" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all">
-                    <i class="fas fa-crown ml-2"></i>
+                <button onclick="switchTab('rank')" id="tab-rank" class="tab-btn px-4 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
                     الرتب
                 </button>
             </div>
         </div>
 
         <!-- Leaderboard Content -->
-        <div class="animate__animated animate__fadeIn">
+        <div>
             
             <!-- Spy Wins Leaderboard -->
             <div id="leaderboard-spy" class="leaderboard-content">
@@ -380,7 +398,9 @@
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                             <span class="w-10 h-10 rounded-lg bg-red-500/20 border-2 border-red-500/30 flex items-center justify-center">
-                                <i class="fas fa-user-secret text-red-400"></i>
+                                <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                </svg>
                             </span>
                             <span class="neon-text">انتصارات الجواسيس</span>
                         </h2>
@@ -404,7 +424,9 @@
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                             <span class="w-10 h-10 rounded-lg bg-green-500/20 border-2 border-green-500/30 flex items-center justify-center">
-                                <i class="fas fa-shield-alt text-green-400"></i>
+                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
                             </span>
                             <span class="neon-text">انتصارات الأبرياء</span>
                         </h2>
@@ -428,7 +450,9 @@
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                             <span class="w-10 h-10 rounded-lg bg-yellow-500/20 border-2 border-yellow-500/30 flex items-center justify-center">
-                                <i class="fas fa-trophy text-yellow-400"></i>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                                </svg>
                             </span>
                             <span class="neon-text">إجمالي المباريات</span>
                         </h2>
@@ -446,6 +470,25 @@
                 </div>
             </div>
 
+            <!-- Rank Leaderboard -->
+            <div id="leaderboard-rank" class="leaderboard-content hidden">
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-xl font-black mb-2 flex items-center gap-2">
+                        <span class="w-10 h-10 rounded-lg bg-yellow-500/20 border-2 border-yellow-500/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </span>
+                        ترتيب الرتب
+                    </h2>
+                    <p id="season-name" class="text-cyan-400 text-sm font-bold mb-1"></p>
+                    <p id="season-dates" class="text-gray-500 text-xs mb-4"></p>
+                    <div class="grid grid-cols-5 gap-2 mb-5" id="rank-tier-counts"></div>
+                    <div id="rank-leaderboard-list" class="space-y-2">
+                        <p class="text-gray-400 text-center py-4">اضغط على تبويب الرتب لتحميلها</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -467,7 +510,7 @@ const firebaseConfig = {
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        window._firebaseFns = { ref, get, update, onValue, push, serverTimestamp };
+        window._firebaseFns = { ref, get, onValue };
 
         let allPlayers = [];
 
@@ -480,6 +523,9 @@ const firebaseConfig = {
             // Update content
             document.querySelectorAll('.leaderboard-content').forEach(content => content.classList.add('hidden'));
             document.getElementById(`leaderboard-${tab}`).classList.remove('hidden');
+            
+            // Load rank leaderboard when tab is clicked
+            if (tab === 'rank') loadRankLeaderboard();
         };
 
         // Fetch Leaderboard Data
@@ -548,7 +594,9 @@ const firebaseConfig = {
             if (players.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-16 empty-state">
-                        <i class="fas fa-inbox text-6xl text-gray-700 mb-4"></i>
+                        <svg class="w-16 h-16 text-gray-700 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
                         <h3 class="text-xl font-black text-gray-400 mb-2">لا توجد بيانات</h3>
                         <p class="text-sm text-gray-600">لم يلعب أحد بعد!</p>
                     </div>
@@ -556,24 +604,22 @@ const firebaseConfig = {
                 return;
             }
 
+            const iconMap = {
+                spy: '<svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>',
+                innocent: '<svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                total: '<svg class="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z"/></svg>'
+            };
+
+            const colorMap = {
+                spy: 'text-red-400',
+                innocent: 'text-green-400',
+                total: 'text-purple-400'
+            };
+
             container.innerHTML = players.map((player, index) => {
                 const rank = index + 1;
                 const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
                 const medalClass = rank === 1 ? 'medal-gold' : rank === 2 ? 'medal-silver' : rank === 3 ? 'medal-bronze' : '';
-                
-                let icon = '';
-                let statColor = '';
-                
-                if (type === 'spy') {
-                    icon = '<i class="fas fa-user-secret text-red-400"></i>';
-                    statColor = 'text-red-400';
-                } else if (type === 'innocent') {
-                    icon = '<i class="fas fa-shield-alt text-green-400"></i>';
-                    statColor = 'text-green-400';
-                } else {
-                    icon = '<i class="fas fa-gamepad text-purple-400"></i>';
-                    statColor = 'text-purple-400';
-                }
 
                 return `
                     <div class="glass rounded-xl p-4 border-2 ${rankClass} hover:border-cyan-500/50 transition-all group">
@@ -611,8 +657,8 @@ const firebaseConfig = {
                             <!-- Stat -->
                             <div class="flex-shrink-0 text-right">
                                 <div class="flex items-center gap-2 mb-1">
-                                    ${icon}
-                                    <span class="text-2xl font-black ${statColor}" style="font-family: 'Orbitron', sans-serif;">
+                                    ${iconMap[type]}
+                                    <span class="text-2xl font-black ${colorMap[type]}" style="font-family: 'Orbitron', sans-serif;">
                                         ${player[statKey]}
                                     </span>
                                 </div>
@@ -626,25 +672,9 @@ const firebaseConfig = {
             }).join('');
         }
 
-        // Refresh Button
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            const btn = document.getElementById('refreshBtn');
-            btn.querySelector('i').classList.add('fa-spin');
-            
-            fetchLeaderboard();
-            
-            setTimeout(() => {
-                btn.querySelector('i').classList.remove('fa-spin');
-            }, 1000);
-        });
-
-        // Initialize
-        fetchLeaderboard();
-
         // RANK LEADERBOARD
         const RANK_ORDER  = {Diamond:5,Platinum:4,Gold:3,Silver:2,Bronze:1};
         const RANK_COLORS = {Diamond:'#00f2ff',Platinum:'#e5e4e2',Gold:'#ffd700',Silver:'#c0c0c0',Bronze:'#cd7f32'};
-        const RANK_ICONS  = {Diamond:'\u{1F4E0}',Platinum:'\u{1F48E}',Gold:'\u{1F947}',Silver:'\u{1F948}',Bronze:'\u{1F949}'};
 
         function loadRankLeaderboard() {
             const listEl = document.getElementById('rank-leaderboard-list');
@@ -688,30 +718,18 @@ const firebaseConfig = {
             });
         }
 
-        const _origSwitch = window.switchTab;
-        window.switchTab = (tab) => { _origSwitch(tab); if(tab==='rank') loadRankLeaderboard(); };
+        // Refresh Button
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            fetchLeaderboard();
+        });
 
+        // Initialize
+        fetchLeaderboard();
     </script>
-
-        <!-- Rank Leaderboard -->
-        <div id="leaderboard-rank" class="leaderboard-content hidden">
-            <div class="glass rounded-2xl p-6">
-                <h2 class="text-xl font-black mb-2 flex items-center gap-2">
-                    <span class="w-10 h-10 rounded-lg bg-yellow-500/20 border-2 border-yellow-500/30 flex items-center justify-center"><i class="fas fa-crown text-yellow-400"></i></span>
-                    ترتيب الرتب
-                </h2>
-                <p id="season-name" class="text-cyan-400 text-sm font-bold mb-1"></p>
-                <p id="season-dates" class="text-gray-500 text-xs mb-4"></p>
-                <div class="grid grid-cols-5 gap-2 mb-5" id="rank-tier-counts"></div>
-                <div id="rank-leaderboard-list" class="space-y-2">
-                    <p class="text-gray-400 text-center py-4">اضغط على تبويب الرتب لتحميلها</p>
-                </div>
-            </div>
-        </div>
 <script>
-    window.alert   = (msg)             => UIAlert(msg);
-    window.confirm = (msg)             => UIConfirm(msg);
-    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+    window.alert   = (msg)             => UIAlert ? UIAlert(msg) : alert(msg);
+    window.confirm = (msg)             => UIConfirm ? UIConfirm(msg) : confirm(msg);
+    window.prompt  = (msg, defaultVal) => UIPrompt ? UIPrompt(msg, { defaultValue: defaultVal }) : prompt(msg, defaultVal);
 </script>
     <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
 </body>
