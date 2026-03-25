@@ -875,7 +875,7 @@
         </div>
     </div>
 
-    <!-- VOICE PANEL (will be created by voice-chat.js) -->
+    <!-- VOICE PANEL -->
     
     <!-- FRIENDS PANEL -->
     <div id="friendsPanel" class="hidden modal-overlay" style="z-index:2000;">
@@ -1083,7 +1083,7 @@
             secretWord: null,
             category: null,
             revealedPlayers: [],
-            suspects: {},  // Now supports multiple suspects: { myUid: [uid1, uid2, ...] }
+            suspects: {},
             votingReady: {},
             votes: {},
             spyHintsUsed: 0
@@ -1379,7 +1379,7 @@
                 
                 let statusTag = '';
                 if (!player.connected || player.status === 'disconnected') {
-                    statusTag = '<span class="status-tag status-disconnected">منفصل</span>';
+                    statusTag = '<span class="status-tag status-disconnected">غير متصل</span>';
                 } else if (player.status === 'idle') {
                     statusTag = '<span class="status-tag status-idle">غير نشط</span>';
                 } else {
@@ -2617,7 +2617,7 @@
     </script>
 
     <!-- Load voice chat script -->
-    <script src="voice-chat-fixed.js"></script>
+    <script src="voice-chat.js"></script>
     
     <!-- Load screenshot system -->
     <script src="screenshot.js"></script>
