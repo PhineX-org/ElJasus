@@ -142,6 +142,19 @@
             box-shadow: 0 0 15px rgba(239,68,68,0.6);
         }
 
+        /* Suspect badges - NEW for multiple suspects */
+        .suspect-badge {
+            display: inline-block;
+            background: rgba(239,68,68,0.2);
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #ef4444;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin: 2px;
+        }
+
         /* Animations */
         @keyframes fadeInUp {
             from {
@@ -170,6 +183,12 @@
 
         .fade-in-up {
             animation: fadeInUp 0.5s ease-out;
+        }
+
+        /* Reveal card - disable pointer events when not your turn */
+        .reveal-card.not-your-turn {
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
         /* Responsive utilities */
@@ -395,6 +414,131 @@
         .friend-status-dot.offline {
             background: #666;
         }
+
+        /* IMPROVED REPORT PANEL STYLES */
+        .report-panel-header {
+            background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1));
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            border-bottom: 2px solid rgba(239,68,68,0.3);
+            margin: -24px -24px 20px -24px;
+        }
+
+        .report-form-section {
+            margin-bottom: 20px;
+        }
+
+        .report-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 8px;
+        }
+
+        .report-select,
+        .report-textarea {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(239,68,68,0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .report-select:focus,
+        .report-textarea:focus {
+            border-color: rgba(239,68,68,0.5);
+            background: rgba(0,0,0,0.6);
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+        }
+
+        .report-select option {
+            background: #1a1535;
+            padding: 8px;
+        }
+
+        .report-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .report-reason-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .report-reason-option {
+            padding: 12px;
+            background: rgba(239,68,68,0.08);
+            border: 2px solid rgba(239,68,68,0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .report-reason-option:hover {
+            background: rgba(239,68,68,0.15);
+            border-color: rgba(239,68,68,0.4);
+            transform: translateY(-2px);
+        }
+
+        .report-reason-option.selected {
+            background: rgba(239,68,68,0.25);
+            border-color: rgba(239,68,68,0.6);
+            box-shadow: 0 0 15px rgba(239,68,68,0.3);
+        }
+
+        .report-submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 20px rgba(239,68,68,0.4);
+        }
+
+        .report-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(239,68,68,0.6);
+        }
+
+        .report-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .report-info-box {
+            background: rgba(251,191,36,0.1);
+            border: 1px solid rgba(251,191,36,0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .report-info-box i {
+            color: #fbbf24;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -546,7 +690,7 @@
                     </div>
                 </div>
 
-                <!-- Suspects List -->
+                <!-- Suspects List with improved multi-suspect UI -->
                 <div id="suspectsList" class="grid player-grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6 max-h-96 overflow-y-auto custom-scrollbar pr-2">
                     <!-- Player cards with suspect buttons -->
                 </div>
@@ -770,49 +914,87 @@
         </div>
     </div>
 
-    <!-- REPORTS PANEL -->
+    <!-- IMPROVED REPORTS PANEL -->
     <div id="reportsPanel" class="hidden modal-overlay" style="z-index:2000;">
-        <div class="modal-content glass rounded-3xl p-6 border-2 border-danger/30">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-black" style="color:#f87171;">🚩 الإبلاغ عن لاعب</h3>
-                <button onclick="toggleReportsPanel()" class="p-2 rounded-lg hover:bg-white/10">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+        <div class="modal-content glass rounded-3xl p-6 border-2 border-danger/30" style="padding-top: 24px;">
+            <!-- Enhanced Header -->
+            <div class="report-panel-header">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h3 class="text-2xl font-black mb-1" style="color:#f87171;">🚩 الإبلاغ عن لاعب</h3>
+                        <p class="text-xs opacity-70">ساعدنا في الحفاظ على مجتمع آمن وممتع للجميع</p>
+                    </div>
+                    <button onclick="toggleReportsPanel()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <i class="fas fa-times text-xl" style="color:#f87171;"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Recent players -->
-            <div class="mb-4">
-                <label class="text-xs font-bold opacity-60 block mb-2">اختر اللاعب:</label>
-                <select id="reportPlayerSelect" class="w-full bg-black/50 border-2 border-danger/20 rounded-xl p-3 outline-none">
+            <!-- Info Box -->
+            <div class="report-info-box">
+                <i class="fas fa-info-circle"></i>
+                البلاغات الكاذبة قد تؤدي إلى حظر حسابك. يُرجى الإبلاغ فقط عن المخالفات الحقيقية.
+            </div>
+
+            <!-- Player Selection -->
+            <div class="report-form-section">
+                <label class="report-label">
+                    <i class="fas fa-user ml-1"></i> اللاعب المخالف
+                </label>
+                <select id="reportPlayerSelect" class="report-select">
                     <option value="">-- اختر لاعباً --</option>
                 </select>
             </div>
 
-            <!-- Report reason -->
-            <div class="mb-4">
-                <label class="text-xs font-bold opacity-60 block mb-2">سبب البلاغ:</label>
-                <select id="reportReason" class="w-full bg-black/50 border-2 border-danger/20 rounded-xl p-3 outline-none">
-                    <option value="cheating">🎰 غش في اللعبة</option>
-                    <option value="harassment">⚠️ تحرش أو إيذاء</option>
-                    <option value="offensive">🤬 محتوى مسيء</option>
-                    <option value="spam">📵 رسائل مزعجة</option>
-                    <option value="hate_speech">🚫 خطاب كراهية</option>
-                    <option value="threats">💀 تهديدات</option>
-                    <option value="other">❓ أخرى</option>
-                </select>
+            <!-- Reason Selection (Grid Layout) -->
+            <div class="report-form-section">
+                <label class="report-label">
+                    <i class="fas fa-exclamation-circle ml-1"></i> سبب البلاغ
+                </label>
+                <div class="report-reason-grid">
+                    <div class="report-reason-option" onclick="selectReportReason('cheating', this)">
+                        <div style="font-size:20px;margin-bottom:4px;">🎰</div>
+                        <div>غش في اللعبة</div>
+                    </div>
+                    <div class="report-reason-option" onclick="selectReportReason('harassment', this)">
+                        <div style="font-size:20px;margin-bottom:4px;">⚠️</div>
+                        <div>تحرش أو إيذاء</div>
+                    </div>
+                    <div class="report-reason-option" onclick="selectReportReason('offensive', this)">
+                        <div style="font-size:20px;margin-bottom:4px;">🤬</div>
+                        <div>محتوى مسيء</div>
+                    </div>
+                    <div class="report-reason-option" onclick="selectReportReason('spam', this)">
+                        <div style="font-size:20px;margin-bottom:4px;">📵</div>
+                        <div>رسائل مزعجة</div>
+                    </div>
+                    <div class="report-reason-option" onclick="selectReportReason('hate_speech', this)">
+                        <div style="font-size:20px;margin-bottom:4px;">🚫</div>
+                        <div>خطاب كراهية</div>
+                    </div>
+                    <div class="report-reason-option" onclick="selectReportReason('threats', this)">
+                        <div style="font-size:20px;margin-bottom:4px;">💀</div>
+                        <div>تهديدات</div>
+                    </div>
+                </div>
+                <input type="hidden" id="reportReason" value="">
             </div>
 
             <!-- Description -->
-            <div class="mb-4">
-                <label class="text-xs font-bold opacity-60 block mb-2">التفاصيل (اختياري):</label>
-                <textarea id="reportDescription" rows="3" maxlength="500"
-                    class="w-full bg-black/50 border-2 border-danger/20 rounded-xl p-3 outline-none resize-none"
-                    placeholder="اشرح ما حدث..."></textarea>
+            <div class="report-form-section">
+                <label class="report-label">
+                    <i class="fas fa-align-right ml-1"></i> التفاصيل (اختياري)
+                </label>
+                <textarea id="reportDescription" class="report-textarea" maxlength="500"
+                    placeholder="اشرح ما حدث بالتفصيل... (اختياري)"></textarea>
+                <div class="text-xs opacity-40 mt-1 text-left">
+                    <span id="reportCharCount">0</span> / 500
+                </div>
             </div>
 
-            <!-- Submit -->
-            <button onclick="submitReport()" class="w-full bg-gradient-to-r from-danger to-red-900 py-3 rounded-xl font-black">
-                <i class="fas fa-flag ml-2"></i>إرسال البلاغ
+            <!-- Submit Button -->
+            <button onclick="submitReport()" class="report-submit-btn">
+                <i class="fas fa-paper-plane ml-2"></i>إرسال البلاغ
             </button>
         </div>
     </div>
@@ -857,7 +1039,7 @@
         const db = getDatabase(app);
 
         // ═══════════════════════════════════════════════════════════
-        // INJECT FIREBASE FUNCTIONS FOR MODERATION SYSTEM
+        // INJECT FIREBASE FUNCTIONS FOR MODERATION SYSTEM & VOICE CHAT
         // ═══════════════════════════════════════════════════════════
         window._firebaseFns = {
             ref:      (database, path) => ref(database, path),
@@ -865,8 +1047,13 @@
             set:      (reference, value) => set(reference, value),
             update:   (reference, value) => update(reference, value),
             remove:   (reference) => remove(reference),
+            push:     (reference, value) => push(reference, value),
             onValue:  (reference, callback) => {
                 const unsub = onValue(reference, callback);
+                return unsub;
+            },
+            onChildAdded: (reference, callback) => {
+                const unsub = onChildAdded(reference, callback);
                 return unsub;
             },
             serverTimestamp: () => serverTimestamp(),
@@ -896,7 +1083,7 @@
             secretWord: null,
             category: null,
             revealedPlayers: [],
-            suspects: {},
+            suspects: {},  // Now supports multiple suspects: { myUid: [uid1, uid2, ...] }
             votingReady: {},
             votes: {},
             spyHintsUsed: 0
@@ -911,6 +1098,7 @@
             console.log('Current Status:', window.gameState.currentStatus);
             console.log('Players:', window.gameState.players);
             console.log('Player Count:', Object.keys(window.gameState.players).length);
+            console.log('Suspects:', window.gameState.suspects);
             console.log('=======================');
             return window.gameState;
         };
@@ -1334,7 +1522,7 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        // REVEAL STATUS
+        // REVEAL STATUS - FIX: Only current player can flip
         // ═══════════════════════════════════════════════════════════
 
         async function handleRevealStatus() {
@@ -1353,8 +1541,18 @@
             document.getElementById('turnIndicator').textContent = `اللاعب ${currentIndex + 1} من ${revealOrder.length}`;
 
             const isMyTurn = currentPlayerId === window.gameState.currentUser.uid;
+            const revealCard = document.getElementById('revealCard');
             
-            if (isMyTurn) {
+            // ✅ FIX: Disable card flipping if not your turn
+            if (!isMyTurn) {
+                revealCard.classList.add('not-your-turn');
+                revealCard.onclick = null;
+                revealCard.title = 'انتظر دورك';
+            } else {
+                revealCard.classList.remove('not-your-turn');
+                revealCard.onclick = flipRevealCard;
+                revealCard.title = 'انقر للكشف';
+                
                 const myRole = roomData.roles?.[window.gameState.currentUser.uid];
                 window.gameState.myRole = myRole;
                 
@@ -1385,43 +1583,82 @@
         }
 
         window.flipRevealCard = function() {
-            document.getElementById('revealCard').classList.toggle('flipped');
+            // Only flip if it's your turn
+            const revealCard = document.getElementById('revealCard');
+            if (revealCard.classList.contains('not-your-turn')) {
+                if (window.showToast) {
+                    showToast('⛔ انتظر دورك');
+                }
+                return;
+            }
+            
+            revealCard.classList.toggle('flipped');
             setTimeout(() => {
                 document.getElementById('nextRevealBtn').classList.remove('hidden');
             }, 600);
         };
 
         window.nextReveal = async function() {
-            const roomRef = ref(db, `rooms/${window.gameState.roomCode}`);
-            const snap = await get(roomRef);
-            const roomData = snap.val();
+            const nextBtn = document.getElementById('nextRevealBtn');
             
-            if (!roomData) return;
+            // ✅ FIX: Disable button immediately to prevent double-clicks
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.5';
+            
+            try {
+                const roomRef = ref(db, `rooms/${window.gameState.roomCode}`);
+                const snap = await get(roomRef);
+                const roomData = snap.val();
+                
+                if (!roomData) return;
 
-            const currentIndex = roomData.currentRevealIndex || 0;
-            const revealOrder = roomData.revealOrder || [];
-            
-            if (currentIndex >= revealOrder.length - 1) {
-                await update(roomRef, {
-                    status: 'discussion',
-                    discussionStartedAt: serverTimestamp()
-                });
-            } else {
-                await update(roomRef, {
-                    currentRevealIndex: currentIndex + 1
-                });
-                document.getElementById('revealCard').classList.remove('flipped');
-                document.getElementById('nextRevealBtn').classList.add('hidden');
+                const currentIndex = roomData.currentRevealIndex || 0;
+                const revealOrder = roomData.revealOrder || [];
+                
+                if (currentIndex >= revealOrder.length - 1) {
+                    await update(roomRef, {
+                        status: 'discussion',
+                        discussionStartedAt: serverTimestamp()
+                    });
+                } else {
+                    await update(roomRef, {
+                        currentRevealIndex: currentIndex + 1
+                    });
+                    document.getElementById('revealCard').classList.remove('flipped');
+                    document.getElementById('nextRevealBtn').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error in nextReveal:', error);
+                if (window.showToast) {
+                    showToast('⛔ حدث خطأ، حاول مرة أخرى');
+                }
+                // Re-enable button on error
+                nextBtn.disabled = false;
+                nextBtn.style.opacity = '1';
             }
         };
 
         // ═══════════════════════════════════════════════════════════
-        // DISCUSSION STATUS
+        // DISCUSSION STATUS - FIX: Multiple suspects support
         // ═══════════════════════════════════════════════════════════
 
         async function handleDiscussionStatus() {
+            // ✅ FIX: Reset spy hints at start of discussion
+            window.gameState.spyHintsUsed = 0;
+            document.getElementById('hintBalance').textContent = '3';
+            document.getElementById('hintList').innerHTML = '';
+            document.getElementById('hintDisplay').classList.add('hidden');
+            
+            const useHintBtn = document.getElementById('useHintBtn');
+            if (useHintBtn) {
+                useHintBtn.disabled = false;
+                useHintBtn.style.opacity = '1';
+            }
+            
             if (window.gameState.myRole === 'spy') {
                 document.getElementById('spyHintSection').classList.remove('hidden');
+            } else {
+                document.getElementById('spyHintSection').classList.add('hidden');
             }
 
             const suspectsRef = ref(db, `rooms/${window.gameState.roomCode}/suspects`);
@@ -1443,12 +1680,21 @@
             const container = document.getElementById('suspectsList');
             const players = window.gameState.players;
             const suspects = window.gameState.suspects;
+            const myUid = window.gameState.currentUser.uid;
             
             container.innerHTML = '';
             
+            // Get my suspect list
+            const mySuspects = suspects[myUid] || [];
+            
             Object.entries(players).forEach(([uid, player]) => {
-                const suspectCount = Object.values(suspects).filter(s => s === uid).length;
-                const isMe = uid === window.gameState.currentUser.uid;
+                // Count how many people suspect this player
+                const suspectCount = Object.values(suspects).filter(suspectList => 
+                    Array.isArray(suspectList) ? suspectList.includes(uid) : suspectList === uid
+                ).length;
+                
+                const isMe = uid === myUid;
+                const iSuspect = mySuspects.includes(uid);
                 
                 const card = document.createElement('div');
                 card.className = `glass rounded-xl p-3 border-2 ${isMe ? 'border-primary' : 'border-white/10'} transition-all relative`;
@@ -1463,11 +1709,11 @@
                         ${!isMe ? `
                             <button onclick="toggleSuspect('${uid}')" 
                                 class="w-full py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                    suspects[window.gameState.currentUser.uid] === uid
+                                    iSuspect
                                         ? 'bg-danger text-white'
                                         : 'bg-white/10 hover:bg-white/20'
                                 }">
-                                ${suspects[window.gameState.currentUser.uid] === uid ? '✓ مشتبه به' : 'ضع كمشتبه'}
+                                ${iSuspect ? '✓ مشتبه به' : 'ضع كمشتبه'}
                             </button>
                         ` : ''}
                     </div>
@@ -1477,16 +1723,31 @@
             });
         }
 
+        // ✅ FIX: Support multiple suspects per player
         window.toggleSuspect = async function(targetUid) {
             const myUid = window.gameState.currentUser.uid;
             const suspectRef = ref(db, `rooms/${window.gameState.roomCode}/suspects/${myUid}`);
             
             const snap = await get(suspectRef);
+            let currentSuspects = snap.val() || [];
             
-            if (snap.val() === targetUid) {
-                await remove(suspectRef);
+            // Ensure it's an array
+            if (!Array.isArray(currentSuspects)) {
+                currentSuspects = currentSuspects ? [currentSuspects] : [];
+            }
+            
+            // Toggle suspect
+            if (currentSuspects.includes(targetUid)) {
+                currentSuspects = currentSuspects.filter(uid => uid !== targetUid);
             } else {
-                await set(suspectRef, targetUid);
+                currentSuspects.push(targetUid);
+            }
+            
+            // Save or remove
+            if (currentSuspects.length > 0) {
+                await set(suspectRef, currentSuspects);
+            } else {
+                await remove(suspectRef);
             }
         };
 
@@ -1852,11 +2113,15 @@
             console.log('Game ended, winner:', winner);
         }
 
+        // ✅ FIX: Reset spy hints when returning to waiting
         window.returnToWaiting = async function() {
             if (!window.gameState.isHost) {
                 alert('فقط المضيف يمكنه إعادة اللعب');
                 return;
             }
+            
+            // Reset local spy hints state
+            window.gameState.spyHintsUsed = 0;
             
             const roomRef = ref(db, `rooms/${window.gameState.roomCode}`);
             await update(roomRef, {
@@ -2038,22 +2303,27 @@
         };
 
         // ═══════════════════════════════════════════════════════════
-        // VOICE CHAT
+        // VOICE CHAT - Initialize when DOM ready
         // ═══════════════════════════════════════════════════════════
 
         window.toggleVoicePanel = function() {
             if (window.VoiceChat) {
-                const panel = document.getElementById('voice-panel');
-                if (panel) {
-                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-                } else {
+                // Check if voice chat instance already exists
+                if (!window.voiceChatInstance) {
                     const playerData = window.gameState.players[window.gameState.currentUser.uid];
-                    window.voiceChat = new VoiceChat(
+                    window.voiceChatInstance = new VoiceChat(
                         db,
                         window.gameState.roomCode,
                         window.gameState.currentUser.uid,
                         playerData?.username || 'لاعب'
                     );
+                }
+                // Toggle panel
+                window.voiceChatInstance._togglePanel();
+            } else {
+                console.warn('VoiceChat not loaded');
+                if (window.showToast) {
+                    showToast('⛔ الدردشة الصوتية غير متوفرة');
                 }
             }
         };
@@ -2218,8 +2488,21 @@
         };
 
         // ═══════════════════════════════════════════════════════════
-        // REPORTS SYSTEM
+        // IMPROVED REPORTS SYSTEM
         // ═══════════════════════════════════════════════════════════
+
+        let selectedReportReason = '';
+
+        window.selectReportReason = function(reason, element) {
+            selectedReportReason = reason;
+            document.getElementById('reportReason').value = reason;
+            
+            // Update UI
+            document.querySelectorAll('.report-reason-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        };
 
         window.toggleReportsPanel = function() {
             const panel = document.getElementById('reportsPanel');
@@ -2227,6 +2510,13 @@
             
             if (!panel.classList.contains('hidden')) {
                 updateReportPlayersList();
+                // Reset form
+                document.getElementById('reportPlayerSelect').value = '';
+                document.getElementById('reportDescription').value = '';
+                document.querySelectorAll('.report-reason-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                selectedReportReason = '';
             }
         };
 
@@ -2247,13 +2537,28 @@
             });
         }
 
+        // Character counter for description
+        document.addEventListener('DOMContentLoaded', () => {
+            const desc = document.getElementById('reportDescription');
+            if (desc) {
+                desc.addEventListener('input', () => {
+                    document.getElementById('reportCharCount').textContent = desc.value.length;
+                });
+            }
+        });
+
         window.submitReport = async function() {
             const targetUid = document.getElementById('reportPlayerSelect').value;
-            const reason = document.getElementById('reportReason').value;
+            const reason = selectedReportReason || document.getElementById('reportReason').value;
             const description = document.getElementById('reportDescription').value.trim();
             
             if (!targetUid) {
                 alert('اختر لاعباً للإبلاغ عنه');
+                return;
+            }
+            
+            if (!reason) {
+                alert('اختر سبب البلاغ');
                 return;
             }
             
@@ -2272,16 +2577,12 @@
             });
             
             if (window.showToast) {
-                showToast('تم إرسال البلاغ بنجاح');
+                showToast('✓ تم إرسال البلاغ بنجاح');
             } else {
                 alert('تم إرسال البلاغ');
             }
             
             toggleReportsPanel();
-            
-            document.getElementById('reportPlayerSelect').value = '';
-            document.getElementById('reportReason').value = 'cheating';
-            document.getElementById('reportDescription').value = '';
         };
 
         // ═══════════════════════════════════════════════════════════
@@ -2316,9 +2617,14 @@
     </script>
 
     <!-- Load voice chat script -->
-    <script src="voice-chat.js"></script>
+    <script src="voice-chat-fixed.js"></script>
     
     <!-- Load screenshot system -->
     <script src="screenshot.js"></script>
+    <script>
+        window.alert   = (msg)             => UIAlert(msg);
+        window.confirm = (msg)             => UIConfirm(msg);
+        window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+    </script>
 </body>
 </html>
