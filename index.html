@@ -13,20 +13,23 @@
     <meta name="keywords" content="الجاسوس, لعبة الجاسوس, ألعاب جماعية, PhineX">
     <meta name="author" content="PhineX">
     <link rel="icon" type="image/png" href="ElJasus.png">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700;800&family=Exo+2:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
-            --cyber-cyan: #00f2ff;
+            --neon-blue: #00d4ff;
+            --electric-blue: #0066ff;
+            --sky-blue: #87ceeb;
             --cyber-purple: #b026ff;
-            --cyber-pink: #ff006e;
-            --cyber-green: #39ff14;
-            --cyber-blue: #0066ff;
+            --deep-purple: #8b5cf6;
+            --neon-green: #39ff14;
+            --lime-green: #00ff88;
             --dark-bg: #000000;
-            --dark-surface: #0a0a0f;
-            --dark-surface-2: #151520;
+            --dark-surface: #050510;
+            --dark-surface-2: #0a0a1a;
+            --dark-surface-3: #151528;
         }
 
         * {
@@ -44,7 +47,7 @@
         }
 
         /* ============================================
-           LOADING SCREEN SYSTEM
+           LOADING SCREEN SYSTEM (PRESERVED)
            ============================================ */
 
         .loading-container {
@@ -102,7 +105,7 @@
             height: auto;
             opacity: 0;
             animation: fadeInLogo 2s ease 1.5s forwards;
-            filter: drop-shadow(0 0 30px var(--cyber-green));
+            filter: drop-shadow(0 0 30px var(--neon-green));
         }
 
         @keyframes fadeInText {
@@ -154,7 +157,7 @@
 
         .amg-container {
             position: relative;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 1rem;
@@ -165,7 +168,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 4rem;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -185,7 +188,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 4rem;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: white;
             background-clip: text;
@@ -304,10 +307,10 @@
             position: absolute;
             width: 2px;
             height: 2px;
-            background: var(--cyber-cyan);
+            background: var(--neon-blue);
             border-radius: 50%;
             animation: particleFloat 15s linear infinite;
-            box-shadow: 0 0 10px var(--cyber-cyan);
+            box-shadow: 0 0 10px var(--neon-blue);
         }
 
         @keyframes particleFloat {
@@ -339,7 +342,7 @@
 
         .circuit-line {
             position: absolute;
-            background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
             height: 1px;
             animation: circuitFlow 8s linear infinite;
         }
@@ -377,11 +380,11 @@
             border: 3px solid transparent;
             border-radius: 50%;
             background: linear-gradient(var(--dark-bg), var(--dark-bg)) padding-box,
-                        linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple), var(--cyber-pink)) border-box;
+                        linear-gradient(135deg, var(--neon-blue), var(--cyber-purple), var(--neon-green)) border-box;
             animation: sphereRotate 8s linear infinite, spherePulse 3s ease-in-out infinite;
             box-shadow: 
-                0 0 40px rgba(0, 242, 255, 0.5),
-                inset 0 0 40px rgba(0, 242, 255, 0.2);
+                0 0 40px rgba(0, 212, 255, 0.5),
+                inset 0 0 40px rgba(0, 212, 255, 0.2);
         }
 
         @keyframes sphereRotate {
@@ -393,13 +396,13 @@
         @keyframes spherePulse {
             0%, 100% {
                 box-shadow: 
-                    0 0 40px rgba(0, 242, 255, 0.5),
-                    inset 0 0 40px rgba(0, 242, 255, 0.2);
+                    0 0 40px rgba(0, 212, 255, 0.5),
+                    inset 0 0 40px rgba(0, 212, 255, 0.2);
             }
             50% {
                 box-shadow: 
-                    0 0 80px rgba(0, 242, 255, 0.8),
-                    inset 0 0 60px rgba(0, 242, 255, 0.4);
+                    0 0 80px rgba(0, 212, 255, 0.8),
+                    inset 0 0 60px rgba(0, 212, 255, 0.4);
             }
         }
 
@@ -426,23 +429,23 @@
             font-size: 4rem;
             font-weight: 900;
             text-transform: uppercase;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             position: relative;
             z-index: 10;
-            text-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
             animation: textGlow 2s ease-in-out infinite;
             letter-spacing: 0.1em;
         }
 
         @keyframes textGlow {
             0%, 100% {
-                filter: drop-shadow(0 0 20px var(--cyber-cyan));
+                filter: drop-shadow(0 0 20px var(--neon-blue));
             }
             50% {
-                filter: drop-shadow(0 0 40px var(--cyber-cyan));
+                filter: drop-shadow(0 0 40px var(--neon-blue));
             }
         }
 
@@ -468,10 +471,10 @@
 
         .loading-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-purple), var(--cyber-pink));
+            background: linear-gradient(90deg, var(--neon-blue), var(--cyber-purple), var(--neon-green));
             width: 0%;
             animation: loadingProgress 4s ease-out forwards;
-            box-shadow: 0 0 20px var(--cyber-cyan);
+            box-shadow: 0 0 20px var(--neon-blue);
         }
 
         @keyframes loadingProgress {
@@ -524,13 +527,13 @@
 
         .glitch::before {
             animation: glitchBefore 3s infinite;
-            color: var(--cyber-cyan);
+            color: var(--neon-blue);
             z-index: -1;
         }
 
         .glitch::after {
             animation: glitchAfter 3s infinite;
-            color: var(--cyber-pink);
+            color: var(--cyber-purple);
             z-index: -2;
         }
 
@@ -559,7 +562,7 @@
         }
 
         /* ============================================
-           MAIN CONTENT STYLES
+           MAIN CONTENT STYLES - REDESIGNED
            ============================================ */
 
         #mainContent {
@@ -573,7 +576,116 @@
             visibility: visible;
         }
 
-        /* Hero section */
+        /* Advanced Background System */
+        .cosmic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 102, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(176, 38, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 30%, rgba(57, 255, 20, 0.1) 0%, transparent 50%),
+                linear-gradient(180deg, #000000 0%, #050510 50%, #0a0a1a 100%);
+        }
+
+        /* Floating Energy Orbs */
+        .energy-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: orbFloat 20s ease-in-out infinite;
+            opacity: 0.3;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--neon-blue) 0%, transparent 70%);
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, var(--cyber-purple) 0%, transparent 70%);
+            top: 60%;
+            right: 15%;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--neon-green) 0%, transparent 70%);
+            bottom: 10%;
+            left: 50%;
+            animation-delay: -10s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(50px, -80px) scale(1.1);
+            }
+            66% {
+                transform: translate(-30px, 50px) scale(0.9);
+            }
+        }
+
+        /* 3D Geometric Grid */
+        .geometric-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            perspective: 1000px;
+        }
+
+        .grid-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform-style: preserve-3d;
+            animation: gridRotate 40s linear infinite;
+        }
+
+        @keyframes gridRotate {
+            0% {
+                transform: perspective(1000px) rotateX(60deg) rotateZ(0deg) translateZ(-200px);
+            }
+            100% {
+                transform: perspective(1000px) rotateX(60deg) rotateZ(360deg) translateZ(-200px);
+            }
+        }
+
+        /* Hero Section - Redesigned */
         .hero-section {
             min-height: 100vh;
             position: relative;
@@ -581,278 +693,488 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            background: radial-gradient(circle at 50% 50%, #0a0515 0%, #000 100%);
-        }
-
-        .hero-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.3;
-        }
-
-        .cyber-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(0,242,255,0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,242,255,0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            animation: gridScroll 30s linear infinite;
-        }
-
-        @keyframes gridScroll {
-            0% {
-                transform: translateY(0) translateX(0);
-            }
-            100% {
-                transform: translateY(40px) translateX(40px);
-            }
-        }
-
-        .floating-hexagons {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .hexagon {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            opacity: 0.1;
-            animation: hexFloat 20s ease-in-out infinite;
-        }
-
-        @keyframes hexFloat {
-            0%, 100% {
-                transform: translateY(0) rotate(0deg);
-            }
-            50% {
-                transform: translateY(-100px) rotate(180deg);
-            }
+            padding: 2rem;
         }
 
         .hero-content {
             position: relative;
             z-index: 10;
             text-align: center;
-            padding: 2rem;
             max-width: 1200px;
+            animation: fadeInUp 1s ease 0.5s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 3D Rotating Logo Container */
+        .logo-container-3d {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 2rem;
+            perspective: 1000px;
+            position: relative;
+        }
+
+        .logo-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: logo3DRotate 20s linear infinite;
+        }
+
+        @keyframes logo3DRotate {
+            0% {
+                transform: rotateY(0deg) rotateX(10deg);
+            }
+            100% {
+                transform: rotateY(360deg) rotateX(10deg);
+            }
         }
 
         .hero-logo {
-            width: 200px;
+            width: 100%;
             height: auto;
-            margin-bottom: 2rem;
-            animation: logoFloat 6s ease-in-out infinite;
-            filter: drop-shadow(0 0 40px var(--cyber-cyan));
+            filter: drop-shadow(0 0 50px var(--neon-blue));
+            position: relative;
+            z-index: 2;
+            animation: logoGlow 3s ease-in-out infinite;
         }
 
-        @keyframes logoFloat {
+        @keyframes logoGlow {
             0%, 100% {
-                transform: translateY(0) rotate(0deg);
+                filter: drop-shadow(0 0 30px var(--neon-blue)) drop-shadow(0 0 60px var(--electric-blue));
             }
             50% {
-                transform: translateY(-20px) rotate(5deg);
+                filter: drop-shadow(0 0 50px var(--cyber-purple)) drop-shadow(0 0 100px var(--deep-purple));
+            }
+        }
+
+        /* Holographic Ring Around Logo */
+        .holo-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 120%;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(var(--dark-bg), var(--dark-bg)) padding-box,
+                        linear-gradient(45deg, var(--neon-blue), var(--cyber-purple), var(--neon-green), var(--neon-blue)) border-box;
+            animation: holoRotate 8s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes holoRotate {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
             }
         }
 
         .hero-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(3rem, 8vw, 6rem);
+            font-family: 'Exo 2', sans-serif;
+            font-size: clamp(3.5rem, 10vw, 7rem);
             font-weight: 900;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple), var(--cyber-pink));
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple), var(--neon-green));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 1rem;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.02em;
             position: relative;
-            animation: titlePulse 4s ease-in-out infinite;
+            text-transform: uppercase;
+            filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.5));
+            animation: titleFloat 6s ease-in-out infinite;
         }
 
-        @keyframes titlePulse {
+        @keyframes titleFloat {
             0%, 100% {
-                filter: drop-shadow(0 0 20px var(--cyber-cyan));
+                transform: translateY(0) scale(1);
             }
             50% {
-                filter: drop-shadow(0 0 40px var(--cyber-purple));
+                transform: translateY(-10px) scale(1.02);
             }
         }
 
         .hero-subtitle {
             font-family: 'Rajdhani', sans-serif;
-            font-size: clamp(1.2rem, 3vw, 2rem);
-            font-weight: 300;
-            letter-spacing: 0.3em;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 3rem;
+            font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+            font-weight: 600;
+            letter-spacing: 0.4em;
+            color: var(--neon-blue);
+            margin-bottom: 2rem;
             text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+            animation: subtitlePulse 4s ease-in-out infinite;
+        }
+
+        @keyframes subtitlePulse {
+            0%, 100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
         }
 
         .hero-description {
             font-family: 'Cairo', sans-serif;
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.8);
-            max-width: 600px;
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            color: rgba(255, 255, 255, 0.85);
+            max-width: 700px;
             margin: 0 auto 3rem;
-            line-height: 1.8;
+            line-height: 2;
+            font-weight: 400;
         }
 
-        /* Cyber buttons */
-        .cyber-btn {
+        /* Advanced 3D Button System */
+        .button-container {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .game-btn {
             position: relative;
-            font-family: 'Orbitron', sans-serif;
+            font-family: 'Exo 2', sans-serif;
             font-size: 1.1rem;
             font-weight: 700;
-            padding: 1.2rem 3rem;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
-            color: #fff;
+            padding: 1.3rem 3rem;
             border: none;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
             cursor: pointer;
             overflow: hidden;
-            transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
+            letter-spacing: 0.15em;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
 
-        .cyber-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .cyber-btn:hover::before {
-            left: 100%;
-        }
-
-        .cyber-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 50px rgba(0, 242, 255, 0.8);
-        }
-
-        .cyber-btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--cyber-cyan);
-        }
-
-        .cyber-btn-secondary:hover {
-            background: rgba(0, 242, 255, 0.1);
-        }
-
-        /* Features section */
-        .features-section {
-            padding: 6rem 2rem;
-            position: relative;
-            background: linear-gradient(180deg, #000 0%, #0a0515 50%, #000 100%);
-        }
-
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 900;
-            text-align: center;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 4rem;
-            letter-spacing: 0.05em;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            position: relative;
-            padding: 2.5rem;
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 242, 255, 0.2);
-            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
-            transition: all 0.4s ease;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
+        .game-btn::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(0, 242, 255, 0.05), rgba(176, 38, 255, 0.05));
-            opacity: 0;
-            transition: opacity 0.4s ease;
+            z-index: -1;
+            transition: transform 0.4s ease;
         }
 
-        .feature-card:hover::before {
-            opacity: 1;
+        .game-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
         }
 
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--cyber-cyan);
-            box-shadow: 0 20px 60px rgba(0, 242, 255, 0.3);
+        .game-btn:hover::after {
+            left: 100%;
         }
 
-        .feature-icon {
-            font-size: 3rem;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1.5rem;
+        /* Primary Button - Neon Blue */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-blue), var(--electric-blue));
+            color: #ffffff;
+            box-shadow: 
+                0 0 30px rgba(0, 212, 255, 0.6),
+                0 10px 30px rgba(0, 102, 255, 0.4),
+                inset 0 0 20px rgba(255, 255, 255, 0.2);
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 0 50px rgba(0, 212, 255, 1),
+                0 15px 40px rgba(0, 102, 255, 0.6),
+                inset 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Secondary Button - Purple Gradient */
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(176, 38, 255, 0.2), rgba(139, 92, 246, 0.2));
+            color: #ffffff;
+            border: 2px solid var(--cyber-purple);
+            box-shadow: 
+                0 0 30px rgba(176, 38, 255, 0.4),
+                inset 0 0 20px rgba(176, 38, 255, 0.1);
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: linear-gradient(135deg, rgba(176, 38, 255, 0.4), rgba(139, 92, 246, 0.4));
+            box-shadow: 
+                0 0 50px rgba(176, 38, 255, 0.8),
+                0 15px 40px rgba(139, 92, 246, 0.5),
+                inset 0 0 30px rgba(176, 38, 255, 0.3);
+        }
+
+        /* Button Icon Styling */
+        .btn-icon {
+            margin-left: 0.6rem;
+            transition: transform 0.3s ease;
             display: inline-block;
         }
 
+        .game-btn:hover .btn-icon {
+            transform: translateX(5px) scale(1.1);
+        }
+
+        /* Floating Hexagon Decorations */
+        .floating-hex-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hex-shape {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            opacity: 0.15;
+            animation: hexDrift 25s ease-in-out infinite;
+        }
+
+        @keyframes hexDrift {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(100px, -50px) rotate(90deg);
+            }
+            50% {
+                transform: translate(50px, 100px) rotate(180deg);
+            }
+            75% {
+                transform: translate(-100px, 50px) rotate(270deg);
+            }
+        }
+
+        /* Features Section - Redesigned with 3D Cards */
+        .features-section {
+            padding: 8rem 2rem;
+            position: relative;
+            background: linear-gradient(180deg, transparent 0%, rgba(5, 5, 16, 0.5) 50%, transparent 100%);
+        }
+
+        .section-title {
+            font-family: 'Exo 2', sans-serif;
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 900;
+            text-align: center;
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.6));
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 3D Holographic Cards */
+        .feature-card-3d {
+            position: relative;
+            padding: 3rem 2rem;
+            background: rgba(10, 10, 26, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .feature-card-3d::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(176, 38, 255, 0.1));
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 0;
+        }
+
+        .feature-card-3d:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card-3d::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                0deg,
+                transparent,
+                rgba(0, 212, 255, 0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shimmer 3s linear infinite;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .feature-card-3d:hover::after {
+            opacity: 1;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateY(100%) rotate(45deg);
+            }
+        }
+
+        .feature-card-3d:hover {
+            transform: translateY(-15px) rotateX(5deg);
+            border-color: var(--neon-blue);
+            box-shadow: 
+                0 30px 60px rgba(0, 212, 255, 0.4),
+                0 0 50px rgba(0, 212, 255, 0.3),
+                inset 0 0 30px rgba(0, 212, 255, 0.1);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Icon Container with 3D Effect */
+        .icon-container-3d {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 2rem;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .icon-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple));
+            border-radius: 50%;
+            opacity: 0.2;
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.2;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.4;
+            }
+        }
+
+        .feature-icon-3d {
+            position: relative;
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            filter: drop-shadow(0 0 20px var(--neon-blue));
+            transition: transform 0.5s ease;
+        }
+
+        .feature-card-3d:hover .feature-icon-3d {
+            transform: scale(1.2) rotateY(360deg);
+        }
+
         .feature-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 1.6rem;
             font-weight: 700;
-            color: var(--cyber-cyan);
+            color: var(--neon-blue);
             margin-bottom: 1rem;
             letter-spacing: 0.05em;
+            text-align: center;
         }
 
         .feature-description {
             font-family: 'Cairo', sans-serif;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.75);
             line-height: 1.8;
+            text-align: center;
         }
 
-        /* CTA Section */
+        /* CTA Section - Redesigned */
         .cta-section {
-            padding: 6rem 2rem;
+            padding: 8rem 2rem;
             position: relative;
-            background: radial-gradient(circle at center, #0a0515 0%, #000 100%);
+            background: radial-gradient(circle at center, rgba(10, 10, 26, 0.8) 0%, transparent 100%);
             overflow: hidden;
         }
 
         .cta-content {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             text-align: center;
             position: relative;
@@ -860,58 +1182,125 @@
         }
 
         .cta-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-family: 'Exo 2', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
             font-weight: 900;
-            background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+            background: linear-gradient(135deg, var(--neon-blue), var(--cyber-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            letter-spacing: 0.02em;
+            filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.5));
         }
 
         .cta-description {
             font-family: 'Cairo', sans-serif;
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.8);
             margin-bottom: 3rem;
-            line-height: 1.8;
+            line-height: 2;
         }
 
-        .cta-buttons {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+        :root {
+    --discord: #5865F2;
+    --github: #333;
+    --youtube: #FF0000;
+    --facebook: #1877F2;
+    --sky-blue: #00acee;    /* for Discord's sky blue hover */
+}
 
-        /* Footer */
+.social-links {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #333;
+}
+
+.social-link i {
+    font-size: 1.5rem;
+    transition: transform 0.2s ease;
+}
+
+/* Hover effects */
+.social-link-discord:hover {
+    color: var(--sky-blue);
+    transform: translateY(-3px);
+}
+
+.social-link-github:hover {
+    color: var(--github);
+    transform: translateY(-3px);
+}
+
+.social-link-youtube:hover {
+    color: var(--youtube);
+    transform: translateY(-3px);
+}
+
+.social-link-facebook:hover {
+    color: var(--facebook);
+    transform: translateY(-3px);
+}
+
+/* Optional: slight icon scaling on hover */
+.social-link:hover i {
+    transform: scale(1.1);
+}
+
+.center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* or height: auto; depending on your layout */
+}
+
+        /* Footer - Redesigned with PhineX Watermark */
         .footer {
-            padding: 4rem 2rem 2rem;
-            background: linear-gradient(180deg, #000 0%, #0a0515 100%);
-            border-top: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 5rem 2rem 2rem;
+            background: linear-gradient(180deg, transparent 0%, rgba(5, 5, 16, 0.95) 100%);
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
             position: relative;
             overflow: hidden;
         }
 
+        /* PhineX Logo Watermark */
         .footer::before {
-            content: 'PhineX';
+            content: '';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(8rem, 20vw, 18rem);
-            font-weight: 900;
-            color: rgba(0, 242, 255, 0.03);
-            white-space: nowrap;
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            background-image: url('PhineX (2).png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.08;
             pointer-events: none;
             z-index: 0;
-            letter-spacing: 0.05em;
+            filter: blur(1px);
         }
 
         .footer-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             position: relative;
             z-index: 10;
@@ -919,17 +1308,19 @@
 
         .footer-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 4rem;
             margin-bottom: 3rem;
         }
 
         .footer-section h3 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            color: var(--cyber-cyan);
+            font-family: 'Exo 2', sans-serif;
+            font-size: 1.4rem;
+            color: var(--neon-blue);
             margin-bottom: 1.5rem;
             letter-spacing: 0.1em;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
         }
 
         .footer-section ul {
@@ -937,56 +1328,70 @@
         }
 
         .footer-section ul li {
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
         }
 
         .footer-section a {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
             font-family: 'Cairo', sans-serif;
+            font-size: 1.05rem;
+            display: inline-block;
         }
 
         .footer-section a:hover {
-            color: var(--cyber-cyan);
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .social-link {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 242, 255, 0.1);
-            border: 1px solid rgba(0, 242, 255, 0.3);
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .social-link:hover {
-            background: rgba(0, 242, 255, 0.2);
-            border-color: var(--cyber-cyan);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
-        }
-
-        .footer-bottom {
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
+            color: var(--neon-blue);
+            transform: translateX(-5px);
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.8);
         }
 
         .footer-logo {
-            width: 60px;
+            width: 80px;
             height: auto;
-            margin-bottom: 1rem;
-            filter: drop-shadow(0 0 20px var(--cyber-cyan));
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 30px var(--neon-green));
+            animation: footerLogoFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes footerLogoFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .footer-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-bottom {
+            padding-top: 2.5rem;
+            border-top: 1px solid rgba(0, 212, 255, 0.2);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1rem;
+        }
+
+        .footer-bottom p {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-bottom a {
+            color: var(--neon-blue);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .footer-bottom a:hover {
+            color: var(--cyber-purple);
+            text-shadow: 0 0 15px rgba(176, 38, 255, 0.8);
         }
 
         /* Responsive */
@@ -1013,20 +1418,96 @@
                 width: 200px;
             }
 
-            .cta-buttons {
+            .button-container {
                 flex-direction: column;
                 align-items: center;
             }
 
-            .cyber-btn {
+            .game-btn {
                 width: 100%;
-                max-width: 300px;
+                max-width: 350px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .logo-container-3d {
+                width: 200px;
+                height: 200px;
+            }
+
+            .orb {
+                filter: blur(60px);
+            }
+        }
+
+        /* Scroll Reveal Animations */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Energy Particles Around Buttons */
+        .btn-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .btn-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            animation: btnParticleFloat 2s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes btnParticleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px) scale(1);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screens Container -->
+    <!-- Cosmic Background -->
+    <div class="cosmic-bg"></div>
+    
+    <!-- Energy Orbs -->
+    <div class="energy-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    
+    <!-- 3D Geometric Grid -->
+    <div class="geometric-grid">
+        <div class="grid-layer"></div>
+    </div>
+
+    <!-- Loading Screens Container (PRESERVED) -->
     <div class="loading-container" id="loadingContainer">
         <!-- Screen 1: Presented By -->
         <div class="loading-screen active" id="presentedByScreen">
@@ -1050,7 +1531,6 @@
                     <div class="name-wrapper">
                         <span class="letter-expand mohamed">OHAMED</span><span class="letter-initial m">M</span>
                     </div>
-
 
                     <div class="name-wrapper">
                         <span class="letter-expand ahmed">HMED</span><span class="letter-initial a">A</span>
@@ -1095,27 +1575,32 @@
     <div id="mainContent">
         <!-- Hero Section -->
         <section class="hero-section">
-            <div class="hero-bg">
-                <div class="cyber-grid"></div>
-                <div class="floating-hexagons" id="hexagonsContainer"></div>
-            </div>
+            <div class="floating-hex-container" id="floatingHexContainer"></div>
             
             <div class="hero-content">
-                <img src="ElJasus.png" alt="El Jasus" class="hero-logo">
+                <!-- 3D Logo Container -->
+                <div class="logo-container-3d">
+                    <div class="holo-ring"></div>
+                    <div class="logo-wrapper">
+                        <img src="ElJasus.png" alt="El Jasus" class="hero-logo">
+                    </div>
+                </div>
+                
                 <h1 class="hero-title">الجاسوس | El Jasus</h1>
                 <div class="hero-subtitle">THE ULTIMATE EDITION</div>
                 <p class="hero-description">
                     اكتشف من هو الجاسوس بينكم في لعبة جماعية مليئة بالتشويق والإثارة. 
                     العب مع أصدقائك واختبر مهاراتك في الخداع والذكاء!
                 </p>
-                <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
-                    <button class="cyber-btn" onclick="location.href='home.html'">
-                        <i class="fas fa-play" style="margin-left: 0.5rem;"></i>
+                
+                <div class="button-container">
+                    <button class="game-btn btn-primary" onclick="location.href='home.html'">
                         العب على الموقع
+                        <i class="fas fa-play btn-icon"></i>
                     </button>
-                    <button class="cyber-btn cyber-btn-secondary" id="installBtnHero">
-                        <i class="fas fa-download" style="margin-left: 0.5rem;"></i>
+                    <button class="game-btn btn-secondary" id="installBtnHero">
                         ثبت التطبيق
+                        <i class="fas fa-download btn-icon"></i>
                     </button>
                 </div>
             </div>
@@ -1123,68 +1608,115 @@
 
         <!-- Features Section -->
         <section class="features-section">
-            <h2 class="section-title">المميزات الحصرية</h2>
+            <h2 class="section-title scroll-reveal">المميزات الحصرية</h2>
             <div class="features-grid">
-                <div class="feature-card">
-                    <i class="fas fa-users feature-icon"></i>
-                    <h3 class="feature-title">متعددة اللاعبين</h3>
-                    <p class="feature-description">
-                        العب مع أصدقائك محلياً أو عبر الإنترنت بنظام متطور
-                    </p>
+                <div class="feature-card-3d scroll-reveal">
+                    <div class="card-content">
+                        <div class="icon-container-3d">
+                            <div class="icon-bg"></div>
+                            <div class="feature-icon-3d">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <h3 class="feature-title">متعددة اللاعبين</h3>
+                        <p class="feature-description">
+                            العب مع أصدقائك محلياً أو عبر الإنترنت بنظام متطور
+                        </p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-crown feature-icon"></i>
-                    <h3 class="feature-title">لوحة المتصدرين</h3>
-                    <p class="feature-description">
-                        تنافس مع اللاعبين حول العالم وأثبت أنك الأفضل
-                    </p>
+                
+                <div class="feature-card-3d scroll-reveal">
+                    <div class="card-content">
+                        <div class="icon-container-3d">
+                            <div class="icon-bg"></div>
+                            <div class="feature-icon-3d">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        </div>
+                        <a href="leaderboard.html" style="text-decoration: none;"><h3 class="feature-title">لوحة المتصدرين</h3></a>
+                        <p class="feature-description">
+                            تنافس مع اللاعبين حول العالم وأثبت أنك الأفضل
+                        </p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-ban feature-icon"></i>
-                    <h3 class="feature-title">نظام الJMS</h3>
-                    <p class="feature-description">
-                        نظام الحظورات والعقوبات المتطور للحفاظ على بيئة لعب عادلة وممتعة
-                    </p>
+                
+                <div class="feature-card-3d scroll-reveal">
+                    <div class="card-content">
+                        <div class="icon-container-3d">
+                            <div class="icon-bg"></div>
+                            <div class="feature-icon-3d">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                        </div>
+                        <a href="JMS.html" style="text-decoration: none;"><h3 class="feature-title">نظام الJMS</h3></a>
+                        <p class="feature-description">
+                            نظام الحظورات والعقوبات المتطور للحفاظ على بيئة لعب عادلة وممتعة
+                        </p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-mobile-alt feature-icon"></i>
-                    <h3 class="feature-title">تجربة محمولة</h3>
-                    <p class="feature-description">
-                        تطبيق متوافق مع جميع الأجهزة بتصميم عصري وسلس
-                    </p>
+                
+                <div class="feature-card-3d scroll-reveal">
+                    <div class="card-content">
+                        <div class="icon-container-3d">
+                            <div class="icon-bg"></div>
+                            <div class="feature-icon-3d">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                        </div>
+                        <h3 class="feature-title">تجربة محمولة</h3>
+                        <p class="feature-description">
+                            تطبيق متوافق مع جميع الأجهزة بتصميم عصري وسلس
+                        </p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-shield-alt feature-icon"></i>
-                    <h3 class="feature-title">آمن ومستقر</h3>
-                    <p class="feature-description">
-                        نظام أمان متقدم لحماية بياناتك وتجربة لعب مستقرة
-                    </p>
+                
+                <div class="feature-card-3d scroll-reveal">
+                    <div class="card-content">
+                        <div class="icon-container-3d">
+                            <div class="icon-bg"></div>
+                            <div class="feature-icon-3d">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                        </div>
+                        <h3 class="feature-title">آمن ومستقر</h3>
+                        <p class="feature-description">
+                            نظام أمان متقدم لحماية بياناتك وتجربة لعب مستقرة
+                        </p>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-rocket feature-icon"></i>
-                    <h3 class="feature-title">تحديثات مستمرة</h3>
-                    <p class="feature-description">
-                        محتوى جديد وميزات حصرية في كل تحديث
-                    </p>
+                
+                <div class="feature-card-3d scroll-reveal">
+                    <div class="card-content">
+                        <div class="icon-container-3d">
+                            <div class="icon-bg"></div>
+                            <div class="feature-icon-3d">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                        </div>
+                        <h3 class="feature-title">تحديثات مستمرة</h3>
+                        <p class="feature-description">
+                            محتوى جديد وميزات حصرية في كل تحديث
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- CTA Section -->
         <section class="cta-section">
-            <div class="cta-content">
+            <div class="cta-content scroll-reveal">
                 <h2 class="cta-title">جاهز للمغامرة؟</h2>
                 <p class="cta-description">
                     انضم إلى آلاف اللاعبين حول العالم واختبر تجربة لعب لا تُنسى
                 </p>
-                <div class="cta-buttons">
-                    <button class="cyber-btn" onclick="location.href='home.html'">
-                        <i class="fas fa-play" style="margin-left: 0.5rem;"></i>
+                <div class="button-container">
+                    <button class="game-btn btn-primary" onclick="location.href='home.html'">
                         العب الآن مجاناً
+                        <i class="fas fa-play btn-icon"></i>
                     </button>
-                    <button class="cyber-btn cyber-btn-secondary" onclick="location.href='howtoplay.html'">
-                        <i class="fas fa-question-circle" style="margin-left: 0.5rem;"></i>
+                    <button class="game-btn btn-secondary" onclick="location.href='howtoplay.html'">
                         كيفية اللعب
+                        <i class="fas fa-question-circle btn-icon"></i>
                     </button>
                 </div>
             </div>
@@ -1197,57 +1729,59 @@
                     <div class="footer-section">
                         <img src="ElJasus.png" alt="El Jasus" class="footer-logo">
                         <h3>الجاسوس</h3>
-                        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">
+                        <p class="footer-description">
                             لعبة جماعية بسيطة وممتعه تجمع الأصدقاء والعائلة في تجربة مليئة بالتشويق والمتعه
                         </p>
-                        <div class="social-links" style="margin-top: 1.5rem;">
-                            <a href="https://discord.gg/xBQ3ewVVHk" target="_blank" class="social-link">
-                                <i class="fab fa-discord"></i>
-                            </a>
-                            <a href="https://github.com/PhineX-org" target="_blank" class="social-link">
-                                <i class="fab fa-github"></i>
-                            </a>
-                            <a href="https://www.youtube.com/channel/UCslNCf9VtxpFH_gtA1VHFyQ" target="_blank" class="social-link">
-                                <i class="fab fa-youtube"></i>
-                            </a>
-                            <a href="https://www.facebook.com/profile.php?id=61584765330775" target="_blank" class="social-link">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                        </div>
+                        <div class="social-links">
+                        <a href="https://discord.gg/xBQ3ewVVHk" target="_blank" class=" social-link-discord">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                        <a href="https://github.com/PhineX-org" target="_blank" class=" social-link-github">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="https://www.youtube.com/channel/UCslNCf9VtxpFH_gtA1VHFyQ" target="_blank" class=" social-link-youtube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="https://www.facebook.com/profile.php?id=61584765330775" target="_blank" class=" social-link-facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                    </div>
                     </div>
                     <div class="footer-section">
                         <h3>روابط سريعة</h3>
                         <ul>
-                            <li><a href="home.html">اللعب</a></li>
-                            <li><a href="howtoplay.html">كيفية اللعب</a></li>
-                            <li><a href="leaderboard.html">لوحة المتصدرين</a></li>
-                            <li><a href="community.html">معايير المجتمع</a></li>
-                            <li><a href="login.html">سجل دخولك</a></li>
+                            <li><a href="home.html"><i class="fas fa-gamepad" style="margin-left: 0.5rem;"></i>اللعب</a></li>
+                            <li><a href="howtoplay.html"><i class="fas fa-info-circle" style="margin-left: 0.5rem;"></i>كيفية اللعب</a></li>
+                            <li><a href="leaderboard.html"><i class="fas fa-trophy" style="margin-left: 0.5rem;"></i>لوحة المتصدرين</a></li>
+                            <li><a href="community.html"><i class="fas fa-users" style="margin-left: 0.5rem;"></i>معايير المجتمع</a></li>
+                            <li><a href="login.html"><i class="fas fa-sign-in-alt" style="margin-left: 0.5rem;"></i>سجل دخولك</a></li>
                         </ul>
                     </div>
                     <div class="footer-section">
                         <h3>الدعم</h3>
                         <ul>
-                            <li><a href="https://discord.gg/xBQ3ewVVHk" target="_blank">Discord</a></li>
-                            <li><a href="bugreport.html">الإبلاغ عن مشكلة</a></li>
-                            <li><a href="https://phinex-org.github.io/PhineX" target="_blank">PhineX</a></li>
+                            <li><a href="https://discord.gg/xBQ3ewVVHk" target="_blank"><i class="fab fa-discord" style="margin-left: 0.5rem;"></i>Discord</a></li>
+                            <li><a href="bugreport.html"><i class="fas fa-bug" style="margin-left: 0.5rem;"></i>الإبلاغ عن مشكلة</a></li>
+                            <li><a href="JMS.html"><i class="fas fa-ban" style="margin-left: 0.5rem;"></i>نظام الاشراف</a></li>
+                            <li><a href="https://phinex-org.github.io/PhineX" target="_blank"><i class="fas fa-globe" style="margin-left: 0.5rem;"></i>PhineX</a></li>
                         </ul>
                     </div>
                 </div>
                 <div class="footer-bottom">
                     <p>&copy; 2026 El Jasus by PhineX. جميع الحقوق محفوظة.</p>
-                    <p style="margin-top: 0.5rem;">
-                        صُنع بـ <i class="fas fa-heart" style="color: var(--cyber-pink);"></i> بواسطة 
-                        <a href="https://www.facebook.com/A.Mo.Elgohary/" target="_blank" style="color: var(--cyber-cyan);">Ahmed Al Gohary</a>
+                    <p style="margin-top: 0.8rem;">
+                        صُنع بـ <i class="fas fa-heart" style="color: var(--cyber-purple);"></i> بواسطة 
+                        <a href="https://www.facebook.com/A.Mo.Elgohary/" target="_blank">Ahmed Al Gohary</a>
                     </p>
                 </div>
             </div>
         </footer>
     </div>
 
+    <!-- ALL JAVASCRIPT PRESERVED FROM ORIGINAL -->
     <script>
         // ============================================
-        // LOADING SCREEN SEQUENCE
+        // LOADING SCREEN SEQUENCE (PRESERVED)
         // ============================================
         
         const screens = {
@@ -1287,20 +1821,20 @@
             }
         }
 
-        // Generate hexagons
-        function createHexagons() {
-            const container = document.getElementById('hexagonsContainer');
-            const hexagonSVG = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><polygon points="50 0, 93.3 25, 93.3 75, 50 100, 6.7 75, 6.7 25" fill="currentColor" stroke="currentColor" stroke-width="2"/></svg>';
+        // Generate floating hexagons
+        function createFloatingHexagons() {
+            const container = document.getElementById('floatingHexContainer');
+            const hexagonSVG = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><polygon points="50 0, 93.3 25, 93.3 75, 50 100, 6.7 75, 6.7 25" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
             
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 const hexagon = document.createElement('div');
-                hexagon.className = 'hexagon';
+                hexagon.className = 'hex-shape';
                 hexagon.style.left = Math.random() * 100 + '%';
                 hexagon.style.top = Math.random() * 100 + '%';
-                hexagon.style.animationDelay = Math.random() * 20 + 's';
-                hexagon.style.animationDuration = (15 + Math.random() * 10) + 's';
+                hexagon.style.animationDelay = Math.random() * 25 + 's';
+                hexagon.style.animationDuration = (20 + Math.random() * 15) + 's';
                 hexagon.innerHTML = hexagonSVG;
-                hexagon.style.color = `rgba(0, 242, 255, ${0.05 + Math.random() * 0.1})`;
+                hexagon.style.color = `rgba(0, 212, 255, ${0.1 + Math.random() * 0.15})`;
                 container.appendChild(hexagon);
             }
         }
@@ -1308,7 +1842,7 @@
         // Initialize effects
         createParticles();
         createCircuitLines();
-        createHexagons();
+        createFloatingHexagons();
 
         // Loading sequence
         function startLoadingSequence() {
@@ -1366,9 +1900,56 @@
             const mouseX = (e.clientX / window.innerWidth - 0.5) * 20;
             const mouseY = (e.clientY / window.innerHeight - 0.5) * 20;
 
-            document.querySelectorAll('.hexagon').forEach((hex, index) => {
+            document.querySelectorAll('.hex-shape').forEach((hex, index) => {
                 const speed = (index % 3 + 1) * 0.3;
                 hex.style.transform = `translate(${mouseX * speed}px, ${mouseY * speed}px)`;
+            });
+
+            // Add parallax to orbs
+            document.querySelectorAll('.orb').forEach((orb, index) => {
+                const speed = (index + 1) * 0.05;
+                orb.style.transform = `translate(${mouseX * speed}px, ${mouseY * speed}px)`;
+            });
+        });
+
+        // Scroll Reveal Animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('revealed');
+                    }, index * 100);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.scroll-reveal').forEach((element) => {
+            observer.observe(element);
+        });
+
+        // 3D Card Tilt Effect
+        document.querySelectorAll('.feature-card-3d').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-15px)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
             });
         });
     </script>

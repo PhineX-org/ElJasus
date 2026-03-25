@@ -1235,25 +1235,25 @@
                 <p class="subtitle">El Jasus Moderation System — نظام الإشراف الآلي المتقدم</p>
                 
                 <p class="header-description">
-                    نظام إشراف محتوى متقدم يستخدم الذكاء الاصطناعي والتعلم الآلي لحماية المجتمعات الرقمية من المحتوى المسيء. يدعم اللغتين العربية والإنجليزية مع تقنيات متقدمة للكشف عن التحايل اللفظي والرموز المشفرة.
+                 نظام هو نظام الاشراف والحظورات الخاص بالجاسوس والذي تم صنعه وتطويره على يد مجموعة فينيكس, يستطيع النظام كشف اي محتوى مسئ حتى لو حاول شخص اخفاءه مثل "ك.لب" او "ك0لب" او "ك-لب" او "ك_لب" او "حيو1ن" لانه تم تطويره ليحول الارقام والرموز الى اقرب حرف ليستطيع قرائة الكلمة بسهولة , تم تصنيف المخالفات الى 5 مستويات مختلفة للتعامل معها بشكل مناسب, من التحذيرات البسيطة إلى الحظر الدائم.
                 </p>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value">5</div>
-                        <div class="stat-label">SEVERITY LEVELS</div>
+                        <div class="stat-label">مستويات المخالفات</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">300+</div>
-                        <div class="stat-label">BLOCKED PATTERNS</div>
+                        <div class="stat-label">الأنماط المحظورة</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">∞</div>
-                        <div class="stat-label">SYMBOL VARIATIONS</div>
+                        <div class="stat-label">متغيرات الرموز</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">< 50ms</div>
-                        <div class="stat-label">RESPONSE TIME</div>
+                        <div class="stat-label">وقت الاستجابة</div>
                     </div>
                 </div>
                 
@@ -1272,7 +1272,7 @@
             <div class="section-header">
                 <h2 class="section-title">نظرة عامة</h2>
                 <p class="section-description">
-                    JMS هو نظام إشراف محتوى شامل مصمم لحماية المجتمعات الرقمية من خلال كشف وردع المحتوى المسيء بشكل تلقائي.
+                    JMS هو نظام إشراف محتوى شامل مصمم لحماية مجتمع الجاسوس من خلال كشف وردع المحتوى المسيء بشكل تلقائي.
                 </p>
             </div>
             
@@ -1297,7 +1297,7 @@
                     </div>
                     <h3 class="feature-title">كشف ذكي للتحايل</h3>
                     <p class="feature-description">
-                        تقنية متقدمة لكشف محاولات التحايل باستخدام الأرقام والرموز (مثل k0s → كوس) مع توليد آلاف الاحتمالات للكلمات المحظورة.
+                        تقنية متقدمة لكشف محاولات التحايل باستخدام الأرقام والرموز (مثل عرص → 3رص) مع تحويل آلاف الرموز الى حروف لكشف الكلمات المحظورة.
                     </p>
                 </div>
                 
@@ -1860,6 +1860,11 @@ await MOD.liftBanManual(targetUid);</pre>
                 createParticles();
             }, 250);
         });
+    </script>
+    <script>
+        window.alert   = (msg)             => UIAlert(msg);
+        window.confirm = (msg)             => UIConfirm(msg);
+        window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
     </script>
 </body>
 </html>

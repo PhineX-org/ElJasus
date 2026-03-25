@@ -751,6 +751,7 @@
                         <li><a href="howtoplay.html">كيفية اللعب</a></li>
                         <li><a href="leaderboard.html">لوحة المتصدرين</a></li>
                         <li><a href="aboutus.html">من نحن</a></li>
+                        <li><a href="JMS.html">نظام الاشراف والحظورات</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -917,6 +918,11 @@
                 this.style.borderColor = 'rgba(0, 242, 255, 0.2)';
             }
         });
+    </script>
+    <script>
+        window.alert   = (msg)             => UIAlert(msg);
+        window.confirm = (msg)             => UIConfirm(msg);
+        window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
     </script>
 </body>
 </html>
