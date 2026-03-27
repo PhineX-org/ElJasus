@@ -2483,19 +2483,38 @@ let selectedNodeData = null;
 window.refreshFirebaseViewer = async function() {
     const container = document.getElementById('firebase-tree-container');
     container.innerHTML = '<div class="firebase-loading"><i class="fas fa-spinner fa-spin ml-2"></i>جاري تحميل البيانات...</div>';
-    
+
     try {
         const rootPath = document.getElementById('firebase-root-select').value;
-        const dbRef = rootPath ? ref(db, rootPath) : ref(db, '/');
-        const snapshot = await get(dbRef);
-        
-        if (snapshot.exists()) {
-            firebaseViewerData = snapshot.val();
-            firebaseViewerPath = rootPath;
-            renderFirebaseTree(firebaseViewerData, rootPath || '/', container);
-            updateFirebaseBreadcrumb(rootPath);
+
+        if (!rootPath) {
+            // Root-level read is blocked by rules — fetch each known path individually
+            const knownPaths = ['players', 'rooms', 'reports', 'bans', 'wordLists', 'announcements', 'adminConfig'];
+            const results = await Promise.allSettled(knownPaths.map(p => get(ref(db, p))));
+            const combined = {};
+            results.forEach((result, i) => {
+                if (result.status === 'fulfilled' && result.value.exists()) {
+                    combined[knownPaths[i]] = result.value.val();
+                }
+            });
+            if (Object.keys(combined).length === 0) {
+                container.innerHTML = '<div class="firebase-empty">📭 لا توجد بيانات متاحة</div>';
+                return;
+            }
+            firebaseViewerData = combined;
+            firebaseViewerPath = '';
+            renderFirebaseTree(combined, '', container);
+            updateFirebaseBreadcrumb('');
         } else {
-            container.innerHTML = '<div class="firebase-empty">📭 لا توجد بيانات في هذا المسار</div>';
+            const snapshot = await get(ref(db, rootPath));
+            if (snapshot.exists()) {
+                firebaseViewerData = snapshot.val();
+                firebaseViewerPath = rootPath;
+                renderFirebaseTree(firebaseViewerData, rootPath, container);
+                updateFirebaseBreadcrumb(rootPath);
+            } else {
+                container.innerHTML = '<div class="firebase-empty">📭 لا توجد بيانات في هذا المسار</div>';
+            }
         }
     } catch(e) {
         container.innerHTML = `<div class="firebase-empty" style="color:#ef4444;">❌ خطأ في التحميل: ${e.message}</div>`;
