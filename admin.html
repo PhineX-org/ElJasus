@@ -10,25 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="dialogs.js"></script>
-    <script src="moderation.js"></script>
-    <script>
-        // Override native browser dialogs with styled versions
-        // (runs after dialogs.js loads synchronously)
-        document.addEventListener('DOMContentLoaded', () => {
-            window.alert   = (msg)             => UIAlert(msg);
-            window.confirm = (msg)             => UIConfirm(msg);
-            window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
-        });
-    </script>
     <style>
         :root{--primary:#00f2ff;--secondary:#7c30ff;--bg:#0a0e1a;}
         *{box-sizing:border-box;}
         body{font-family:'Cairo',sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;overflow:auto;}
+        
         /* Sidebar */
         #admin-sidebar{width:220px;flex-shrink:0;background:linear-gradient(180deg,rgba(15,20,35,.98),rgba(10,14,26,.98));
-            border-left:2px solid rgba(0,242,255,.15);display:flex;flex-direction:column;padding:20px 0;
-            overflow-y:auto;}
+            border-left:2px solid rgba(0,242,255,.15);display:flex;flex-direction:column;padding:20px 0;overflow-y:auto;}
         .admin-logo{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,.07);}
         .admin-logo h1{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;color:#00f2ff;letter-spacing:2px;}
         .admin-logo p{font-size:10px;color:#444;margin-top:2px;}
@@ -38,15 +27,17 @@
         .nav-item:hover{color:#ccc;background:rgba(255,255,255,.04);}
         .nav-item.active{color:#00f2ff;background:rgba(0,242,255,.08);border-right-color:#00f2ff;}
         .nav-item i{width:18px;text-align:center;font-size:14px;}
+        
         /* Main content */
         #admin-main{flex:1;overflow-y:auto;padding:24px;}
+        
         /* Cards */
         .glass{background:linear-gradient(135deg,rgba(15,20,35,.9),rgba(25,30,50,.8));
-            border:2px solid rgba(0,242,255,.15);border-radius:16px;
-            box-shadow:0 4px 20px rgba(0,0,0,.4);}
+            border:2px solid rgba(0,242,255,.15);border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.4);}
         .kpi-card{padding:20px;transition:all .3s;}
         .kpi-card:hover{border-color:rgba(0,242,255,.4);transform:translateY(-2px);}
         .kpi-num{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;}
+        
         /* Tables */
         table{width:100%;border-collapse:collapse;}
         thead tr{border-bottom:2px solid rgba(0,242,255,.15);}
@@ -55,48 +46,59 @@
         tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;}
         tbody tr:hover{background:rgba(255,255,255,.03);}
         td{padding:10px 12px;font-size:13px;}
+        
         /* Badges */
         .badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:900;}
         .badge-pending{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
         .badge-resolved{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3);}
+        .badge-warned{background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3);}
         .badge-banned{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);}
         .badge-active{background:rgba(0,242,255,.15);color:#00f2ff;border:1px solid rgba(0,242,255,.3);}
+        
         /* Input */
         .admin-input{background:rgba(255,255,255,.05);border:2px solid rgba(0,242,255,.2);
             border-radius:10px;padding:10px 14px;color:#fff;font-family:'Cairo',sans-serif;
             font-size:13px;outline:none;transition:border .2s;width:100%;}
         .admin-input:focus{border-color:rgba(0,242,255,.5);}
         textarea.admin-input{resize:vertical;min-height:80px;}
+        
         /* Buttons */
         .btn-primary{padding:10px 20px;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer;
             border:none;background:linear-gradient(135deg,#00f2ff,#7c30ff);color:white;transition:all .2s;}
         .btn-primary:hover{opacity:.9;transform:scale(1.02);}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
         .btn-danger{padding:8px 16px;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;
             border:2px solid rgba(239,68,68,.4);background:rgba(239,68,68,.15);color:#ef4444;transition:all .2s;}
         .btn-danger:hover{background:rgba(239,68,68,.3);}
         .btn-success{padding:8px 16px;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;
             border:2px solid rgba(34,197,94,.4);background:rgba(34,197,94,.15);color:#22c55e;transition:all .2s;}
         .btn-sm{padding:6px 12px;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;
-            border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#ccc;}
+            border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#ccc;transition:all .2s;}
+        .btn-sm:hover{background:rgba(255,255,255,.1);}
+        .btn-sm.active-filter{background:rgba(0,242,255,.15);border-color:rgba(0,242,255,.3);color:#00f2ff;}
+        
         /* Sections */
         .section{display:none;}
         .section.active{display:block;}
         canvas{max-height:220px;}
+        
         /* Word category tag */
         .word-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
             border-radius:20px;background:rgba(0,242,255,.1);border:1px solid rgba(0,242,255,.25);
             font-size:12px;font-weight:700;margin:3px;}
         .word-tag button{background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0;}
+        
         /* Announcement priority */
         .ann-info{border-left:4px solid #3b82f6;}
         .ann-warning{border-left:4px solid #f59e0b;}
         .ann-critical{border-left:4px solid #ef4444;}
+        
         /* Scrollbars */
         ::-webkit-scrollbar{width:4px;}
         ::-webkit-scrollbar-track{background:transparent;}
         ::-webkit-scrollbar-thumb{background:rgba(0,242,255,.2);border-radius:2px;}
 
-        /* ── DIAGNOSTICS ──────────────────────── */
+        /* Diagnostics */
         .test-item {
             display: flex; align-items: flex-start; gap: 12px;
             padding: 11px 14px; border-radius: 10px;
@@ -329,7 +331,21 @@
             direction: ltr;
             text-align: left;
         }
-
+        
+        /* Error state */
+        .error-state {
+            background: rgba(239, 68, 68, .1);
+            border: 2px solid rgba(239, 68, 68, .3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #ef4444;
+        }
+        .error-state i {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -359,7 +375,7 @@
 
     <div class="nav-section">أدوات</div>
     <div class="nav-item" onclick="showSection('diagnostics')"><i class="fas fa-flask"></i> تشخيص النظام <span id="diag-badge" style="margin-right:auto;background:#f97316;color:white;font-size:9px;padding:2px 7px;border-radius:10px;display:none;">!</span></div>
-    <div class="nav-item" onclick="showSection('firebase-viewer')"><i class="fas fa-database"></i> عرض قاعدة البيانات</div>
+    <div class="nav-item" onclick="showSection('firebase-viewer')"><i class="fas fa-database"></i> قاعدة البيانات</div>
 
     <div style="flex:1;"></div>
     <div style="padding:16px 20px;border-top:1px solid rgba(255,255,255,.05);">
@@ -377,7 +393,7 @@
                 <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#00f2ff;">نظرة عامة</h2>
                 <p style="font-size:12px;color:#555;" id="overview-date"></p>
             </div>
-            <button class="btn-primary" onclick="refreshAll()"><i class="fas fa-sync-alt ml-2"></i>تحديث</button>
+            <button class="btn-primary" onclick="refreshAll()" id="refresh-btn"><i class="fas fa-sync-alt ml-2"></i>تحديث</button>
         </div>
 
         <!-- KPI Row -->
@@ -423,53 +439,53 @@
 
     <!-- ── REPORTS ────────────────────────────── -->
     <section id="section-reports" class="section">
-    <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#ef4444;margin-bottom:24px;">البلاغات</h2>
-    
-    <div class="flex gap-3 mb-4 flex-wrap">
-        <button class="btn-sm active-filter" onclick="filterReports('all',this)">الكل</button>
-        <button class="btn-sm" onclick="filterReports('pending',this)">معلقة</button>
-        <button class="btn-sm" onclick="filterReports('resolved',this)">محلولة</button>
-        <button class="btn-sm" onclick="filterReports('warned',this)">تم التحذير</button>
-        <button class="btn-sm" onclick="filterReports('banned',this)">تم الحظر</button>
-        <div style="margin-right:auto;display:flex;align-items:center;gap:8px;">
-            <input id="report-search" class="admin-input" type="text" placeholder="🔍 ابحث..."
-                style="max-width:200px;" oninput="searchReports(this.value)">
+        <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#ef4444;margin-bottom:24px;">البلاغات</h2>
+        
+        <div class="flex gap-3 mb-4 flex-wrap">
+            <button class="btn-sm active-filter" onclick="filterReports('all',this)">الكل</button>
+            <button class="btn-sm" onclick="filterReports('pending',this)">معلقة</button>
+            <button class="btn-sm" onclick="filterReports('resolved',this)">محلولة</button>
+            <button class="btn-sm" onclick="filterReports('warned',this)">تم التحذير</button>
+            <button class="btn-sm" onclick="filterReports('banned',this)">تم الحظر</button>
+            <div style="margin-right:auto;display:flex;align-items:center;gap:8px;">
+                <input id="report-search" class="admin-input" type="text" placeholder="🔍 ابحث..."
+                    style="max-width:200px;" oninput="searchReports(this.value)">
+            </div>
         </div>
-    </div>
 
-    <div class="glass" style="padding:20px;">
-        <table>
-            <thead>
-                <tr>
-                    <th>المُبلَّغ عنه</th>
-                    <th>السبب</th>
-                    <th>مخالفة القواعد</th>
-                    <th>من</th>
-                    <th>الغرفة</th>
-                    <th>التاريخ</th>
-                    <th>الحالة</th>
-                    <th>إجراء</th>
-                </tr>
-            </thead>
-            <tbody id="reports-table">
-                <tr><td colspan="8" style="text-align:center;padding:30px;color:#555;">جاري التحميل...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Report Detail Modal -->
-    <div id="report-detail-modal" style="display:none;position:fixed;inset:0;z-index:9990;
-        background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
-        display:none;align-items:center;justify-content:center;padding:20px;">
-        <div class="glass" style="max-width:600px;width:100%;border-radius:20px;padding:28px;
-            max-height:90vh;overflow-y:auto;position:relative;">
-            <button onclick="closeReportDetail()"
-                style="position:absolute;top:16px;left:16px;background:none;border:none;
-                color:#555;cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px;">✕</button>
-            <div id="report-detail-content"></div>
+        <div class="glass" style="padding:20px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>المُبلَّغ عنه</th>
+                        <th>السبب</th>
+                        <th>مخالفة القواعد</th>
+                        <th>من</th>
+                        <th>الغرفة</th>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                        <th>إجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-table">
+                    <tr><td colspan="8" style="text-align:center;padding:30px;color:#555;">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
         </div>
-    </div>
-</section>
+
+        <!-- Report Detail Modal -->
+        <div id="report-detail-modal" style="display:none;position:fixed;inset:0;z-index:9990;
+            background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
+            align-items:center;justify-content:center;padding:20px;">
+            <div class="glass" style="max-width:600px;width:100%;border-radius:20px;padding:28px;
+                max-height:90vh;overflow-y:auto;position:relative;">
+                <button onclick="closeReportDetail()"
+                    style="position:absolute;top:16px;left:16px;background:none;border:none;
+                    color:#555;cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px;">✕</button>
+                <div id="report-detail-content"></div>
+            </div>
+        </div>
+    </section>
 
     <!-- ── BANS ───────────────────────────────── -->
     <section id="section-bans" class="section">
@@ -587,103 +603,6 @@
         </div>
     </section>
 
-    <!-- ── FIREBASE DATABASE VIEWER ───────────── -->
-    <section id="section-firebase-viewer" class="section">
-        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <div>
-                <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#00f2ff;">
-                    <i class="fas fa-database ml-2" style="color:#a855f7;"></i>عرض قاعدة البيانات
-                </h2>
-                <p style="font-size:12px;color:#555;">استعرض وأدر بيانات Firebase في الوقت الفعلي</p>
-            </div>
-            <div class="flex gap-3 flex-wrap">
-                <button class="btn-primary" onclick="refreshFirebaseViewer()">
-                    <i class="fas fa-sync-alt ml-2"></i>تحديث
-                </button>
-                <button class="btn-sm" onclick="expandAllNodes()" style="padding:10px 18px;">
-                    <i class="fas fa-expand ml-2"></i>توسيع الكل
-                </button>
-                <button class="btn-sm" onclick="collapseAllNodes()" style="padding:10px 18px;">
-                    <i class="fas fa-compress ml-2"></i>طي الكل
-                </button>
-            </div>
-        </div>
-
-        <!-- Breadcrumb Navigation -->
-        <div id="firebase-breadcrumb" class="firebase-breadcrumb"></div>
-
-        <!-- Search and Filter -->
-        <div class="firebase-search">
-            <div class="flex gap-3 flex-wrap">
-                <input id="firebase-search-input" class="admin-input" type="text" 
-                    placeholder="🔍 ابحث في المسارات أو القيم..." 
-                    style="flex:1;min-width:300px;"
-                    oninput="filterFirebaseNodes(this.value)">
-                <select id="firebase-root-select" class="admin-input" onchange="loadFirebaseRoot(this.value)" style="max-width:200px;">
-                    <option value="">/ (الجذر)</option>
-                    <option value="players">players</option>
-                    <option value="rooms">rooms</option>
-                    <option value="reports">reports</option>
-                    <option value="bans">bans</option>
-                    <option value="wordLists">wordLists</option>
-                    <option value="announcements">announcements</option>
-                    <option value="adminConfig">adminConfig</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Database Tree View -->
-        <div class="glass" style="padding:20px;">
-            <div id="firebase-tree-container" class="firebase-tree">
-                <div class="firebase-loading">
-                    <i class="fas fa-spinner fa-spin ml-2"></i>
-                    جاري تحميل البيانات...
-                </div>
-            </div>
-        </div>
-
-        <!-- Node Details Panel -->
-        <div id="firebase-details" style="display:none;">
-            <div class="glass firebase-details-panel" style="margin-top:20px;">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 style="font-size:14px;font-weight:900;color:#00f2ff;">
-                        <i class="fas fa-info-circle ml-2"></i>تفاصيل العقدة
-                    </h3>
-                    <button onclick="closeFirebaseDetails()" style="background:none;border:none;color:#555;cursor:pointer;font-size:16px;">✕</button>
-                </div>
-                
-                <div class="mb-4">
-                    <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">المسار</p>
-                    <div id="firebase-details-path" class="firebase-path"></div>
-                </div>
-
-                <div class="mb-4">
-                    <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">النوع</p>
-                    <span id="firebase-details-type" style="font-size:12px;color:#00f2ff;"></span>
-                </div>
-
-                <div class="mb-4">
-                    <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">القيمة (JSON)</p>
-                    <div id="firebase-details-json" class="firebase-json"></div>
-                </div>
-
-                <div class="flex gap-3">
-                    <button class="btn-primary" onclick="copyFirebaseNodeData()">
-                        <i class="fas fa-copy ml-2"></i>نسخ JSON
-                    </button>
-                    <button class="btn-sm" onclick="exportFirebaseNode()">
-                        <i class="fas fa-download ml-2"></i>تصدير
-                    </button>
-                    <button class="btn-danger" onclick="deleteFirebaseNode()">
-                        <i class="fas fa-trash ml-2"></i>حذف
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-</main>
-
     <!-- ── WORDS ──────────────────────────────── -->
     <section id="section-words" class="section">
         <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#a855f7;margin-bottom:24px;">قوائم الكلمات</h2>
@@ -757,7 +676,6 @@
             </div>
         </div>
     </section>
-
 
     <!-- ── ADMIN ACCESS MANAGEMENT ────────────── -->
     <section id="section-admin-access" class="section">
@@ -952,14 +870,117 @@
         </div>
     </section>
 
+    <!-- ── FIREBASE DATABASE VIEWER ───────────── -->
+    <section id="section-firebase-viewer" class="section">
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <div>
+                <h2 style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#00f2ff;">
+                    <i class="fas fa-database ml-2" style="color:#a855f7;"></i>عرض قاعدة البيانات
+                </h2>
+                <p style="font-size:12px;color:#555;">استعرض وأدر بيانات Firebase في الوقت الفعلي</p>
+            </div>
+            <div class="flex gap-3 flex-wrap">
+                <button class="btn-primary" onclick="refreshFirebaseViewer()">
+                    <i class="fas fa-sync-alt ml-2"></i>تحديث
+                </button>
+                <button class="btn-sm" onclick="expandAllNodes()" style="padding:10px 18px;">
+                    <i class="fas fa-expand ml-2"></i>توسيع الكل
+                </button>
+                <button class="btn-sm" onclick="collapseAllNodes()" style="padding:10px 18px;">
+                    <i class="fas fa-compress ml-2"></i>طي الكل
+                </button>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Navigation -->
+        <div id="firebase-breadcrumb" class="firebase-breadcrumb"></div>
+
+        <!-- Search and Filter -->
+        <div class="firebase-search">
+            <div class="flex gap-3 flex-wrap">
+                <input id="firebase-search-input" class="admin-input" type="text" 
+                    placeholder="🔍 ابحث في المحاور أو القيم..." 
+                    style="flex:1;min-width:300px;"
+                    oninput="filterFirebaseNodes(this.value)">
+                <select id="firebase-root-select" class="admin-input" onchange="loadFirebaseRoot(this.value)" style="max-width:200px;">
+                    <option value="">/ (الجذر)</option>
+                    <option value="players">players</option>
+                    <option value="rooms">rooms</option>
+                    <option value="reports">reports</option>
+                    <option value="bans">bans</option>
+                    <option value="wordLists">wordLists</option>
+                    <option value="announcements">announcements</option>
+                    <option value="adminConfig">adminConfig</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Database Tree View -->
+        <div class="glass" style="padding:20px;">
+            <div id="firebase-tree-container" class="firebase-tree">
+                <div class="firebase-loading">
+                    <i class="fas fa-spinner fa-spin ml-2"></i>
+                    جاري تحميل البيانات...
+                </div>
+            </div>
+        </div>
+
+        <!-- Node Details Panel -->
+        <div id="firebase-details" style="display:none;">
+            <div class="glass firebase-details-panel" style="margin-top:20px;">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 style="font-size:14px;font-weight:900;color:#00f2ff;">
+                        <i class="fas fa-info-circle ml-2"></i>تفاصيل العقدة
+                    </h3>
+                    <button onclick="closeFirebaseDetails()" style="background:none;border:none;color:#555;cursor:pointer;font-size:16px;">✕</button>
+                </div>
+                
+                <div class="mb-4">
+                    <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">المحور</p>
+                    <div id="firebase-details-path" class="firebase-path"></div>
+                </div>
+
+                <div class="mb-4">
+                    <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">النوع</p>
+                    <span id="firebase-details-type" style="font-size:12px;color:#00f2ff;"></span>
+                </div>
+
+                <div class="mb-4">
+                    <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">القيمة (JSON)</p>
+                    <div id="firebase-details-json" class="firebase-json"></div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button class="btn-primary" onclick="copyFirebaseNodeData()">
+                        <i class="fas fa-copy ml-2"></i>نسخ JSON
+                    </button>
+                    <button class="btn-sm" onclick="exportFirebaseNode()">
+                        <i class="fas fa-download ml-2"></i>تصدير
+                    </button>
+                    <button class="btn-danger" onclick="deleteFirebaseNode()">
+                        <i class="fas fa-trash ml-2"></i>حذف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </main>
+
+<!-- Load dialogs.js FIRST, then Firebase -->
+<script src="dialogs.js"></script>
+<script>
+// Override native dialogs AFTER dialogs.js loads
+window.alert   = (msg)             => UIAlert(msg);
+window.confirm = (msg)             => UIConfirm(msg);
+window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
+</script>
 
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 import { getDatabase, ref, get, set, update, remove, push, onValue, query, orderByChild } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnd-pmKEatI3DaFz6xHWB5ucurtHXt9tk",
@@ -976,6 +997,16 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
+// Expose to window for global access
+window.db = db;
+window.auth = auth;
+window.ref = ref;
+window.get = get;
+window.set = set;
+window.update = update;
+window.remove = remove;
+window.push = push;
+
 // ADMIN ACCESS VIA CODE REDEMPTION
 const ADMIN_CODE = 'ADMIN26';
 
@@ -989,13 +1020,22 @@ let wordListData   = {};
 let rankChart = null;
 let catChart  = null;
 
+// Report filtering
+let currentReportFilter = 'all';
+let allReportsArray = [];
+
 // ── AUTH GUARD ────────────────────────────
 onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
     
     // Check if user has admin access via redeemed code
-    const adminSnap = await get(ref(db, `players/${user.uid}/isAdmin`));
-    isAdmin = adminSnap.val() === true;
+    try {
+        const adminSnap = await get(ref(db, `players/${user.uid}/isAdmin`));
+        isAdmin = adminSnap.val() === true;
+    } catch(e) {
+        console.error('Admin check failed:', e);
+        isAdmin = false;
+    }
     
     if (!isAdmin) {
         // Show code redemption modal
@@ -1058,7 +1098,7 @@ function showAdminCodeModal() {
             </div>
             
             <div style="display:flex;gap:12px;">
-                <button id="verify-code-btn" onclick="verifyAdminCode()"
+                <button id="verify-code-btn" onclick="window.verifyAdminCode()"
                     style="flex:1;padding:14px;border-radius:12px;
                     background:linear-gradient(135deg,#00f2ff,#7c30ff);
                     border:none;color:white;font-weight:900;cursor:pointer;
@@ -1090,7 +1130,7 @@ function showAdminCodeModal() {
     
     // Allow Enter key to verify
     document.getElementById('admin-code-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') verifyAdminCode();
+        if (e.key === 'Enter') window.verifyAdminCode();
     });
 }
 
@@ -1111,8 +1151,13 @@ window.verifyAdminCode = async function() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> جاري التحقق...';
     
     // Verify code against Firebase
-    const codeSnap = await get(ref(db, 'adminConfig/accessCode'));
-    const validCode = codeSnap.exists() ? codeSnap.val() : ADMIN_CODE; // Fallback to ADMIN26
+    let validCode = ADMIN_CODE; // Default
+    try {
+        const codeSnap = await get(ref(db, 'adminConfig/accessCode'));
+        if (codeSnap.exists()) validCode = codeSnap.val();
+    } catch(e) {
+        console.warn('Could not read admin code from Firebase, using default');
+    }
     
     if (code === validCode) {
         // Valid code - grant admin access
@@ -1127,7 +1172,8 @@ window.verifyAdminCode = async function() {
             btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
             
             setTimeout(() => {
-                document.getElementById('admin-code-modal').remove();
+                const modal = document.getElementById('admin-code-modal');
+                if (modal) modal.remove();
                 isAdmin = true;
                 document.getElementById('overview-date').textContent =
                     new Date().toLocaleDateString('ar-SA', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -1174,8 +1220,8 @@ document.head.appendChild(style);
 window.showSection = (name) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('section-' + name).classList.add('active');
-    event.currentTarget.classList.add('active');
+    document.getElementById('section-' + name)?.classList.add('active');
+    event?.currentTarget?.classList.add('active');
 
     // Lazy load section data
     if (name === 'reports')   loadReports();
@@ -1184,61 +1230,96 @@ window.showSection = (name) => {
     if (name === 'words')     loadWords();
     if (name === 'announcements') loadAnnouncements();
     if (name === 'analytics') loadAnalytics();
-    if (name === 'diagnostics') { /* user triggers manually via Run button */ }
+    if (name === 'admin-access') {
+        loadAdminsList();
+        get(ref(db, 'adminConfig/accessCode')).then(snap => {
+            if (snap.exists()) {
+                document.getElementById('current-admin-code').textContent = snap.val();
+            }
+        }).catch(()=>{});
+    }
+    if (name === 'firebase-viewer' && !window.firebaseViewerData) {
+        refreshFirebaseViewer();
+    }
 };
 
 window.refreshAll = async () => {
-    // Initialize admin code in Firebase if not exists
-    const codeSnap = await get(ref(db, 'adminConfig/accessCode'));
-    if (!codeSnap.exists()) {
-        await set(ref(db, 'adminConfig/accessCode'), ADMIN_CODE);
-        await set(ref(db, 'adminConfig/codeCreatedAt'), Date.now());
+    const btn = document.getElementById('refresh-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i>جاري التحديث...';
     }
 
-    // Players: Firebase rules may restrict reading entire tree — handle gracefully
-    let playerSnap = null;
     try {
-        playerSnap = await get(ref(db, 'players'));
-        allPlayers = playerSnap.exists() ? playerSnap.val() : {};
+        // Initialize admin code in Firebase if not exists
+        try {
+            const codeSnap = await get(ref(db, 'adminConfig/accessCode'));
+            if (!codeSnap.exists()) {
+                await set(ref(db, 'adminConfig/accessCode'), ADMIN_CODE);
+                await set(ref(db, 'adminConfig/codeCreatedAt'), Date.now());
+            }
+        } catch(e) {
+            console.warn('Could not initialize admin code:', e);
+        }
+
+        // Players: Firebase rules may restrict reading entire tree — handle gracefully
+        let playerSnap = null;
+        try {
+            playerSnap = await get(ref(db, 'players'));
+            allPlayers = playerSnap.exists() ? playerSnap.val() : {};
+        } catch(e) {
+            console.warn('[Admin] players read failed (check Firebase rules):', e.message);
+            allPlayers = {};
+        }
+
+        const [roomSnap, reportSnap, banSnap] = await Promise.all([
+            get(ref(db, 'rooms')).catch(() => ({ exists: () => false })),
+            get(ref(db, 'reports')).catch(() => ({ exists: () => false })),
+            get(ref(db, 'bans')).catch(() => ({ exists: () => false }))
+        ]);
+
+        allReports = reportSnap.exists() ? reportSnap.val() : {};
+        allBans    = banSnap.exists() ? banSnap.val() : {};
+
+        const playerCount = Object.keys(allPlayers).length;
+        const roomCount   = roomSnap.exists() ? Object.values(roomSnap.val()).filter(r => r.status === 'waiting' || r.status === 'playing').length : 0;
+        const pendingReps = Object.values(allReports).filter(r => r.status === 'pending').length;
+        const activeBans  = Object.keys(allBans).length;
+
+        document.getElementById('kpi-players').textContent = playerCount;
+        document.getElementById('kpi-rooms').textContent   = roomCount;
+        document.getElementById('kpi-reports').textContent = pendingReps;
+        document.getElementById('kpi-bans').textContent    = activeBans;
+
+        // Report badge
+        const badge = document.getElementById('report-badge');
+        badge.textContent = pendingReps;
+        badge.style.display = pendingReps > 0 ? 'inline-block' : 'none';
+
+        renderRankDist();
+        renderRecentPlayers();
     } catch(e) {
-        allPlayers = {};
-        console.warn('[Admin] players read failed (check Firebase rules):', e.message);
-        // Attempt fallback: read only current user's own record to confirm DB is alive
+        console.error('Refresh failed:', e);
+        await UIAlert('حدث خطأ أثناء التحديث: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt ml-2"></i>تحديث';
+        }
     }
-
-    const [roomSnap, reportSnap, banSnap] = await Promise.all([
-        get(ref(db, 'rooms')),
-        get(ref(db, 'reports')),
-        get(ref(db, 'bans'))
-    ]);
-    allReports = reportSnap.exists() ? reportSnap.val() : {};
-    allBans    = banSnap.exists() ? banSnap.val() : {};
-
-    const playerCount = Object.keys(allPlayers).length;
-    const roomCount   = roomSnap.exists() ? Object.values(roomSnap.val()).filter(r => r.status === 'waiting' || r.status === 'playing').length : 0;
-    const pendingReps = Object.values(allReports).filter(r => r.status === 'pending').length;
-    const activeBans  = Object.keys(allBans).length;
-
-    document.getElementById('kpi-players').textContent = playerCount;
-    document.getElementById('kpi-rooms').textContent   = roomCount;
-    document.getElementById('kpi-reports').textContent = pendingReps;
-    document.getElementById('kpi-bans').textContent    = activeBans;
-
-    // Report badge
-    const badge = document.getElementById('report-badge');
-    badge.textContent = pendingReps;
-    badge.style.display = pendingReps > 0 ? 'inline-block' : 'none';
-
-    renderRankDist();
-    renderRecentPlayers();
 };
 
 // ── RANK DISTRIBUTION ─────────────────────
 function renderRankDist() {
     const counts = {Bronze:0, Silver:0, Gold:0, Platinum:0, Diamond:0};
-    Object.values(allPlayers).forEach(p => { if (counts[p.rank] !== undefined) counts[p.rank]++; else counts.Bronze++; });
+    Object.values(allPlayers).forEach(p => { 
+        if (counts[p.rank] !== undefined) counts[p.rank]++; 
+        else counts.Bronze++; 
+    });
     if (rankChart) rankChart.destroy();
-    rankChart = new Chart(document.getElementById('rank-dist-chart'), {
+    const ctx = document.getElementById('rank-dist-chart');
+    if (!ctx) return;
+    rankChart = new Chart(ctx, {
         type: 'doughnut',
         data: { labels: Object.keys(counts), datasets:[{
             data: Object.values(counts),
@@ -1256,7 +1337,7 @@ function renderRecentPlayers() {
         .sort((a,b) => (b.stats.lastPlayed||0) - (a.stats.lastPlayed||0))
         .slice(0, 8);
 
-    document.getElementById('recent-players-list').innerHTML = sorted.map(p => `
+    document.getElementById('recent-players-list').innerHTML = sorted.length ? sorted.map(p => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);">
             <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f2ff,#7c30ff);display:flex;align-items:center;justify-content:center;font-size:12px;">
@@ -1268,7 +1349,7 @@ function renderRecentPlayers() {
                 </div>
             </div>
             <span style="font-size:11px;font-weight:900;color:#00f2ff;">${p.rank || 'Bronze'}</span>
-        </div>`).join('') || '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا يوجد لاعبون</p>';
+        </div>`).join('') : '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا يوجد لاعبون</p>';
 }
 
 // ── ANALYTICS ────────────────────────────
@@ -1284,7 +1365,9 @@ function loadAnalytics() {
     });
     const cats = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
     if (catChart) catChart.destroy();
-    catChart = new Chart(document.getElementById('category-chart'), {
+    const ctx = document.getElementById('category-chart');
+    if (!ctx) return;
+    catChart = new Chart(ctx, {
         type:'bar',
         data:{ labels: cats.map(c=>c[0]), datasets:[{ label:'مباريات', data: cats.map(c=>c[1]),
             backgroundColor:'rgba(0,242,255,.3)', borderColor:'#00f2ff', borderWidth:2, borderRadius:6 }]},
@@ -1293,9 +1376,10 @@ function loadAnalytics() {
             responsive:true }
     });
 
-    // Top words (from wordLists)
+    // Top words
     get(ref(db,'wordLists')).then(wSnap => {
         const container = document.getElementById('top-words-list');
+        if (!container) return;
         if (!wSnap.exists()) { container.innerHTML = '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا توجد كلمات</p>'; return; }
         const wData = wSnap.val();
         const wordFreq = {};
@@ -1303,7 +1387,6 @@ function loadAnalytics() {
             const arr = Array.isArray(words) ? words : Object.keys(words);
             arr.forEach(w => { wordFreq[w] = (wordFreq[w]||0) + 1; });
         });
-        // Show top words sorted by category count (or just list them with category counts)
         const topWords = Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,15);
         container.innerHTML = topWords.length
             ? topWords.map(([w,c],i) => `
@@ -1313,79 +1396,251 @@ function loadAnalytics() {
                     <span style="font-size:11px;color:#00f2ff;font-weight:900;">${c} فئ${c>1?'ات':'ة'}</span>
                 </div>`).join('')
             : '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا توجد بيانات</p>';
-    });
+    }).catch(()=>{});
 
     const topPlayers = Object.values(allPlayers)
         .sort((a,b)=>(b.rankPoints||0)-(a.rankPoints||0))
         .slice(0,20);
 
-    document.getElementById('top-players-table').innerHTML = topPlayers.map((p,i)=>{
-        const total = p.stats?.totalGames||0;
-        const wins  = (p.stats?.spyWins||0) + (p.stats?.innocentWins||0);
-        const wr    = total ? Math.round(wins/total*100) : 0;
-        return `<tr><td style="color:#555;">${i+1}</td>
-            <td style="font-weight:700;">${p.username}</td>
-            <td><span class="badge badge-active">${p.rank||'Bronze'}</span></td>
-            <td style="font-family:'Orbitron',sans-serif;color:#00f2ff;font-size:12px;">${p.rankPoints||0}</td>
-            <td>${total}</td>
-            <td style="color:${wr>=50?'#22c55e':'#ef4444'};">${wr}%</td></tr>`;
-    }).join('');
+    const tbody = document.getElementById('top-players-table');
+    if (tbody) {
+        tbody.innerHTML = topPlayers.map((p,i)=>{
+            const total = p.stats?.totalGames||0;
+            const wins  = (p.stats?.spyWins||0) + (p.stats?.innocentWins||0);
+            const wr    = total ? Math.round(wins/total*100) : 0;
+            return `<tr><td style="color:#555;">${i+1}</td>
+                <td style="font-weight:700;">${p.username}</td>
+                <td><span class="badge badge-active">${p.rank||'Bronze'}</span></td>
+                <td style="font-family:'Orbitron',sans-serif;color:#00f2ff;font-size:12px;">${p.rankPoints||0}</td>
+                <td>${total}</td>
+                <td style="color:${wr>=50?'#22c55e':'#ef4444'};">${wr}%</td></tr>`;
+        }).join('');
+    }
 }
 
 // ── REPORTS ──────────────────────────────
-let currentReportFilter = 'all';
 function loadReports() {
     get(ref(db,'reports')).then(snap => {
         allReports = snap.exists() ? snap.val() : {};
         renderReports();
+    }).catch(e => {
+        console.error('Failed to load reports:', e);
+        const tbody = document.getElementById('reports-table');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444;">فشل التحميل</td></tr>';
     });
 }
 window.loadReports = loadReports;
 
 function renderReports() {
     const tbody = document.getElementById('reports-table');
-    let reports = Object.entries(allReports);
-    if (currentReportFilter !== 'all') reports = reports.filter(([,r]) => r.status === currentReportFilter);
+    if (!tbody) return;
+    
+    allReportsArray = Object.entries(allReports);
+    let reports = allReportsArray;
+    
+    // Apply filter
+    if (currentReportFilter !== 'all') {
+        reports = reports.filter(([,r]) => r.status === currentReportFilter);
+    }
+    
     reports.sort((a,b) => (b[1].timestamp||0) - (a[1].timestamp||0));
 
-    if (!reports.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#555;">لا توجد بلاغات</td></tr>'; return; }
+    if (!reports.length) { 
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#555;">لا توجد بلاغات</td></tr>'; 
+        return; 
+    }
 
-    tbody.innerHTML = reports.map(([id,r]) => `
+    tbody.innerHTML = reports.map(([id,r]) => {
+        const statusClass = r.status === 'pending' ? 'badge-pending' : 
+                          r.status === 'warned' ? 'badge-warned' :
+                          r.status === 'banned' ? 'badge-banned' : 'badge-resolved';
+        const statusText = r.status === 'pending' ? 'معلق' : 
+                         r.status === 'warned' ? 'محذّر' :
+                         r.status === 'banned' ? 'محظور' : 'محلول';
+        
+        return `
         <tr>
-            <td style="font-weight:700;">${r.reportedUsername || status}</td>
+            <td style="font-weight:700;">${r.reportedUsername || 'مجهول'}</td>
             <td>${reasonAr(r.reason)}</td>
-            <td style="color:#888;font-size:11px;">${r.reportedByUsername||title}</td>
-            <td style="font-family:'Orbitron',sans-serif;font-size:11px;color:#555;">${r.roomCode||r.description}</td>
-            <td style="font-size:11px;color:#555;">${r.timestamp ? new Date(r.timestamp).toLocaleDateString('ar-SA') : contact}</td>
-            <td><span class="badge ${r.status==='pending'?'badge-pending':'badge-resolved'}">${r.status==='pending'?'معلق':'محلول'}</span></td>
+            <td style="font-size:11px;color:#888;">${r.ruleViolation || '—'}</td>
+            <td style="color:#888;font-size:11px;">${r.reportedByUsername || 'مجهول'}</td>
+            <td style="font-family:'Orbitron',sans-serif;font-size:11px;color:#555;">${r.roomCode || '—'}</td>
+            <td style="font-size:11px;color:#555;">${r.timestamp ? new Date(r.timestamp).toLocaleDateString('ar-SA') : '—'}</td>
+            <td><span class="badge ${statusClass}">${statusText}</span></td>
             <td>
                 <div style="display:flex;gap:6px;">
-                    <button class="btn-danger" onclick="resolveReport('${id}')">حل</button>
-                    <button class="btn-sm" onclick="banFromReport('${r.reportedUsername}')">حظر</button>
+                    ${r.status === 'pending' ? `
+                        <button class="btn-sm" onclick="viewReportDetail('${id}')">عرض</button>
+                        <button class="btn-success" onclick="resolveReport('${id}')">حل</button>
+                        <button class="btn-danger" onclick="banFromReport('${r.reportedUsername}')">حظر</button>
+                    ` : `<button class="btn-sm" onclick="viewReportDetail('${id}')">عرض</button>`}
                 </div>
             </td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
 }
 
 window.filterReports = (f, btn) => {
     currentReportFilter = f;
-    document.querySelectorAll('.active-filter').forEach(b => { b.classList.remove('active-filter'); b.style.background=''; });
-    btn.classList.add('active-filter'); btn.style.background='rgba(0,242,255,.15)';
+    document.querySelectorAll('.active-filter').forEach(b => b.classList.remove('active-filter'));
+    btn.classList.add('active-filter');
     renderReports();
 };
 
+window.searchReports = (query) => {
+    if (!query.trim()) {
+        renderReports();
+        return;
+    }
+    
+    const tbody = document.getElementById('reports-table');
+    if (!tbody) return;
+    
+    const q = query.toLowerCase();
+    const filtered = allReportsArray.filter(([id, r]) => {
+        return (r.reportedUsername && r.reportedUsername.toLowerCase().includes(q)) ||
+               (r.reportedByUsername && r.reportedByUsername.toLowerCase().includes(q)) ||
+               (r.roomCode && r.roomCode.toLowerCase().includes(q)) ||
+               (r.reason && r.reason.toLowerCase().includes(q));
+    });
+    
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#555;">لا توجد نتائج</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(([id,r]) => {
+        const statusClass = r.status === 'pending' ? 'badge-pending' : 
+                          r.status === 'warned' ? 'badge-warned' :
+                          r.status === 'banned' ? 'badge-banned' : 'badge-resolved';
+        const statusText = r.status === 'pending' ? 'معلق' : 
+                         r.status === 'warned' ? 'محذّر' :
+                         r.status === 'banned' ? 'محظور' : 'محلول';
+        
+        return `
+        <tr>
+            <td style="font-weight:700;">${r.reportedUsername || 'مجهول'}</td>
+            <td>${reasonAr(r.reason)}</td>
+            <td style="font-size:11px;color:#888;">${r.ruleViolation || '—'}</td>
+            <td style="color:#888;font-size:11px;">${r.reportedByUsername || 'مجهول'}</td>
+            <td style="font-family:'Orbitron',sans-serif;font-size:11px;color:#555;">${r.roomCode || '—'}</td>
+            <td style="font-size:11px;color:#555;">${r.timestamp ? new Date(r.timestamp).toLocaleDateString('ar-SA') : '—'}</td>
+            <td><span class="badge ${statusClass}">${statusText}</span></td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    ${r.status === 'pending' ? `
+                        <button class="btn-sm" onclick="viewReportDetail('${id}')">عرض</button>
+                        <button class="btn-success" onclick="resolveReport('${id}')">حل</button>
+                        <button class="btn-danger" onclick="banFromReport('${r.reportedUsername}')">حظر</button>
+                    ` : `<button class="btn-sm" onclick="viewReportDetail('${id}')">عرض</button>`}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+};
+
+window.viewReportDetail = function(reportId) {
+    const report = allReports[reportId];
+    if (!report) return;
+    
+    const modal = document.getElementById('report-detail-modal');
+    const content = document.getElementById('report-detail-content');
+    
+    if (!modal || !content) return;
+    
+    content.innerHTML = `
+        <h3 style="font-size:18px;font-weight:900;color:#ef4444;margin-bottom:20px;">
+            <i class="fas fa-flag ml-2"></i>تفاصيل البلاغ
+        </h3>
+        
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">المُبلَّغ عنه</p>
+            <p style="font-size:14px;color:#fff;font-weight:700;">${report.reportedUsername || 'مجهول'}</p>
+        </div>
+        
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">السبب</p>
+            <p style="font-size:13px;color:#ccc;">${reasonAr(report.reason)}</p>
+        </div>
+        
+        ${report.ruleViolation ? `
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">مخالفة القواعد</p>
+            <p style="font-size:13px;color:#ccc;">${report.ruleViolation}</p>
+        </div>
+        ` : ''}
+        
+        ${report.description ? `
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">الوصف</p>
+            <p style="font-size:13px;color:#ccc;line-height:1.6;">${report.description}</p>
+        </div>
+        ` : ''}
+        
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">المُبلِّغ</p>
+            <p style="font-size:13px;color:#ccc;">${report.reportedByUsername || 'مجهول'}</p>
+        </div>
+        
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">رمز الغرفة</p>
+            <p style="font-size:13px;color:#ccc;font-family:'Orbitron',sans-serif;">${report.roomCode || '—'}</p>
+        </div>
+        
+        <div style="margin-bottom:16px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">التاريخ</p>
+            <p style="font-size:13px;color:#ccc;">${report.timestamp ? new Date(report.timestamp).toLocaleString('ar-SA') : '—'}</p>
+        </div>
+        
+        <div style="margin-bottom:24px;">
+            <p style="font-size:11px;color:#666;margin-bottom:6px;font-weight:700;">الحالة</p>
+            <span class="badge ${report.status === 'pending' ? 'badge-pending' : 
+                               report.status === 'warned' ? 'badge-warned' :
+                               report.status === 'banned' ? 'badge-banned' : 'badge-resolved'}">
+                ${report.status === 'pending' ? 'معلق' : 
+                  report.status === 'warned' ? 'محذّر' :
+                  report.status === 'banned' ? 'محظور' : 'محلول'}
+            </span>
+        </div>
+        
+        ${report.status === 'pending' ? `
+        <div class="flex gap-3">
+            <button class="btn-success" onclick="resolveReport('${reportId}'); closeReportDetail();">
+                <i class="fas fa-check ml-2"></i>حل البلاغ
+            </button>
+            <button class="btn-danger" onclick="banFromReport('${report.reportedUsername}'); closeReportDetail();">
+                <i class="fas fa-ban ml-2"></i>حظر اللاعب
+            </button>
+        </div>
+        ` : ''}
+    `;
+    
+    modal.style.display = 'flex';
+};
+
+window.closeReportDetail = function() {
+    const modal = document.getElementById('report-detail-modal');
+    if (modal) modal.style.display = 'none';
+};
+
 window.resolveReport = async (id) => {
-    await update(ref(db, `reports/${id}`), { status:'resolved', resolvedAt: Date.now() });
-    loadReports();
+    try {
+        await update(ref(db, `reports/${id}`), { status:'resolved', resolvedAt: Date.now() });
+        loadReports();
+        closeReportDetail();
+    } catch(e) {
+        await UIAlert('فشل حل البلاغ: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 window.banFromReport = (username) => {
     document.getElementById('ban-username').value = username || '';
     showSection('bans');
+    closeReportDetail();
 };
 
 function reasonAr(r) {
-    const m = {cheating:'غش',spam:'سبام',harassment:'تحرش',offensive:'محتوى مسيء',other:'أخرى'};
+    const m = {cheating:'غش',spam:'سبام',harassment:'تحرش',offensive:'محتوى مسيء',other:'أخرى',inappropriate:'غير لائق'};
     return m[r] || r || '—';
 }
 
@@ -1394,12 +1649,17 @@ function loadBans() {
     get(ref(db,'bans')).then(snap => {
         allBans = snap.exists() ? snap.val() : {};
         renderBans();
+    }).catch(e => {
+        console.error('Failed to load bans:', e);
+        const tbody = document.getElementById('bans-table');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#ef4444;">فشل التحميل</td></tr>';
     });
 }
 window.loadBans = loadBans;
 
 function renderBans() {
     const tbody = document.getElementById('bans-table');
+    if (!tbody) return;
     const bans  = Object.entries(allBans);
     if (!bans.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#555;">لا توجد حظورات</td></tr>'; return; }
 
@@ -1420,49 +1680,64 @@ window.banPlayer = async () => {
     if (!username) { await UIAlert('الرجاء إدخال اسم المستخدم', { title: 'حقل مطلوب', type: 'warning', icon: '✏️' }); return; }
 
     // Find player UID
-    const snap = await get(ref(db,'players'));
-    if (!snap.exists()) return;
-    const players = snap.val();
     let targetUid = null;
-    for (const uid in players) {
-        if (players[uid].username === username) { targetUid = uid; break; }
+    try {
+        const snap = await get(ref(db,'players'));
+        if (snap.exists()) {
+            const players = snap.val();
+            for (const uid in players) {
+                if (players[uid].username === username) { targetUid = uid; break; }
+            }
+        }
+    } catch(e) {
+        await UIAlert('خطأ في البحث عن اللاعب: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+        return;
     }
 
-    if (!targetUid) { await UIAlert('لا يوجد لاعب بهذا الاسم في قاعدة البيانات', { title: 'المستخدم غير موجود', type: 'error', icon: '🔍' }); return; }
+    if (!targetUid) { 
+        await UIAlert('لا يوجد لاعب بهذا الاسم في قاعدة البيانات', { title: 'المستخدم غير موجود', type: 'error', icon: '🔍' }); 
+        return; 
+    }
 
-    await set(ref(db, `bans/${targetUid}`), {
-        username,
-        reason: reason || 'مخالفة اللوائح',
-        bannedAt:  Date.now(),
-        expiresAt: duration === -1 ? null : Date.now() + duration,
-        permanent: duration === -1,
-        bannedByName: 'Admin'
-    });
+    try {
+        await set(ref(db, `bans/${targetUid}`), {
+            username,
+            reason: reason || 'مخالفة اللوائح',
+            bannedAt:  Date.now(),
+            expiresAt: duration === -1 ? null : Date.now() + duration,
+            permanent: duration === -1,
+            bannedByName: 'Admin'
+        });
 
-    await UIAlert(`تم حظر ${username} بنجاح`, { title: '🚫 تم الحظر', type: 'success', icon: '✅' });
-    document.getElementById('ban-username').value = '';
-    document.getElementById('ban-reason').value = '';
-    loadBans();
+        await UIAlert(`تم حظر ${username} بنجاح`, { title: '🚫 تم الحظر', type: 'success', icon: '✅' });
+        document.getElementById('ban-username').value = '';
+        document.getElementById('ban-reason').value = '';
+        loadBans();
+    } catch(e) {
+        await UIAlert('فشل الحظر: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 window.unban = async (uid) => {
     const ok = await UIConfirm('هل أنت متأكد من رفع الحظر عن هذا اللاعب؟', { title: 'رفع الحظر', type: 'warning', confirmText: 'رفع الحظر', icon: '✅' });
     if (!ok) return;
-    await remove(ref(db, `bans/${uid}`));
-    loadBans();
+    try {
+        await remove(ref(db, `bans/${uid}`));
+        loadBans();
+    } catch(e) {
+        await UIAlert('فشل رفع الحظر: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 // ── PLAYERS ──────────────────────────────
 let filteredPlayers = [];
 function loadPlayers() {
-    // Show ALL players — including broken ones without username so admin can see them
     filteredPlayers = Object.values(allPlayers);
     renderPlayersTable(filteredPlayers);
     populatePatchDropdown();
 }
 window.loadPlayers = loadPlayers;
 
-// ── POPULATE BROKEN-PLAYERS DROPDOWN ─────
 function populatePatchDropdown() {
     const select = document.getElementById('patch-uid-select');
     if (!select) return;
@@ -1482,7 +1757,6 @@ function populatePatchDropdown() {
 window.onPatchSelectChange = function(uid) {
     if (!uid) return;
     document.getElementById('patch-uid').value = uid;
-    // Pre-fill known data
     const p = allPlayers[uid];
     if (p) {
         if (p.username && p.username !== 'undefined')
@@ -1494,7 +1768,6 @@ window.onPatchSelectChange = function(uid) {
     }
 };
 
-// ── MANUAL PATCH ─────────────────────────
 window.manualPatchPlayer = async function() {
     const uid      = document.getElementById('patch-uid').value.trim();
     const username = document.getElementById('patch-username').value.trim();
@@ -1514,12 +1787,10 @@ window.manualPatchPlayer = async function() {
     if (!username) { showResult('❌ الرجاء إدخال اسم المستخدم', false); return; }
     if (!email)    { showResult('❌ الرجاء إدخال البريد الإلكتروني', false); return; }
 
-    // Basic email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showResult('❌ البريد الإلكتروني غير صحيح', false); return;
     }
 
-    // Check UID exists in DB
     try {
         const snap = await get(ref(db, `players/${uid}`));
         if (!snap.exists()) {
@@ -1531,7 +1802,6 @@ window.manualPatchPlayer = async function() {
         return;
     }
 
-    // Check email not already used by another player
     const emailLower = email.toLowerCase();
     for (const [existingUid, p] of Object.entries(allPlayers)) {
         if (existingUid !== uid && p.email?.toLowerCase() === emailLower) {
@@ -1546,14 +1816,12 @@ window.manualPatchPlayer = async function() {
 
         await update(ref(db, `players/${uid}`), patch);
 
-        // Update local cache
         if (allPlayers[uid]) {
             allPlayers[uid] = { ...allPlayers[uid], ...patch };
         }
 
         showResult(`✅ تم تحديث بيانات اللاعب بنجاح — ${username} (${email})`, true);
 
-        // Clear fields & refresh
         document.getElementById('patch-uid').value       = '';
         document.getElementById('patch-username').value  = '';
         document.getElementById('patch-fullname').value  = '';
@@ -1568,19 +1836,13 @@ window.manualPatchPlayer = async function() {
     }
 };
 
-// ── REPAIR PLAYER RECORDS ─────────────────
-// Fixes players whose username/email/uid are missing in the DB.
-// uid  → always patchable from the DB key
-// email & username → patchable only if the user logged in recently
-//   (ensurePlayerRecord in login.html will have written them)
 window.repairPlayerRecords = async function() {
     const logEl  = document.getElementById('repair-log');
     logEl.innerHTML = '';
     logEl.style.display = 'block';
 
     const log = (msg, color = '#aaa') => {
-        logEl.innerHTML += `<span style="color:${color}">${msg}</span>
-`;
+        logEl.innerHTML += `<span style="color:${color}">${msg}</span>\n`;
         logEl.scrollTop = logEl.scrollHeight;
     };
 
@@ -1603,29 +1865,21 @@ window.repairPlayerRecords = async function() {
         const patch = {};
         let needsFix = false;
 
-        // uid is ALWAYS the DB key — safe to patch unconditionally
         if (!p.uid) {
             patch.uid = uid;
             needsFix = true;
         }
 
-        // username: use displayName from Auth if missing
-        // We can't read OTHER users Auth directly from client,
-        // but if they logged in after our fix, it's already in DB.
-        // Fallback: mark as "مجهول_{short_uid}" so record is searchable
         if (!p.username || p.username === 'undefined') {
             patch.username = p.fullName || `مجهول_${uid.slice(0, 6)}`;
             needsFix = true;
         }
 
-        // email: if missing, we can't recover it without Auth Admin SDK
-        // Flag it so admin knows
         if (!p.email || p.email === 'undefined') {
-            patch.email = '';   // empty string so search won't crash
+            patch.email = '';
             needsFix = true;
         }
 
-        // Ensure required fields exist
         if (p.coins       == null) { patch.coins       = 100;     needsFix = true; }
         if (p.hints       == null) { patch.hints       = 3;       needsFix = true; }
         if (p.rankPoints  == null) { patch.rankPoints  = 0;       needsFix = true; }
@@ -1653,12 +1907,10 @@ window.repairPlayerRecords = async function() {
         }
     }
 
-    log(`
-اكتمل: ${fixed} تم إصلاحه | ${already} سليم | ${skipped} فشل`, '#00f2ff');
+    log(`\nاكتمل: ${fixed} تم إصلاحه | ${already} سليم | ${skipped} فشل`, '#00f2ff');
 
     if (fixed > 0) {
         log('⚠️ ملاحظة: البريد الإلكتروني لا يمكن استرداده إلا عندما يُسجّل المستخدم الدخول مجدداً.', '#fbbf24');
-        // Reload players list
         try {
             const freshSnap = await get(ref(db, 'players'));
             if (freshSnap.exists()) {
@@ -1676,6 +1928,7 @@ window.searchPlayers = (q) => {
 
 function renderPlayersTable(players) {
     const tbody = document.getElementById('players-table');
+    if (!tbody) return;
     if (!players.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#555;">لا يوجد لاعبون</td></tr>'; return; }
     const RANK_COLORS = {Diamond:'#00f2ff',Platinum:'#e5e4e2',Gold:'#ffd700',Silver:'#c0c0c0',Bronze:'#cd7f32'};
 
@@ -1686,7 +1939,6 @@ function renderPlayersTable(players) {
         const color   = RANK_COLORS[p.rank] || '#888';
         const last    = p.stats?.lastPlayed ? new Date(p.stats.lastPlayed).toLocaleDateString('ar-SA') : '—';
 
-        // Detect broken/empty records
         const isBroken = !p.username || p.username === 'undefined' || !p.email || p.email === 'undefined';
         const rowStyle = isBroken ? 'background:rgba(251,191,36,.04);border-right:3px solid #fbbf24;' : '';
         const nameDisplay = p.username && p.username !== 'undefined'
@@ -1735,14 +1987,19 @@ window.viewPlayer = (username) => {
 
 // ── WORD MANAGEMENT ──────────────────────
 async function loadWords() {
-    const snap = await get(ref(db, 'wordLists'));
-    wordListData = snap.exists() ? snap.val() : {};
-    renderCategoryList();
+    try {
+        const snap = await get(ref(db, 'wordLists'));
+        wordListData = snap.exists() ? snap.val() : {};
+        renderCategoryList();
+    } catch(e) {
+        console.error('Failed to load words:', e);
+    }
 }
 window.loadWords = loadWords;
 
 function renderCategoryList() {
     const list = document.getElementById('category-list');
+    if (!list) return;
     const cats  = Object.keys(wordListData);
     list.innerHTML = cats.map(cat => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
@@ -1768,65 +2025,93 @@ window.selectCategory = (cat) => {
 
 window.addWord = async () => {
     const word = document.getElementById('new-word').value.trim();
-    if (!word || !activeCategory) { await UIAlert('اختر فئة أولاً وأدخل كلمة', { title: 'تنبيه', type: 'warning', icon: '⚠️' }); return; }
+    if (!word || !activeCategory) { 
+        await UIAlert('اختر فئة أولاً وأدخل كلمة', { title: 'تنبيه', type: 'warning', icon: '⚠️' }); 
+        return; 
+    }
     const words = Array.isArray(wordListData[activeCategory]) ? [...wordListData[activeCategory]] : Object.keys(wordListData[activeCategory]);
     if (!words.includes(word)) {
         words.push(word);
         wordListData[activeCategory] = words;
-        await set(ref(db, `wordLists/${activeCategory}`), words);
-        document.getElementById('new-word').value = '';
-        selectCategory(activeCategory);
-    } else { await UIAlert(`الكلمة "${word}" موجودة بالفعل في هذه الفئة`, { title: 'كلمة مكررة', type: 'warning', icon: '⚠️' }); }
+        try {
+            await set(ref(db, `wordLists/${activeCategory}`), words);
+            document.getElementById('new-word').value = '';
+            selectCategory(activeCategory);
+        } catch(e) {
+            await UIAlert('فشل إضافة الكلمة: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+        }
+    } else { 
+        await UIAlert(`الكلمة "${word}" موجودة بالفعل في هذه الفئة`, { title: 'كلمة مكررة', type: 'warning', icon: '⚠️' }); 
+    }
 };
 
 window.deleteWord = async (cat, word) => {
     const ok = await UIConfirm(`هل تريد حذف الكلمة "${word}" من الفئة "${cat}"؟`, { title: 'حذف كلمة', type: 'error', confirmText: 'حذف', cancelText: 'إلغاء', icon: '🗑️' });
     if (!ok) return;
-    const words = Array.isArray(wordListData[cat]) ? [...wordListData[cat]] : Object.keys(wordListData[cat]);
-    const updated = words.filter(w => w !== word);
-    wordListData[cat] = updated;
-    await set(ref(db, `wordLists/${cat}`), updated);
-    selectCategory(cat);
+    try {
+        const words = Array.isArray(wordListData[cat]) ? [...wordListData[cat]] : Object.keys(wordListData[cat]);
+        const updated = words.filter(w => w !== word);
+        wordListData[cat] = updated;
+        await set(ref(db, `wordLists/${cat}`), updated);
+        selectCategory(cat);
+    } catch(e) {
+        await UIAlert('فشل حذف الكلمة: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 window.addCategory = async () => {
     const cat = document.getElementById('new-category').value.trim();
     if (!cat) return;
-    if (wordListData[cat]) { await UIAlert(`الفئة "${cat}" موجودة بالفعل`, { title: 'فئة مكررة', type: 'warning', icon: '⚠️' }); return; }
-    wordListData[cat] = [];
-    await set(ref(db, `wordLists/${cat}`), []);
-    document.getElementById('new-category').value = '';
-    renderCategoryList();
-    selectCategory(cat);
+    if (wordListData[cat]) { 
+        await UIAlert(`الفئة "${cat}" موجودة بالفعل`, { title: 'فئة مكررة', type: 'warning', icon: '⚠️' }); 
+        return; 
+    }
+    try {
+        wordListData[cat] = [];
+        await set(ref(db, `wordLists/${cat}`), []);
+        document.getElementById('new-category').value = '';
+        renderCategoryList();
+        selectCategory(cat);
+    } catch(e) {
+        await UIAlert('فشل إضافة الفئة: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 // ── ANNOUNCEMENTS ─────────────────────────
 window.setPriority = (p, btn) => {
     activePriority = p;
-    document.querySelectorAll('[id^="pri-"]').forEach(b => b.style.fontWeight = '700');
+    document.querySelectorAll('[id^="pri-"]').forEach(b => { b.style.fontWeight = '700'; b.style.boxShadow = 'none'; });
     btn.style.fontWeight = '900'; btn.style.boxShadow = '0 0 10px currentColor';
 };
 
 window.sendAnnouncement = async () => {
     const text = document.getElementById('ann-text').value.trim();
-    if (!text) { await UIAlert('الرجاء كتابة نص الإعلان أولاً', { title: 'النص مطلوب', type: 'warning', icon: '✏️' }); return; }
+    if (!text) { 
+        await UIAlert('الرجاء كتابة نص الإعلان أولاً', { title: 'النص مطلوب', type: 'warning', icon: '✏️' }); 
+        return; 
+    }
     const duration = parseInt(document.getElementById('ann-duration').value);
 
-    await push(ref(db, 'announcements'), {
-        message:   text,
-        priority:  activePriority,
-        timestamp: Date.now(),
-        expiresAt: Date.now() + duration
-    });
+    try {
+        await push(ref(db, 'announcements'), {
+            message:   text,
+            priority:  activePriority,
+            timestamp: Date.now(),
+            expiresAt: Date.now() + duration
+        });
 
-    document.getElementById('ann-text').value = '';
-    await UIAlert('تم إرسال الإعلان لجميع اللاعبين بنجاح', { title: '📣 إعلان مُرسل', type: 'success', icon: '✅' });
-    loadAnnouncements();
+        document.getElementById('ann-text').value = '';
+        await UIAlert('تم إرسال الإعلان لجميع اللاعبين بنجاح', { title: '📣 إعلان مُرسل', type: 'success', icon: '✅' });
+        loadAnnouncements();
+    } catch(e) {
+        await UIAlert('فشل إرسال الإعلان: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 function loadAnnouncements() {
     get(ref(db,'announcements')).then(snap => {
         const container = document.getElementById('active-announcements');
+        if (!container) return;
         if (!snap.exists()) { container.innerHTML='<p style="color:#555;font-size:12px;text-align:center;padding:20px;">لا توجد إعلانات</p>'; return; }
         const anns = Object.entries(snap.val())
             .filter(([,a]) => a.expiresAt > Date.now())
@@ -1844,13 +2129,17 @@ function loadAnnouncements() {
                 </div>
                 <p style="font-size:10px;color:#555;margin-top:6px;">ينتهي: ${new Date(a.expiresAt).toLocaleDateString('ar-SA')}</p>
             </div>`).join('');
-    });
+    }).catch(()=>{});
 }
 window.loadAnnouncements = loadAnnouncements;
 
 window.deleteAnn = async (id) => {
-    await remove(ref(db, `announcements/${id}`));
-    loadAnnouncements();
+    try {
+        await remove(ref(db, `announcements/${id}`));
+        loadAnnouncements();
+    } catch(e) {
+        await UIAlert('فشل حذف الإعلان: ' + e.message, { title: 'خطأ', type: 'error', icon: '❌' });
+    }
 };
 
 // ── ADMIN ACCESS MANAGEMENT ───────────────────
@@ -1888,6 +2177,7 @@ window.generateNewCode = async function() {
 
 window.loadAdminsList = async function() {
     const container = document.getElementById('admins-list');
+    if (!container) return;
     container.innerHTML = '<p style="color:#555;font-size:12px;text-align:center;padding:20px;">جاري التحميل...</p>';
 
     try {
@@ -1956,927 +2246,27 @@ window.revokeAdmin = async function(uid, username) {
 };
 
 // ═══════════════════════════════════════════════
-// DIAGNOSTICS ENGINE
+// DIAGNOSTICS ENGINE - see separate script
 // ═══════════════════════════════════════════════
-
-let diagLog = '';
-let diagCounts = { major: 0, error: 0, warning: 0, pass: 0 };
-let diagRunning = false;
-
-// Helper to emit a test result into a container
-function diagResult(containerId, severity, name, detail) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const icons = { major:'🔴', error:'🟠', warning:'🟡', pass:'🟢', info:'🔵', running:'⏳' };
-    const classes = { major:'test-major', error:'test-error', warning:'test-warning', pass:'test-pass', info:'test-info', running:'test-running' };
-    const item = document.createElement('div');
-    item.className = `test-item ${classes[severity] || 'test-info'}`;
-    item.innerHTML = `
-        <span class="test-icon">${icons[severity] || 'ℹ️'}</span>
-        <div>
-            <div class="test-name">${name}</div>
-            ${detail ? `<div class="test-detail">${detail}</div>` : ''}
-        </div>`;
-    container.appendChild(item);
-
-    // Count
-    if (['major','error','warning','pass'].includes(severity)) diagCounts[severity]++;
-
-    // Log
-    const ts = new Date().toISOString().slice(11,19);
-    const sev = severity.toUpperCase().padEnd(7);
-    diagLog += `[${ts}] ${sev} | ${name}${detail ? ' — ' + detail.replace(/<[^>]+>/g,'') : ''}\n`;
-    document.getElementById('diag-log').textContent = diagLog;
-    document.getElementById('diag-log').scrollTop = document.getElementById('diag-log').scrollHeight;
-}
-
-function diagSetDot(id, color) {
-    const el = document.getElementById(id);
-    if (el) el.style.background = color;
-}
-
-function diagUpdateCounters() {
-    document.getElementById('cnt-major').textContent   = diagCounts.major;
-    document.getElementById('cnt-error').textContent   = diagCounts.error;
-    document.getElementById('cnt-warning').textContent = diagCounts.warning;
-    document.getElementById('cnt-pass').textContent    = diagCounts.pass;
-    const summary = document.getElementById('diag-summary');
-    summary.style.setProperty('display', 'flex', 'important');
-
-    // Badge in sidebar
-    const hasIssues = diagCounts.major + diagCounts.error + diagCounts.warning > 0;
-    const badge = document.getElementById('diag-badge');
-    if (badge) badge.style.display = hasIssues ? 'inline-block' : 'none';
-}
-
-function diagProgress(current, total, label) {
-    const pct = Math.round(current / total * 100);
-    document.getElementById('diag-progress-bar').style.width = pct + '%';
-    document.getElementById('diag-progress-pct').textContent = pct + '%';
-    if (label) document.getElementById('diag-progress-label').textContent = label;
-}
-
-window.clearDiagnostics = function() {
-    ['tests-connection','tests-data','tests-stats','tests-integrity','tests-functions','tests-content']
-        .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
-    ['dot-connection','dot-data','dot-functions','dot-stats','dot-integrity','dot-content']
-        .forEach(id => diagSetDot(id, '#555'));
-    document.getElementById('diag-log').textContent = 'جاهز للتشخيص — اضغط "تشغيل الفحص" للبدء';
-    document.getElementById('diag-summary').style.setProperty('display', 'none', 'important');
-    document.getElementById('diag-progress-wrap').style.display = 'none';
-    diagLog = ''; diagCounts = { major:0, error:0, warning:0, pass:0 };
+// Load diagnostics script
+const diagScript = document.createElement('script');
+diagScript.src = 'admin-diagnostics.js';
+diagScript.onerror = () => {
+    console.warn('Diagnostics script failed to load - diagnostics section will not work');
 };
-
-window.copyDiagLog = function() {
-    navigator.clipboard.writeText(diagLog).then(() =>
-        UIAlert('تم نسخ سجل التشخيص', { title: 'تم النسخ', type: 'success', icon: '📋' })
-    );
-};
-
-window.runDiagnostics = async function() {
-    if (diagRunning) return;
-    diagRunning = true;
-    clearDiagnostics();
-    const btn = document.getElementById('run-tests-btn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i>جاري الفحص...';
-    btn.disabled = true;
-
-    document.getElementById('diag-progress-wrap').style.display = 'block';
-    document.getElementById('diag-last-run').textContent =
-        'آخر فحص: ' + new Date().toLocaleString('ar-SA');
-    diagLog = `=== EL JASUS DIAGNOSTICS RUN ===\n${new Date().toISOString()}\n\n`;
-
-    const TOTAL = 30;
-    let step = 0;
-    const step_ = (lbl) => { step++; diagProgress(step, TOTAL, lbl); };
-    const delay = (ms) => new Promise(r => setTimeout(r, ms));
-
-    // ─── GROUP 1: CONNECTION & AUTH ─────────────────────
-    diagSetDot('dot-connection', '#fbbf24');
-    step_('فحص الاتصال بـ Firebase...');
-    await delay(100);
-
-    // Test 1: Firebase app init
-    try {
-        const testSnap = await get(ref(db, 'adminConfig'));
-        if (testSnap.exists()) {
-            diagResult('tests-connection', 'pass', 'اتصال Firebase', 'القراءة من قاعدة البيانات تعمل بشكل صحيح ✅');
-        } else {
-            diagResult('tests-connection', 'warning', 'اتصال Firebase — adminConfig فارغ', 'متصل، لكن لا توجد بيانات في adminConfig بعد');
-        }
-    } catch(e) {
-        if (e.message && e.message.includes('Permission')) {
-            diagResult('tests-connection', 'warning', 'اتصال Firebase (مقيّد)', 'الاتصال يعمل لكن adminConfig مرفوض — تحقق من قواعد Firebase');
-        } else {
-            diagResult('tests-connection', 'major', 'فشل الاتصال بـ Firebase', e.message);
-        }
-    }
-
-    step_('التحقق من حالة المصادقة...');
-    await delay(80);
-
-    // Test 2: Auth
-    const user = auth.currentUser;
-    if (user) {
-        diagResult('tests-connection', 'pass', 'المصادقة', `مسجّل الدخول: ${user.email || user.uid}`);
-    } else {
-        diagResult('tests-connection', 'major', 'غير مسجل الدخول', 'لم يتم التعرف على أي مستخدم — التوجيه لـ login.html');
-    }
-
-    step_('التحقق من صلاحيات الإدارة...');
-    await delay(80);
-
-    // Test 3: Admin status
-    if (user) {
-        try {
-            const adminSnap = await get(ref(db, `players/${user.uid}/isAdmin`));
-            if (adminSnap.val() === true) {
-                diagResult('tests-connection', 'pass', 'صلاحيات الإدارة', 'المستخدم الحالي لديه صلاحيات admin');
-            } else {
-                diagResult('tests-connection', 'major', 'لا صلاحيات إدارة', `players/${user.uid}/isAdmin ليس true`);
-            }
-        } catch(e) {
-            diagResult('tests-connection', 'error', 'خطأ في قراءة صلاحيات', e.message);
-        }
-    }
-
-    // Test 4: Admin code
-    step_('التحقق من رمز الإدارة...');
-    await delay(80);
-    try {
-        const codeSnap = await get(ref(db, 'adminConfig/accessCode'));
-        if (codeSnap.exists()) {
-            diagResult('tests-connection', 'pass', 'رمز الإدارة موجود', `الرمز محفوظ في Firebase: ${codeSnap.val()}`);
-        } else {
-            diagResult('tests-connection', 'warning', 'رمز الإدارة غير موجود في Firebase', 'سيُستخدم الرمز الافتراضي ADMIN26');
-        }
-    } catch(e) {
-        diagResult('tests-connection', 'error', 'خطأ في قراءة رمز الإدارة', e.message);
-    }
-
-    diagSetDot('dot-connection', diagCounts.major > 0 ? '#ef4444' : '#22c55e');
-
-    // ─── GROUP 2: DATABASE READ ─────────────────────────
-    diagSetDot('dot-data', '#fbbf24');
-    const dbNodes = [
-        { path: 'rooms',         label: 'قاعدة الغرف',        severity: 'error',   container: 'tests-data' },
-        { path: 'reports',       label: 'البلاغات',           severity: 'warning', container: 'tests-data' },
-        { path: 'bans',          label: 'الحظورات',           severity: 'warning', container: 'tests-data' },
-        { path: 'wordLists',     label: 'قوائم الكلمات',      severity: 'warning', container: 'tests-data' },
-        { path: 'announcements', label: 'الإعلانات',          severity: 'warning', container: 'tests-data' },
-    ];
-
-    // Players: test separately with special handling for permission rules
-    step_('قراءة بيانات اللاعبين...');
-    await delay(80);
-    try {
-        const pSnap = await get(ref(db, 'players'));
-        const count = pSnap.exists() ? Object.keys(pSnap.val()).length : 0;
-        if (count > 0) {
-            allPlayers = pSnap.val();
-            diagResult('tests-data', 'pass', 'قراءة players', `${count} لاعب — ✅ يعمل`);
-        } else {
-            diagResult('tests-data', 'info', 'قراءة players', 'العقدة فارغة (لا يوجد لاعبون بعد)');
-        }
-    } catch(e) {
-        if (e.message && (e.message.includes('Permission') || e.message.includes('permission'))) {
-            diagResult('tests-data', 'error', 'players — رُفض الوصول (Firebase Rules)',
-                `قواعد Firebase تمنع قراءة كل اللاعبين. أضف هذه القاعدة في Firebase Console:<br>
-                <code style="font-family:monospace;font-size:10px;background:rgba(0,0,0,.4);padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;direction:ltr;">
-                "players": { ".read": "auth != null && root.child('players').child(auth.uid).child('isAdmin').val() === true" }
-                </code>`);
-        } else {
-            diagResult('tests-data', 'major', 'خطأ في قراءة players', e.message);
-        }
-    }
-    for (const node of dbNodes) {
-        step_(`قراءة ${node.label}...`);
-        await delay(80);
-        try {
-            const snap = await get(ref(db, node.path));
-            const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-            diagResult(node.container, count > 0 ? 'pass' : 'info',
-                `قراءة ${node.path}`,
-                snap.exists() ? `${count} سجل — ✅ يعمل` : 'العقدة فارغة (لا توجد سجلات بعد)');
-        } catch(e) {
-            diagResult(node.container, node.severity, `خطأ في قراءة ${node.path}`, e.message);
-        }
-    }
-    diagSetDot('dot-data', '#22c55e');
-
-    // ─── GROUP 3: STATS FUNCTIONS ───────────────────────
-    diagSetDot('dot-stats', '#fbbf24');
-    step_('فحص وظائف الإحصائيات...');
-    await delay(100);
-
-    // Re-read players fresh for stats (allPlayers may be empty due to rules)
-    let statsPlayers = Object.values(allPlayers);
-    if (statsPlayers.length === 0) {
-        // Try one more time inline
-        try {
-            const ps = await get(ref(db, 'players'));
-            if (ps.exists()) {
-                allPlayers = ps.val();
-                statsPlayers = Object.values(allPlayers);
-            }
-        } catch(e) { /* already logged in data section */ }
-    }
-    const players = statsPlayers;
-
-    // Player count
-    if (players.length === 0) {
-        diagResult('tests-stats', 'warning', 'لا يوجد لاعبون في الذاكرة',
-            'إما أن قاعدة البيانات فارغة، أو Firebase Rules تمنع قراءة players (راجع نتائج فحص قاعدة البيانات أعلاه)');
-    } else {
-        diagResult('tests-stats', 'pass', 'بيانات اللاعبين محمّلة', `${players.length} لاعب في الذاكرة`);
-    }
-
-    step_('فحص إحصائيات اللاعبين...');
-    await delay(80);
-
-    // Player field integrity
-    const withUsername = players.filter(p => p.username).length;
-    const withRank     = players.filter(p => p.rank).length;
-    const withStats    = players.filter(p => p.stats).length;
-    const withPoints   = players.filter(p => typeof p.rankPoints === 'number').length;
-    const missing      = [];
-    if (withUsername < players.length) missing.push(`${players.length - withUsername} بلا username`);
-    if (withRank     < players.length) missing.push(`${players.length - withRank} بلا rank`);
-    if (withStats    < players.length) missing.push(`${players.length - withStats} بلا stats`);
-    if (withPoints   < players.length) missing.push(`${players.length - withPoints} بلا rankPoints`);
-
-    if (missing.length) {
-        diagResult('tests-stats', 'warning', 'حقول مفقودة في بعض اللاعبين', missing.join(' | '));
-    } else {
-        diagResult('tests-stats', 'pass', 'حقول اللاعبين مكتملة', 'username ✓ rank ✓ stats ✓ rankPoints ✓');
-    }
-
-    step_('فحص حسابات الفوز...');
-    await delay(80);
-
-    // Check win rate calculation
-    let wr_ok = 0, wr_bad = 0;
-    players.forEach(p => {
-        const total = p.stats?.totalGames || 0;
-        const wins  = (p.stats?.spyWins||0) + (p.stats?.innocentWins||0);
-        if (total > 0 && wins > total) wr_bad++;
-        else wr_ok++;
-    });
-    if (wr_bad > 0) {
-        diagResult('tests-stats', 'error', 'بيانات فوز غير منطقية', `${wr_bad} لاعب لديه انتصارات > مباريات`);
-    } else {
-        diagResult('tests-stats', 'pass', 'حسابات الفوز سليمة', `${wr_ok} لاعب — لا تناقضات`);
-    }
-
-    step_('فحص توزيع الرتب...');
-    await delay(80);
-
-    // Rank distribution
-    const validRanks = ['Bronze','Silver','Gold','Platinum','Diamond'];
-    const invalidRankPlayers = players.filter(p => p.rank && !validRanks.includes(p.rank));
-    if (invalidRankPlayers.length) {
-        diagResult('tests-stats', 'warning', 'رتب غير معروفة',
-            invalidRankPlayers.map(p => `${p.username}: ${p.rank}`).join(', '));
-    } else {
-        diagResult('tests-stats', 'pass', 'قيم الرتب صحيحة', validRanks.join(' | '));
-    }
-
-    diagSetDot('dot-stats', '#22c55e');
-
-    // ─── GROUP 4: DATA INTEGRITY ───────────────────────
-    diagSetDot('dot-integrity', '#fbbf24');
-    step_('فحص سلامة البيانات...');
-    await delay(100);
-
-    // Active bans — check expired
-    try {
-        const bansSnap = await get(ref(db, 'bans'));
-        if (bansSnap.exists()) {
-            const bans = Object.entries(bansSnap.val());
-            const expired = bans.filter(([,b]) => !b.permanent && b.expiresAt && b.expiresAt < Date.now());
-            if (expired.length) {
-                diagResult('tests-integrity', 'warning', 'حظورات منتهية الصلاحية',
-                    `${expired.length} حظر منتهٍ لم يُنظَّف — يمكن مسحها يدوياً`);
-            } else {
-                diagResult('tests-integrity', 'pass', 'الحظورات نظيفة', `${bans.length} حظر نشط، لا منتهية`);
-            }
-        } else {
-            diagResult('tests-integrity', 'info', 'لا توجد حظورات', 'جدول bans فارغ');
-        }
-    } catch(e) {
-        diagResult('tests-integrity', 'error', 'خطأ في فحص الحظورات', e.message);
-    }
-
-    step_('فحص البلاغات المعلقة...');
-    await delay(80);
-
-    // Pending reports
-    const pendingReports = Object.values(allReports).filter(r => r.status === 'pending').length;
-    if (pendingReports > 10) {
-        diagResult('tests-integrity', 'warning', 'بلاغات معلقة كثيرة', `${pendingReports} بلاغ لم يُعالج`);
-    } else if (pendingReports > 0) {
-        diagResult('tests-integrity', 'info', `${pendingReports} بلاغ معلق`, 'تحقق من قسم البلاغات');
-    } else {
-        diagResult('tests-integrity', 'pass', 'لا بلاغات معلقة', 'جميع البلاغات معالجة');
-    }
-
-    step_('فحص غرف اللعب...');
-    await delay(80);
-
-    // Stale rooms
-    try {
-        const roomsSnap = await get(ref(db, 'rooms'));
-        if (roomsSnap.exists()) {
-            const rooms = Object.values(roomsSnap.val());
-            const stale = rooms.filter(r => r.status === 'playing' && (!r.players || Object.keys(r.players||{}).length < 2));
-            const active = rooms.filter(r => r.status === 'waiting' || r.status === 'playing');
-            if (stale.length) {
-                diagResult('tests-integrity', 'warning', 'غرف علقت في حالة playing', `${stale.length} غرفة بلاعبين أقل من 2`);
-            } else {
-                diagResult('tests-integrity', 'pass', 'الغرف سليمة', `${active.length} غرفة نشطة`);
-            }
-        } else {
-            diagResult('tests-integrity', 'info', 'لا توجد غرف', 'جدول rooms فارغ');
-        }
-    } catch(e) {
-        diagResult('tests-integrity', 'warning', 'تعذّر فحص الغرف', e.message);
-    }
-
-    step_('فحص مدونة قواعد السلوك...');
-    await delay(80);
-
-    // Moderation — check blocked words available
-    if (typeof window.MOD !== 'undefined') {
-        diagResult('tests-integrity', 'pass', 'نظام الإشراف محمّل', 'MOD.checkAndHandleMessage متاح');
-    } else {
-        diagResult('tests-integrity', 'info', 'moderation.js غير نشط في هذه الصفحة',
-            'هذا طبيعي — الإشراف يعمل في room.html و home.html حيث يلعب المستخدمون');
-    }
-
-    diagSetDot('dot-integrity', '#22c55e');
-
-    // ─── GROUP 5: FUNCTION AVAILABILITY ───────────────
-    diagSetDot('dot-functions', '#fbbf24');
-    step_('فحص توفر الوظائف...');
-    await delay(100);
-
-    const requiredFns = [
-        ['refreshAll',         'تحديث البيانات'],
-        ['showSection',        'التنقل بين الأقسام'],
-        ['banPlayer',          'حظر لاعب'],
-        ['unban',              'رفع الحظر'],
-        ['loadPlayers',        'تحميل اللاعبين'],
-        ['searchPlayers',      'البحث عن لاعب'],
-        ['viewPlayer',         'عرض بيانات لاعب'],
-        ['loadBans',           'تحميل الحظورات'],
-        ['loadReports',        'تحميل البلاغات'],
-        ['filterReports',      'تصفية البلاغات'],
-        ['resolveReport',      'حل البلاغ'],
-        ['banFromReport',      'حظر من بلاغ'],
-        ['loadWords',          'تحميل الكلمات'],
-        ['selectCategory',     'اختيار فئة'],
-        ['addWord',            'إضافة كلمة'],
-        ['deleteWord',         'حذف كلمة'],
-        ['addCategory',        'إضافة فئة'],
-        ['loadAnnouncements',  'تحميل الإعلانات'],
-        ['sendAnnouncement',   'إرسال إعلان'],
-        ['deleteAnn',          'حذف إعلان'],
-        ['setPriority',        'تحديد الأولوية'],
-        ['loadAdminsList',     'قائمة المسؤولين'],
-        ['revokeAdmin',        'إلغاء صلاحيات'],
-        ['generateNewCode',    'إنشاء رمز جديد'],
-        ['copyAdminCode',      'نسخ الرمز'],
-        ['verifyAdminCode',    'التحقق من الرمز'],
-        ['runDiagnostics',     'تشغيل التشخيص'],
-        ['clearDiagnostics',   'مسح التشخيص'],
-    ];
-
-    let fnMissing = 0;
-    for (const [fn, label] of requiredFns) {
-        if (typeof window[fn] === 'function') {
-            diagResult('tests-functions', 'pass', `${label}`, `window.${fn}() ✓`);
-        } else {
-            diagResult('tests-functions', 'error', `وظيفة مفقودة: ${fn}`, `${label} — window.${fn} غير معرّفة`);
-            fnMissing++;
-        }
-        await delay(20);
-    }
-    step_('اكتمل فحص الوظائف');
-
-    if (fnMissing === 0) {
-        diagResult('tests-functions', 'pass', 'جميع الوظائف متاحة', `${requiredFns.length}/${requiredFns.length} وظيفة تعمل`);
-    } else {
-        diagResult('tests-functions', 'error', `${fnMissing} وظيفة مفقودة`, 'تحقق من تحميل ملفات JS');
-    }
-    diagSetDot('dot-functions', fnMissing ? '#ef4444' : '#22c55e');
-
-    // ─── GROUP 6: CONTENT CHECK ────────────────────────
-    diagSetDot('dot-content', '#fbbf24');
-    step_('فحص محتوى قوائم الكلمات...');
-    await delay(100);
-
-    try {
-        const wSnap = await get(ref(db, 'wordLists'));
-        if (!wSnap.exists()) {
-            diagResult('tests-content', 'warning', 'قوائم الكلمات فارغة',
-                'لا توجد فئات في wordLists — اللعبة ستستخدم الكلمات المدمجة فقط');
-        } else {
-            const wData = wSnap.val();
-            const cats  = Object.keys(wData);
-            let emptyCats = 0, totalWords = 0;
-            cats.forEach(c => {
-                const arr = Array.isArray(wData[c]) ? wData[c] : Object.keys(wData[c]);
-                totalWords += arr.length;
-                if (arr.length === 0) emptyCats++;
-            });
-            if (emptyCats) {
-                diagResult('tests-content', 'warning', 'فئات فارغة', `${emptyCats} فئة بدون كلمات من أصل ${cats.length}`);
-            }
-            diagResult('tests-content', cats.length > 0 ? 'pass' : 'warning', 'قوائم الكلمات',
-                `${cats.length} فئة | ${totalWords} كلمة إجمالاً`);
-        }
-    } catch(e) {
-        diagResult('tests-content', 'error', 'خطأ في قراءة قوائم الكلمات', e.message);
-    }
-
-    step_('فحص الإعلانات المنتهية...');
-    await delay(80);
-
-    // Expired announcements
-    try {
-        const annSnap = await get(ref(db, 'announcements'));
-        if (annSnap.exists()) {
-            const anns = Object.entries(annSnap.val());
-            const expired = anns.filter(([,a]) => a.expiresAt < Date.now());
-            const active  = anns.length - expired.length;
-            if (expired.length > 5) {
-                diagResult('tests-content', 'warning', 'إعلانات منتهية الصلاحية',
-                    `${expired.length} إعلان منتهٍ — يمكن حذفها لتنظيف قاعدة البيانات`);
-            } else {
-                diagResult('tests-content', 'pass', 'الإعلانات',
-                    `${active} نشط | ${expired.length} منتهٍ`);
-            }
-        } else {
-            diagResult('tests-content', 'info', 'لا توجد إعلانات', 'جدول announcements فارغ');
-        }
-    } catch(e) {
-        diagResult('tests-content', 'warning', 'خطأ في فحص الإعلانات', e.message);
-    }
-
-    // Chart.js availability
-    step_('فحص مكتبات الرسوم البيانية...');
-    await delay(80);
-    if (typeof Chart !== 'undefined') {
-        diagResult('tests-content', 'pass', 'Chart.js متاح', `الإصدار: ${Chart.version || 'غير معروف'}`);
-    } else {
-        diagResult('tests-content', 'error', 'Chart.js غير محمّل', 'الرسوم البيانية في قسم التحليلات لن تعمل');
-    }
-
-    diagSetDot('dot-content', '#22c55e');
-
-    // ─── DONE ──────────────────────────────────────────
-    diagProgress(TOTAL, TOTAL, 'اكتمل الفحص');
-    diagUpdateCounters();
-
-    const total = diagCounts.major + diagCounts.error + diagCounts.warning + diagCounts.pass;
-    const emoji = diagCounts.major > 0 ? '🔴' : diagCounts.error > 0 ? '🟠' : diagCounts.warning > 0 ? '🟡' : '🟢';
-    diagLog += `\n=== النتيجة: ${emoji} ${diagCounts.major} جسيم | ${diagCounts.error} خطأ | ${diagCounts.warning} تحذير | ${diagCounts.pass} ناجح ===\n`;
-    document.getElementById('diag-log').textContent = diagLog;
-
-    setTimeout(() => {
-        document.getElementById('diag-progress-wrap').style.display = 'none';
-    }, 1500);
-
-    btn.innerHTML = '<i class="fas fa-check ml-2"></i>اكتمل الفحص';
-    btn.disabled = false;
-    setTimeout(() => {
-        btn.innerHTML = '<i class="fas fa-play ml-2"></i>إعادة الفحص';
-    }, 2000);
-    diagRunning = false;
-};
+document.head.appendChild(diagScript);
 
 // ═══════════════════════════════════════════════
-const _origShowSection = window.showSection;
-window.showSection = function(name) {
-    _origShowSection(name);
-    if (name === 'admin-access') {
-        loadAdminsList();
-        // Load current code from Firebase
-        get(ref(db, 'adminConfig/accessCode')).then(snap => {
-            if (snap.exists()) {
-                document.getElementById('current-admin-code').textContent = snap.val();
-            }
-        });
-    }
-};
-
+// FIREBASE DATABASE VIEWER - see separate script
 // ═══════════════════════════════════════════════
-// FIREBASE DATABASE VIEWER
-// ═══════════════════════════════════════════════
-
-let firebaseViewerData = null;
-let firebaseViewerPath = '';
-let expandedNodes = new Set();
-let selectedNodePath = null;
-let selectedNodeData = null;
-
-window.refreshFirebaseViewer = async function() {
-    const container = document.getElementById('firebase-tree-container');
-    container.innerHTML = '<div class="firebase-loading"><i class="fas fa-spinner fa-spin ml-2"></i>جاري تحميل البيانات...</div>';
-
-    try {
-        const rootPath = document.getElementById('firebase-root-select').value;
-
-        if (!rootPath) {
-            // Root-level read is blocked by rules — fetch each known path individually
-            const knownPaths = ['players', 'rooms', 'reports', 'bans', 'wordLists', 'announcements', 'adminConfig'];
-            const results = await Promise.allSettled(knownPaths.map(p => get(ref(db, p))));
-            const combined = {};
-            results.forEach((result, i) => {
-                if (result.status === 'fulfilled' && result.value.exists()) {
-                    combined[knownPaths[i]] = result.value.val();
-                }
-            });
-            if (Object.keys(combined).length === 0) {
-                container.innerHTML = '<div class="firebase-empty">📭 لا توجد بيانات متاحة</div>';
-                return;
-            }
-            firebaseViewerData = combined;
-            firebaseViewerPath = '';
-            renderFirebaseTree(combined, '', container);
-            updateFirebaseBreadcrumb('');
-        } else {
-            const snapshot = await get(ref(db, rootPath));
-            if (snapshot.exists()) {
-                firebaseViewerData = snapshot.val();
-                firebaseViewerPath = rootPath;
-                renderFirebaseTree(firebaseViewerData, rootPath, container);
-                updateFirebaseBreadcrumb(rootPath);
-            } else {
-                container.innerHTML = '<div class="firebase-empty">📭 لا توجد بيانات في هذا المسار</div>';
-            }
-        }
-    } catch(e) {
-        container.innerHTML = `<div class="firebase-empty" style="color:#ef4444;">❌ خطأ في التحميل: ${e.message}</div>`;
-        console.error('Firebase viewer error:', e);
-    }
+// Load viewer script
+const viewerScript = document.createElement('script');
+viewerScript.src = 'firebase-viewer.js';
+viewerScript.onerror = () => {
+    console.warn('Firebase viewer script failed to load - viewer section will not work');
 };
-
-function renderFirebaseTree(data, path, container, level = 0) {
-    container.innerHTML = '';
-    
-    if (data === null || data === undefined) {
-        container.innerHTML = '<div class="firebase-empty">القيمة: null</div>';
-        return;
-    }
-    
-    const isObject = typeof data === 'object' && data !== null;
-    
-    if (!isObject) {
-        // Primitive value
-        container.innerHTML = `<div class="firebase-node">
-            <div class="firebase-node-header">
-                <span class="firebase-value ${typeof data}">${formatFirebaseValue(data)}</span>
-            </div>
-        </div>`;
-        return;
-    }
-    
-    // Object/Array
-    const entries = Object.entries(data);
-    
-    entries.forEach(([key, value]) => {
-        const nodePath = path ? `${path}/${key}` : key;
-        const isExpanded = expandedNodes.has(nodePath);
-        const isSelected = selectedNodePath === nodePath;
-        const hasChildren = typeof value === 'object' && value !== null;
-        const childCount = hasChildren ? Object.keys(value).length : 0;
-        
-        const nodeEl = document.createElement('div');
-        nodeEl.className = 'firebase-node';
-        nodeEl.dataset.path = nodePath;
-        
-        const headerEl = document.createElement('div');
-        headerEl.className = `firebase-node-header ${isSelected ? 'selected' : ''}`;
-        headerEl.style.paddingLeft = `${level * 12}px`;
-        
-        // Toggle icon
-        if (hasChildren) {
-            const toggleEl = document.createElement('span');
-            toggleEl.className = `firebase-toggle ${isExpanded ? 'expanded' : ''}`;
-            toggleEl.innerHTML = '▶';
-            toggleEl.onclick = (e) => {
-                e.stopPropagation();
-                toggleFirebaseNode(nodePath);
-            };
-            headerEl.appendChild(toggleEl);
-        } else {
-            const spacerEl = document.createElement('span');
-            spacerEl.style.width = '16px';
-            headerEl.appendChild(spacerEl);
-        }
-        
-        // Key
-        const keyEl = document.createElement('span');
-        keyEl.className = 'firebase-key';
-        keyEl.textContent = key;
-        headerEl.appendChild(keyEl);
-        
-        // Type badge
-        const typeEl = document.createElement('span');
-        typeEl.className = 'firebase-type';
-        if (hasChildren) {
-            typeEl.textContent = Array.isArray(value) ? 'array' : 'object';
-        } else {
-            typeEl.textContent = typeof value;
-        }
-        headerEl.appendChild(typeEl);
-        
-        // Count badge for objects
-        if (hasChildren) {
-            const countEl = document.createElement('span');
-            countEl.className = 'firebase-count';
-            countEl.textContent = `${childCount}`;
-            headerEl.appendChild(countEl);
-        }
-        
-        // Value preview for primitives
-        if (!hasChildren) {
-            const valueEl = document.createElement('span');
-            valueEl.className = `firebase-value ${typeof value}`;
-            valueEl.textContent = formatFirebaseValue(value);
-            headerEl.appendChild(valueEl);
-        }
-        
-        // Actions
-        const actionsEl = document.createElement('div');
-        actionsEl.className = 'firebase-actions';
-        
-        const viewBtn = document.createElement('button');
-        viewBtn.className = 'firebase-action-btn';
-        viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
-        viewBtn.title = 'عرض التفاصيل';
-        viewBtn.onclick = (e) => {
-            e.stopPropagation();
-            showFirebaseNodeDetails(nodePath, value);
-        };
-        actionsEl.appendChild(viewBtn);
-        
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'firebase-action-btn';
-        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
-        copyBtn.title = 'نسخ المسار';
-        copyBtn.onclick = (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(nodePath);
-            UIAlert('تم نسخ المسار', { title: 'نسخ', type: 'success', icon: '📋' });
-        };
-        actionsEl.appendChild(copyBtn);
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'firebase-action-btn danger';
-        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-        deleteBtn.title = 'حذف';
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            confirmDeleteFirebaseNode(nodePath);
-        };
-        actionsEl.appendChild(deleteBtn);
-        
-        headerEl.appendChild(actionsEl);
-        
-        // Click handler
-        headerEl.onclick = () => {
-            if (hasChildren) {
-                toggleFirebaseNode(nodePath);
-            }
-            selectFirebaseNode(nodePath, value);
-        };
-        
-        nodeEl.appendChild(headerEl);
-        
-        // Children container
-        if (hasChildren) {
-            const childrenEl = document.createElement('div');
-            childrenEl.className = `firebase-children ${isExpanded ? 'expanded' : ''}`;
-            if (isExpanded) {
-                renderFirebaseTree(value, nodePath, childrenEl, level + 1);
-            }
-            nodeEl.appendChild(childrenEl);
-        }
-        
-        container.appendChild(nodeEl);
-    });
-}
-
-function formatFirebaseValue(value) {
-    if (value === null) return 'null';
-    if (value === undefined) return 'undefined';
-    if (typeof value === 'string') return `"${value.length > 50 ? value.slice(0, 50) + '...' : value}"`;
-    if (typeof value === 'boolean') return value.toString();
-    if (typeof value === 'number') return value.toString();
-    return JSON.stringify(value).slice(0, 50) + '...';
-}
-
-function toggleFirebaseNode(path) {
-    if (expandedNodes.has(path)) {
-        expandedNodes.delete(path);
-    } else {
-        expandedNodes.add(path);
-    }
-    
-    // Re-render only this node
-    const nodeEl = document.querySelector(`[data-path="${path}"]`);
-    if (nodeEl) {
-        const childrenEl = nodeEl.querySelector('.firebase-children');
-        const toggleEl = nodeEl.querySelector('.firebase-toggle');
-        
-        if (childrenEl && toggleEl) {
-            const isExpanded = expandedNodes.has(path);
-            childrenEl.classList.toggle('expanded', isExpanded);
-            toggleEl.classList.toggle('expanded', isExpanded);
-            
-            if (isExpanded && childrenEl.children.length === 0) {
-                // Lazy load children
-                const pathParts = path.split('/').filter(p => p);
-                let data = firebaseViewerData;
-                for (const part of pathParts) {
-                    data = data[part];
-                }
-                renderFirebaseTree(data, path, childrenEl, pathParts.length);
-            }
-        }
-    }
-}
-
-function selectFirebaseNode(path, data) {
-    // Deselect previous
-    const prevSelected = document.querySelector('.firebase-node-header.selected');
-    if (prevSelected) prevSelected.classList.remove('selected');
-    
-    // Select new
-    const nodeEl = document.querySelector(`[data-path="${path}"] > .firebase-node-header`);
-    if (nodeEl) nodeEl.classList.add('selected');
-    
-    selectedNodePath = path;
-    selectedNodeData = data;
-}
-
-function showFirebaseNodeDetails(path, data) {
-    selectedNodePath = path;
-    selectedNodeData = data;
-    
-    document.getElementById('firebase-details-path').textContent = path;
-    
-    const type = Array.isArray(data) ? 'Array' : typeof data === 'object' ? 'Object' : typeof data;
-    document.getElementById('firebase-details-type').textContent = type;
-    
-    const jsonStr = JSON.stringify(data, null, 2);
-    document.getElementById('firebase-details-json').textContent = jsonStr;
-    
-    document.getElementById('firebase-details').style.display = 'block';
-    
-    // Scroll to details
-    document.getElementById('firebase-details').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-window.closeFirebaseDetails = function() {
-    document.getElementById('firebase-details').style.display = 'none';
-    selectedNodePath = null;
-    selectedNodeData = null;
-};
-
-window.copyFirebaseNodeData = function() {
-    if (!selectedNodeData) return;
-    const jsonStr = JSON.stringify(selectedNodeData, null, 2);
-    navigator.clipboard.writeText(jsonStr).then(() => {
-        UIAlert('تم نسخ البيانات بتنسيق JSON', { title: 'نسخ', type: 'success', icon: '📋' });
-    });
-};
-
-window.exportFirebaseNode = function() {
-    if (!selectedNodeData || !selectedNodePath) return;
-    
-    const jsonStr = JSON.stringify(selectedNodeData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `firebase_${selectedNodePath.replace(/\//g, '_')}_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    UIAlert('تم تصدير البيانات', { title: 'تصدير', type: 'success', icon: '💾' });
-};
-
-window.deleteFirebaseNode = async function() {
-    if (!selectedNodePath) return;
-    await confirmDeleteFirebaseNode(selectedNodePath);
-};
-
-async function confirmDeleteFirebaseNode(path) {
-    const ok = await UIConfirm(
-        `هل أنت متأكد من حذف هذه العقدة؟<br><br><code style="font-family:monospace;background:rgba(0,0,0,.4);padding:4px 8px;border-radius:4px;color:#ef4444;">${path}</code><br><br>⚠️ <strong>هذا الإجراء لا يمكن التراجع عنه!</strong>`,
-        { title: 'حذف عقدة', type: 'error', confirmText: 'حذف نهائياً', cancelText: 'إلغاء', icon: '🗑️' }
-    );
-    
-    if (!ok) return;
-    
-    try {
-        await remove(ref(db, path));
-        await UIAlert('تم حذف العقدة بنجاح', { title: 'تم الحذف', type: 'success', icon: '✅' });
-        closeFirebaseDetails();
-        refreshFirebaseViewer();
-    } catch(e) {
-        await UIAlert(`خطأ في الحذف: ${e.message}`, { title: 'خطأ', type: 'error', icon: '❌' });
-    }
-}
-
-window.expandAllNodes = function() {
-    if (!firebaseViewerData) return;
-    
-    function collectAllPaths(data, basePath = '') {
-        const paths = [];
-        if (typeof data === 'object' && data !== null) {
-            Object.keys(data).forEach(key => {
-                const path = basePath ? `${basePath}/${key}` : key;
-                paths.push(path);
-                paths.push(...collectAllPaths(data[key], path));
-            });
-        }
-        return paths;
-    }
-    
-    const allPaths = collectAllPaths(firebaseViewerData, firebaseViewerPath);
-    allPaths.forEach(p => expandedNodes.add(p));
-    
-    refreshFirebaseViewer();
-};
-
-window.collapseAllNodes = function() {
-    expandedNodes.clear();
-    refreshFirebaseViewer();
-};
-
-window.filterFirebaseNodes = function(query) {
-    const nodes = document.querySelectorAll('.firebase-node');
-    query = query.toLowerCase();
-    
-    if (!query) {
-        nodes.forEach(node => node.style.display = '');
-        return;
-    }
-    
-    nodes.forEach(node => {
-        const path = node.dataset.path || '';
-        const text = node.textContent.toLowerCase();
-        const matches = path.toLowerCase().includes(query) || text.includes(query);
-        node.style.display = matches ? '' : 'none';
-    });
-};
-
-window.loadFirebaseRoot = function(rootPath) {
-    firebaseViewerPath = rootPath;
-    expandedNodes.clear();
-    refreshFirebaseViewer();
-};
-
-function updateFirebaseBreadcrumb(path) {
-    const breadcrumb = document.getElementById('firebase-breadcrumb');
-    if (!path) {
-        breadcrumb.innerHTML = '<span class="firebase-breadcrumb-item" onclick="loadFirebaseRoot(\'\')">الجذر /</span>';
-        return;
-    }
-    
-    const parts = path.split('/').filter(p => p);
-    let html = '<span class="firebase-breadcrumb-item" onclick="loadFirebaseRoot(\'\')">الجذر</span>';
-    
-    parts.forEach((part, i) => {
-        const partPath = parts.slice(0, i + 1).join('/');
-        html += `<span class="firebase-breadcrumb-separator">/</span>`;
-        html += `<span class="firebase-breadcrumb-item" onclick="loadFirebaseRoot('${partPath}')">${part}</span>`;
-    });
-    
-    breadcrumb.innerHTML = html;
-}
-
-// Auto-load when section is shown
-const _origShowSection2 = window.showSection;
-window.showSection = function(name) {
-    _origShowSection2(name);
-    if (name === 'firebase-viewer') {
-        if (!firebaseViewerData) {
-            refreshFirebaseViewer();
-        }
-    }
-};
+document.head.appendChild(viewerScript);
 
 </script>
-<script>
-    window.alert   = (msg)             => UIAlert(msg);
-    window.confirm = (msg)             => UIConfirm(msg);
-    window.prompt  = (msg, defaultVal) => UIPrompt(msg, { defaultValue: defaultVal });
-</script>
-<script src="dialogs.js"></script>
 </body>
 </html>
