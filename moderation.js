@@ -1,50 +1,87 @@
 // ============================================================
-// EL JASUS — JMS (El Jasus Moderation System) v3.0
+// EL JASUS — JMS (El Jasus Moderation System) v3.1 ENHANCED
+// Advanced Detection with Substring Extraction & Pattern Matching
 // ============================================================
 
 (function () {
 'use strict';
 
 // ══════════════════════════════════════════════════════════
-// SYMBOL SUBSTITUTION MAP
-// Normalizes common symbol tricks like k0s → كوس
+// ENHANCED SYMBOL SUBSTITUTION MAP
+// Normalizes leetspeak, symbols, emojis, Unicode tricks
 // ══════════════════════════════════════════════════════════
 const SYMBOL_MAP = {
-    // Numbers to letters
-    '0': ['o', 'ο', 'о', '٠'],
-    '1': ['i', 'l', '١','ا', 'أ', 'إ'],
-    '2': ['z', '٢', 'ا', 'أ', 'إ', 'ء'],
-    '3': ['e', '٣', 'ع'],
-    '4': ['a', '٤','ش'],
-    '5': ['s', '٥', 'خ'],
-    '7': ['h', '٧', 'ح'],
-    '8': ['b', '٨', 'غ'],
-    '9': ['g', '٩'],
+    // Numbers to letters (expanded)
+    '0': ['o', 'ο', 'о', '٠', 'ø', 'ɵ', 'θ'],
+    '1': ['i', 'l', '١','ا', 'أ', 'إ', '|', 'ǀ', 'ɪ'],
+    '2': ['z', '٢', 'ا', 'أ', 'إ', 'ء', 'ʒ'],
+    '3': ['e', '٣', 'ع', 'ɛ', 'є', 'ε'],
+    '4': ['a', '٤','ش', 'α', 'ą'],
+    '5': ['s', '٥', 'خ', 'ś', 'š'],
+    '6': ['b', '٦', 'ب'],
+    '7': ['h', '٧', 'ح', 'ħ'],
+    '8': ['b', '٨', 'غ', 'β'],
+    '9': ['g', '٩', 'q', 'ق'],
     
-    // Symbols to letters
+    // Symbols to letters (expanded)
     '$': ['s'],
-    '@': ['a'],
-    '!': ['i'],
+    '@': ['a', 'ع'],
+    '!': ['i', 'l'],
     '|': ['i', 'l'],
     '&': ['and'],
-    '*': ['a', 'o'],
+    '*': ['a', 'o', 'x'],
     '#': ['h'],
     '%': ['x'],
+    '^': ['a'],
+    '~': ['n'],
+    '+': ['t'],
+    '=': ['e'],
     
-    // Special characters
-    '.': [''],
-    '-': [''],
-    '_': [''],
-    ' ': [''],
-    '/': [''],
-    '\\': [''],
-    '~': [''],
-    '+': [''],
+    // Special/look-alike characters
+    'а': ['a'], 'е': ['e'], 'о': ['o'], 'р': ['p'], 'с': ['c'], // Cyrillic
+    'х': ['x'], 'у': ['y'], 'і': ['i'], 'ѕ': ['s'], 'һ': ['h'],
+    'ɑ': ['a'], 'е': ['e'], 'ο': ['o'], 'ѕ': ['s'], // Greek-like
+    'ℓ': ['l'], '℮': ['e'], 'ℯ': ['e'], '℥': ['o'],
+    
+    // Remove these entirely
+    '.': [''], '-': [''], '_': [''], ' ': [''], '/': [''], '\\': [''],
+    ',': [''], ';': [''], ':': [''], '(': [''], ')': [''], '[': [''],
+    ']': [''], '{': [''], '}': [''], '<': [''], '>': [''], '?': [''],
+    '\'': [''], '"': [''], '`': [''], '´': [''], "": [''], '': [''],
+    '"': [''], '"': [''], '«': [''], '»': [''], '→': [''], '←': [''],
+    '↑': [''], '↓': [''], '•': [''], '·': [''], '∙': [''], '◦': [''],
 };
 
 // ══════════════════════════════════════════════════════════
+// OFFENSIVE EMOJI PATTERNS
+// ══════════════════════════════════════════════════════════
+const OFFENSIVE_EMOJI_PATTERNS = [
+    /🖕/g,
+    /🍆🍑/g,
+    /💦🍆/g,
+    /🔞/g,
+    /🔴⚫/g, 
+    /💋/g,
+    /🫦/g,
+    /👙/g,
+    /🌈/g,
+    /🏳️‍🌈/g,
+    /☮️/g,
+    /✝️/g,
+    /🕉️/g,
+    /☸️/g,
+    /✡️/g,
+    /🔯/g,
+    /🪯/g,
+    /🕎/g,
+    /☯️/g,
+    /☦️/g,
+    /⚧️/g,
+    /🏳️‍⚧️/g,
+];
+
+// ══════════════════════════════════════════════════════════
 // 5-LEVEL VIOLATION CLASSIFICATION
-// Each level has: warnings threshold, ban duration, severity
 // ══════════════════════════════════════════════════════════
 const LEVELS = {
     1: {
@@ -62,7 +99,7 @@ const LEVELS = {
         icon: '🔶',
         color: '#f97316',
         warningsThreshold: 5,
-        banDuration: 1 * 864e5, // 1 day (24-48 hours average)
+        banDuration: 1 * 864e5, // 1 day
         severity: 'حظر مؤقت خفيف',
     },
     3: {
@@ -71,7 +108,7 @@ const LEVELS = {
         icon: '🔴',
         color: '#ef4444',
         warningsThreshold: 3,
-        banDuration: 10 * 864e5, // 10 days (7-14 average)
+        banDuration: 10 * 864e5, // 10 days
         severity: 'حظر مؤقت شديد',
     },
     4: {
@@ -80,7 +117,7 @@ const LEVELS = {
         icon: '🟣',
         color: '#a855f7',
         warningsThreshold: 1,
-        banDuration: 45 * 864e5, // 45 days (30-60 average)
+        banDuration: 45 * 864e5, // 45 days
         severity: 'حظر طويل',
     },
     5: {
@@ -95,77 +132,91 @@ const LEVELS = {
 };
 
 // ══════════════════════════════════════════════════════════
-// BLOCKED WORDS BY LEVEL
+// MASSIVELY EXPANDED BLOCKED WORDS BY LEVEL
 // ══════════════════════════════════════════════════════════
 const VIOLATIONS = {
     // ── Level 1: Minor inappropriate language ────────────────
     1: {
-    words: [
-        // ========== ARABIC (original + extensive additions) ==========
-        'غبي', 'غبية', 'أهبل', 'عبيط', 'حمار', 'جحش', 'بهيمة', 'حيوان',
-        'زبالة', 'وسخ', 'حقير', 'نعل', 'تبا', 'ملعون', 'لعنة', 'قذر',
-        'مقرف', 'سافل', 'تافه', 'سخيف', 'كلب', 'بقرة', 'ماعز', 'خنزير',
-        // Additional Arabic (minor profanity, insults, vulgar slang)
-        'أحمق', 'بليد', 'معتوه', 'مريض', 'خسيس', 'وضيع', 'دنيء', 'لئيم',
-        'فاشل', 'خايب', 'ساقط', 'نذل', 'رعاع', 'أوغاد', 'جبان', 'متخلف',
-        'جاهل', 'أبله', 'ساذج', 'مغفل', 'قبيح', 'بذيء', 'وقح', 'صفيق',
-        'كذاب', 'نصاب', 'مارق', 'فاجر', 'ماكر', 'حقود', 'حسود', 'أناني',
-        'مغرور', 'متكبر', 'فظ', 'غليظ', 'أخرق', 'أبكم', 'أطرش', 'أعمى',
-        'أعرج', 'أصلع', 'أقرع', 'أحدب', 'أشوه', 'أرعن', 'أرعن', 'أهوج',
-        'أحمق', 'أبله', 'أعور', 'أشل', 'أكمه', 'أصم', 'أبتر', 'أجدع',
-        'نكد', 'نكدي', 'زفت', 'زبالة', 'قمامة', 'عاهرة', 'قحبة', 'شرموطة',
-        'منيوك', 'ناكح', 'متناك', 'لحس', 'كس', 'كسي', 'طيز', 'مص', 'بوس',
-        'نياكة', 'لحس', 'خرا', 'خرة', 'خربان', 'خربوطي', 'مخرب', 'فاسد',
-        'منحط', 'ساقط', 'خنزير', 'كلب', 'ابن الكلب', 'بنت الكلب', 'أمك',
-        'أختك', 'دينك', 'عرضك', 'شرفك', 'كلبك', 'أبوك', 'أمك', 'بنت',
-        'شرموط', 'قواد', 'ديوث', 'داعر', 'فاجر', 'زاني', 'زانية', 'لوطي',
-        'لوطية', 'منكوح', 'منكوحة', 'متناكة', 'منيوكة', 'مصاص', 'مصاصة',
-        'نياك', 'نياكة', 'خول', 'خولة', 'خنيث', 'مخنث', 'لطي', 'لطية',
-        'قحبة', 'عاهرة', 'مومس', 'دعارة', 'زنا', 'زنى', 'سفاح', 'سفاحة',
-        'فاحشة', 'منكر', 'قذر', 'وسخ', 'نجس', 'نجاسة', 'رجيع', 'براز',
-        'بول', 'بائل', 'بولة', 'خراء', 'خرئ', 'خرة', 'خرية', 'عذرة',
-        'عذرة', 'غائط', 'غائطة', 'كخة', 'كخ', 'قرف', 'مقرف', 'مقزز',
-        'مقزز', 'كريه', 'مكروه', 'بغيض', 'مبغض', 'ممقوت', 'منفور', 'مكروه',
-        'حقير', 'تافه', 'سخيف', 'رذيل', 'دني', 'وضيع', 'سافل', 'خسيس',
-        'لئيم', 'ماكر', 'غدار', 'خائن', 'غاش', 'نصاب', 'محتال', 'مخادع',
-        'كذاب', 'زور', 'زوري', 'منافق', 'مرائي', 'مريب', 'مشبوه', 'مريب',
-        'مريض', 'معتوه', 'مجنون', 'مختل', 'ممسوخ', 'مشوه', 'مشكل', 'مشوش',
-        'فاشل', 'خاسر', 'خسران', 'خسرانه', 'بايع', 'بايع', 'خايب', 'خايبة',
-        'بايز', 'بايزة', 'باين', 'باينة', 'خربان', 'خربانة', 'مخرب', 'مخربة',
-        'فاسد', 'فاسدة', 'منحط', 'منحطة', 'ساقط', 'ساقطة', 'نذل', 'نذلة',
-        'وغد', 'وغدة', 'أرذل', 'أرذلة', 'أدنى', 'أدناء', 'أخس', 'أخساء',
-        'ألأم', 'ألئام', 'أوضاع', 'أوضاع', 'أرذال', 'أوغاد', 'أشقياء',
-        'أشرار', 'أشرار', 'أنجاس', 'أرجاس', 'أقذار', 'أوساخ',
-        // Additional variations / common insults
-        'يا حمار', 'يا كلب', 'يا خنزير', 'يا تيس', 'يا تيسة', 'يا ثور',
-        'يا ثور', 'يا جحش', 'يا بهيمة', 'يا حيوان', 'يا غبي', 'يا أهبل',
-        'يا عبيط', 'يا سافل', 'يا حقير', 'يا نذل', 'يا رعاع', 'يا زبالة',
-        'يا وسخ', 'يا قذر', 'يا مقرف', 'يا تافه', 'يا سخيف', 'يا فاشل',
-        'يا خايب', 'يا معتوه', 'يا مريض', 'يا مجنون', 'يا مختل', 'يا أحمق',
-        'يا بليد', 'يا أبله', 'يا ساذج', 'يا مغفل', 'يا قبيح', 'يا بذيء',
-        'يا وقح', 'يا صفيق', 'يا جبان', 'يا متخلف', 'يا جاهل', 'يا خسيس',
-        'يا وضيع', 'يا دنيء', 'يا لئيم', 'يا ماكر', 'يا غدار', 'يا خائن',
-        'يا غاش', 'يا نصاب', 'يا محتال', 'يا مخادع', 'يا كذاب', 'يا منافق',
-        'يا مرائي', 'يا مريب', 'يا مشبوه',
-
-        // ========== ENGLISH (original + extensive additions) ==========
-        // Original
-        'stupid', 'idiot', 'dumb', 'noob', 'loser', 'trash', 'garbage',
-        'fool', 'moron', 'dumbass', 'asshole', 'peace of shit', 'shit',
-        // Extensive additions (mild to moderate profanity, insults, gamer slang)
-        'dummy', 'imbecile', 'cretin', 'ignoramus', 'buffoon', 'jerk',
-        'crap', 'damn', 'hell', 'poop', 'butt', 'ass', 'idiotic',
-        'moronic', 'brainless', 'mindless', 'simpleton', 'n00b', 'newb',
-        'scrub', 'pleb', 'dickhead', 'jackass', 'douche', 'douchebag',
-        'bastard', 'bitch', 'wanker', 'prick', 'twat', 'cunt', 'fuck',
-        'fucker', 'motherfucker', 'mf', 'bullshit', 'horseshit', 'crap',
-        'damn', 'dammit', 'goddamn', 'goddam', 'goddammit', 'heck', 'frick',
-        'frig', 'freak', 'frigging', 'freaking', 'eff', 'effing', 'suck',
-        'sucks', 'sucker', 'sucka', 'chump', 'schmuck', 'putz', 'dweeb',
+        words: [
+            // ========== ARABIC (massively expanded) ==========
+            // Original words
+            'غبي', 'غبية', 'أهبل', 'عبيط', 'حمار', 'جحش', 'بهيمة', 'حيوان',
+            'زبالة', 'وسخ', 'حقير', 'نعل', 'تبا', 'ملعون', 'لعنة', 'قذر',
+            'مقرف', 'سافل', 'تافه', 'سخيف', 'كلب', 'بقرة', 'ماعز', 'خنزير',
+            
+            // Extensive additions
+            'أحمق', 'بليد', 'معتوه', 'مريض', 'خسيس', 'وضيع', 'دنيء', 'لئيم',
+            'فاشل', 'خايب', 'ساقط', 'نذل', 'رعاع', 'أوغاد', 'جبان', 'متخلف',
+            'جاهل', 'أبله', 'ساذج', 'مغفل', 'قبيح', 'بذيء', 'وقح', 'صفيق',
+            'كذاب', 'نصاب', 'مارق', 'فاجر', 'ماكر', 'حقود', 'حسود', 'أناني',
+            'مغرور', 'متكبر', 'فظ', 'غليظ', 'أخرق', 'أبكم', 'أطرش', 'أعمى',
+            
+            // More variations
+            'هبل', 'هبلة', 'مهبل', 'تهبيل', 'غباء', 'غبائك', 'حمارك', 'حمارة',
+            'وساخة', 'قذارة', 'نذالة', 'رذالة', 'خسة', 'وضاعة', 'دناءة',
+            'فشل', 'خيبة', 'سقوط', 'انحطاط', 'تخلف', 'جهل', 'بلادة',
+            
+            // Insult prefixes
+            'يا غبي', 'يا حمار', 'يا كلب', 'يا خنزير', 'يا جحش', 'يا بهيمة',
+            'يا أهبل', 'يا عبيط', 'يا سافل', 'يا حقير', 'يا نذل', 'يا وسخ',
+            'يا قذر', 'يا مقرف', 'يا تافه', 'يا سخيف', 'يا فاشل', 'يا خايب',
+            
+            // Animal insults
+            'قرد', 'قردة', 'حشرة', 'حشرات', 'ذباب', 'صرصور', 'فأر', 'جرذ',
+            'ثعبان', 'أفعى', 'عقرب', 'عنكبوت', 'تمساح', 'كلاب', 'خنازير',
+            
+            // ========== ENGLISH (massively expanded) ==========
+            // Original
+            'stupid', 'idiot', 'dumb', 'noob', 'loser', 'trash', 'garbage',
+            'fool', 'moron', 'dumbass', 'asshole', 'piece of shit', 'shit',
+            
+            // Common profanity
+            'damn', 'hell', 'crap', 'poop', 'butt', 'ass', 'arse',
+            'piss', 'bollocks', 'bloody', 'blimey', 'crikey',
+            
+            // Insults
+            'jerk', 'dummy', 'imbecile', 'cretin', 'ignoramus', 'buffoon',
+            'simpleton', 'dimwit', 'nitwit', 'halfwit', 'numbskull', 'dunce',
+            'dolt', 'nincompoop', 'blockhead', 'bonehead', 'airhead', 'birdbrain',
+            
+            // Gamer slang
+            'noob', 'n00b', 'newb', 'scrub', 'pleb', 'peasant', 'bot',
+            'trash player', 'garbage player', 'trash tier', 'low elo',
+            
+            // Variations
+            'stupido', 'stupeed', 'stoopid', 'stoopud', 'stewpid',
+            'idiota', 'idot', 'idoit', 'ediot', 'eejit',
+            'dumass', 'dumas', 'dumaz', 'dumbazz',
+            'looser', 'loozer', 'luser',
+            'azzhole', 'a$$hole', 'a55hole', 'ahole', 'arsehole',
+            
+            // Mild profanity variations
+            'shite', 'shiet', 'shieet', 'sh1t', 'sh!t', 'sht',
+            'frick', 'freak', 'freaking', 'frigging', 'friggin',
+            'heck', 'hecking', 'dang', 'darn', 'drat',
+            
+            // Body parts (mild)
+            'booty', 'bootie', 'bum', 'buns', 'behind', 'rear',
+            
+            // Common substitutions
+            'suck', 'sucks', 'sucka', 'sucker', 'suckz',
+            'lame', 'lameo', 'lamer', 'lamest', 'lameass',
+            'weak', 'weakling', 'weaksauce',
+            'pathetic', 'pitiful', 'worthless', 'useless',
+            
+            // ========== FRANCO-ARABIC (expanded) ==========
+            'ya 7mar', 'ya kalb', 'ya khanzir', 'ya ahbal', '3abeet',
+            'ghabi', 'ghaby', 'ghabia', 'ghabya',
+            'hamar', '7mar', 'hmar', 'homaar',
+            'kalb', 'kelb', 'kilb', 'kalib',
+            'wa5', 'waskh', 'wesekh', 'wisikh',
+            'za2', 'za2er', 'za2eer',
+            '7a2eer', '7a2ir', 'ha2eer', 'ha2ir',
         ],
         patterns: [
             /(.)\1{6,}/,  // Spam: same char 7+ times
             /^\s*(.+?)\s*\1\s*\1/,  // Repeated words 3+ times
+            /(.{2,})\1{3,}/,  // Repeated sequences
         ],
         category: 'minor_profanity',
         description: 'ألفاظ غير لائقة خفيفة',
@@ -174,10 +225,48 @@ const VIOLATIONS = {
     // ── Level 2: Moderate harassment ──────────────────────────
     2: {
         words: [
-            'عرص', 'عرصة', 'معرص', 'خول', 'خولة', 'كلب', 'ابن كلب',
-            'متخلف', 'بربري', 'همجي', 'زق', 'خرا', 'خري',
-            'ass', 'asshole', 'jerk', 'bastard', 'prick', 'douche',
-            'wanker', 'jackass', 'dipshit', 'arse',
+            // ========== ARABIC ==========
+            'عرص', 'عرصة', 'معرص', 'عرصان', 'عراص', 'تعريص',
+            'خول', 'خولة', 'خولات', 'تخويل', 'مخول',
+            'كلب', 'كلبة', 'ابن كلب', 'بنت كلب', 'كليب', 'كلاب',
+            'متخلف', 'متخلفة', 'متخلفين', 'تخلف',
+            'بربري', 'بربرية', 'همجي', 'همجية', 'همج',
+            'زق', 'زقق', 'يا زق', 'زقي',
+            'خرا', 'خري', 'خرة', 'خرية', 'خراء', 'خرئ',
+            'حثالة', 'حثالات', 'نفاية', 'قمامة', 'زبالة',
+            'وصخ', 'واطي', 'واطية', 'نيل', 'زفت',
+            'عفن', 'عفنة', 'عفونة', 'منتن', 'قذارة',
+            'سافل', 'سافلة', 'سفالة', 'سافلين',
+            'حقير', 'حقيرة', 'حقارة', 'محتقر',
+            
+            // Family insults (mild)
+            'امك', 'ابوك', 'اهلك', 'اختك', 'اخوك',
+            
+            // ========== ENGLISH ==========
+            'ass', 'asshole', 'azzhole', 'a$$', 'a$$hole',
+            'jerk', 'jerkoff', 'jerkwad', 'jerkface',
+            'bastard', 'basterd', 'bstard', 'b@stard',
+            'prick', 'pr!ck', 'prik', 'pric',
+            'douche', 'douchebag', 'douch', 'd0uche',
+            'wanker', 'w@nker', 'wankr', 'tosser',
+            'jackass', 'jackarse', 'jack@ss',
+            'dipshit', 'dipsh!t', 'dips#it',
+            'dickhead', 'd!ckhead', 'dickhed', 'd1ckhead',
+            'shithead', 'sh!thead', 'shithed', 'shiithead',
+            'scumbag', 'scum', 'filth', 'vermin',
+            'retard', 'retarded', 'r3tard', 'tard',
+            'autist', 'autistic', 'sperg', 'sperglord',
+            
+            // Slurs (mild)
+            'gay', 'ghey', 'gey', 'homo',
+            
+            // ========== FRANCO-ARABIC ==========
+            '3ars', '3rs', 'mo3ars', 'mo3rs', 'ars',
+            'khawal', 'khwal', 'khawl', '5awal', '5wal',
+            'kelb', 'kalb', 'ibn kalb', 'bent kalb',
+            'za2', 'za22', 'zaa2', 'za2i',
+            'khra', 'khara', '5ara', '5ra', 'khraa',
+            'wa6i', 'wa6y', 'waty', 'wati',
         ],
         category: 'harassment',
         description: 'تحرش لفظي وإزعاج',
@@ -186,17 +275,90 @@ const VIOLATIONS = {
     // ── Level 3: Severe profanity ─────────────────────────────
     3: {
         words: [
-            'كس', 'كوس', 'بص', 'بصص', 'زبر', 'أير', 'اير', 'زب',
-            'نيك', 'ينيك', 'انيك', 'تنيك', 'مناك', 'منيوك', 'تناك',
-            'شرموط', 'شرموطة', 'شرموته', 'قحبة', 'قحب', 'متناك',
-            'فشخ', 'فشخك', 'يفشخ', 'تفشيخ', 'طيز', 'مكوة',
-            'كسمك', 'كسامك', 'مكوتك', 'طيزك', 'لحس',
-            'fuck', 'fucking', 'fucker', 'motherfucker', 'shit',
-            'bitch', 'pussy', 'dick', 'cock', 'cunt', 'twat',
-            // Franco-Arabic
-            'kosomak', 'ksomak', 'ksmk', 'metnak', 'metnaka',
-            'sharmota', 'sharmouta', 'mnyok', 'mnywk', 'a7a', 'aha',
-            'khawal', 'khwal', 'ars', '3ars', 'mo3ars',
+            // ========== ARABIC PROFANITY ==========
+            // Core profanity
+            'كس', 'كوس', 'كسك', 'كسها', 'كسه', 'كسمك', 'كسامك', 'كسخت',
+            'كسي', 'كسكم', 'كساس', 'اكساس', 'تكسيس',
+            
+            'بص', 'بصص', 'بصة', 'بصاص', 'بصبص',
+            
+            'زبر', 'زبري', 'زبرك', 'زباير', 'زبور',
+            'أير', 'اير', 'ايري', 'ايرك', 'عير', 'عيري',
+            'زب', 'زبي', 'زبك', 'زبه', 'زبها', 'ازبار',
+            
+            // Sexual acts
+            'نيك', 'نيكة', 'ينيك', 'انيك', 'تنيك', 'نيكها', 'نيكه',
+            'مناك', 'منيوك', 'تناك', 'متناك', 'ناك', 'ناكها',
+            'نايك', 'نيكني', 'نيكتك', 'منتاك', 'منتاكة',
+            'فشخ', 'فشخك', 'فشخها', 'يفشخ', 'تفشيخ', 'مفشوخ',
+            'لحس', 'لحاس', 'الحس', 'لحست', 'ملحوس',
+            'مص', 'مصاص', 'امص', 'مصي', 'ممصوص',
+            
+            // Sexual slurs
+            'شرموط', 'شرموطة', 'شرموته', 'شراميط', 'شرمطة',
+            'قحبة', 'قحب', 'قحاب', 'اقحاب',
+            'عاهرة', 'عاهر', 'عواهر', 'عهر',
+            'مومس', 'مومسة', 'عاهرات',
+            'قواد', 'قوادة', 'قيادة',
+            'ديوث', 'دياثة', 'ديايث',
+            
+            // Body parts
+            'طيز', 'طيزك', 'طيزها', 'طياز', 'اطياز',
+            'مكوة', 'مكوتك', 'مكوتها',
+            'بزاز', 'بز', 'بزك', 'بزها',
+            'صدرها', 'نهودها', 'نهود',
+            
+            // ========== ENGLISH PROFANITY ==========
+            // F-word variations
+            'fuck', 'fucking', 'fucker', 'fucked', 'fuk', 'fck',
+            'fuk', 'fuc', 'fawk', 'fawking', 'phuck', 'phuk',
+            'f**k', 'f*ck', 'f***', 'fxck', 'fcuk', 'fuc',
+            'motherfucker', 'mfer', 'mofo', 'mf', 'mutha',
+            'motherfucking', 'motherfucka', 'muthafucka',
+            
+            // Genitalia
+            'dick', 'cock', 'penis', 'dong', 'schlong', 'pecker',
+            'd!ck', 'd1ck', 'dik', 'dck', 'c0ck', 'cawk',
+            'pussy', 'cunt', 'vagina', 'puss', 'cooch', 'coochie',
+            'p***y', 'c**t', 'cnt', 'kunt', 'c0nt',
+            'balls', 'ballz', 'nutsack', 'nuts', 'testicles',
+            'tits', 'titties', 'boobs', 'breasts', 't!ts', 'bewbs',
+            
+            // Sexual acts
+            'sex', 'suck', 'blow', 'blowjob', 'handjob', 'oral',
+            'anal', 'rape', 'molest', 'grope', 'fondle',
+            
+            // Slurs
+            'bitch', 'b!tch', 'b1tch', 'biatch', 'biotch', 'beetch',
+            'whore', 'wh0re', 'hoe', 'ho', 'slut', 'skank',
+            'slag', 'tramp', 'hooker', 'prostitute',
+            'twat', 'tw@t', 'twet', 'tw4t',
+            
+            // Shit variations
+            'shit', 'shitting', 'shitty', 'shitter', 'shite',
+            'sh!t', 'sh1t', 'sht', 'shiit', 'shieet',
+            'bullshit', 'bs', 'horseshit', 'dogshit',
+            
+            // ========== FRANCO-ARABIC ==========
+            'kos', 'koss', 'kus', 'kuss', 'kosomak', 'ksomak', 'ksmk', 'ks',
+            'kosek', 'kosaha', 'koseha', 'kos omak', 'kos om',
+            
+            'ayr', '3ayr', 'ayri', '3ayri', 'ayrak', '3ayrak',
+            'zob', 'zeb', 'zobi', 'zebi', 'zobak',
+            
+            'nik', 'neek', 'nayek', 'nayk', 'na3tek', 'nektk',
+            'metnak', 'metnaka', 'mtnaka', 'mtnak',
+            'mnyok', 'mnywk', 'manyok', 'manyouk',
+            'tanyek', 'tenak', 'tnaka',
+            
+            'sharmota', 'sharmouta', '4armota', '4armouta', 'shrmota',
+            '2a7ba', '2ahba', 'kahba', 'ka7ba', 'ga7ba',
+            
+            'a7a', 'aha', 'eh eh', 'eih eih',
+            
+            'teez', 'tiz', 'teezi', 'teezak', 't33z',
+            
+            'fsh5', 'fash5', 'fsh', 'fshhh',
         ],
         category: 'severe_profanity',
         description: 'ألفاظ بذيئة شديدة',
@@ -205,32 +367,106 @@ const VIOLATIONS = {
     // ── Level 4: Hate speech & threats ────────────────────────
     4: {
         words: [
-            // Hate speech
-            'عبد', 'زنجي', 'عنصري', 'nigger', 'nigga', 'n1gga',
-            'faggot', 'fag', 'retard',
-            // Sexual harassment
-            'عاهرة', 'مومس', 'قواد', 'ديوث', 'لواط', 'لوطي',
-            'شاذ', 'منحرف', 'مخنث', 'whore', 'slut', 'skank',
-            'pedo', 'pedophile', 'rape',
-            // Mild threats
-            'اقتلك', 'اقتله', 'اذبحك', 'اذبحه', 'سأقتلك',
-            'امسحك', 'ادعسك', 'kill you', 'beat you',
+            // ========== RACIAL SLURS ==========
+            'nigger', 'nigga', 'nigg', 'n1gg', 'nig', 'n1gger',
+            'n1gga', 'niggr', 'nigr', 'nggr', 'n!gger', 'n!gga',
+            
+            'عبد', 'عبيد', 'عبدة', 'ياعبد',
+            'زنجي', 'زنجية', 'زنوج', 'يازنجي',
+            'عنصري', 'عنصرية', 'تمييز', 'عرقية',
+            
+            // ========== HOMOPHOBIC SLURS ==========
+            'faggot', 'fag', 'fgt', 'f@ggot', 'f@g', 'fagg', 'fagot',
+            'queer', 'dyke', 'tranny', 'shemale',
+            
+            'لوطي', 'لوطية', 'لواط', 'لواطة',
+            'شاذ', 'شاذة', 'شذوذ', 'منحرف', 'منحرفة',
+            'مخنث', 'مخنثة', 'تخنيث', 'خنوث',
+            'مثلي', 'مثلية', 'مثليين',
+            
+            // ========== SEXUAL HARASSMENT ==========
+            'rape', 'r@pe', 'raep', 'rpe', 'rapist',
+            'molest', 'grope', 'fondle',
+            
+            'اغتصاب', 'اغتصب', 'اغتصبك', 'مغتصب',
+            'تحرش', 'متحرش', 'تحرشي',
+            
+            // ========== DISABILITY SLURS ==========
+            'retard', 'retarded', 'r3tard', 'tard',
+            'autist', 'autistic', 'aspie', 'sperg',
+            'cripple', 'gimp', 'vegetable',
+            
+            'معوق', 'معاق', 'معاقة', 'إعاقة',
+            'متخلف عقليا', 'متخلفة عقليا',
+            
+            // ========== MILD THREATS ==========
+            'kill you', 'beat you', 'hurt you', 'punch you',
+            'kick your ass', 'beat your ass',
+            
+            'اقتلك', 'اقتله', 'اقتلها', 'سأقتلك',
+            'اذبحك', 'اذبحه', 'اذبحها',
+            'اضربك', 'اضربه', 'اضربها',
+            'امسحك', 'امسحه', 'امسحها',
+            'ادعسك', 'ادوسك',
+            
+            // ========== OTHER HATE SPEECH ==========
+            'cancer', 'aids', 'die', 'suicide', 'hang yourself',
+            'kys', 'kill yourself', 'go die',
+            
+            'مرض', 'سرطان', 'ايدز', 'موت', 'انتحر',
+            'اشنق نفسك', 'مت', 'روح مت',
         ],
         category: 'hate_speech',
         description: 'خطاب كراهية وتهديدات',
     },
 
-    // ── Level 5: Severe threats ───────────────────────────────
+    // ── Level 5: Severe threats & illegal ────────────────────
     5: {
         words: [
-            'ارهابي', 'تفجير', 'اغتيال', 'اغتصاب',
-            'terrorist', 'bomb', 'murder', 'assassination',
-            'strangle', 'cut your throat',
+            // ========== TERRORISM & VIOLENCE ==========
+            'ارهابي', 'ارهابية', 'ارهاب', 'تطرف', 'متطرف',
+            'تفجير', 'انفجار', 'قنبلة', 'متفجرات',
+            'اغتيال', 'اغتصاب', 'خطف', 'احتجاز',
+            'ذبح', 'قطع رأس', 'قطع الرأس',
+            
+            'terrorist', 'terrorism', 'extremist', 'radical',
+            'bomb', 'bombing', 'explosive', 'detonate',
+            'murder', 'assassination', 'assassinate',
+            'kidnap', 'abduct', 'hostage',
+            'strangle', 'strangulation',
+            'cut your throat', 'slit throat', 'behead',
+            
+            // ========== SPECIFIC THREATS ==========
+            'school shooting', 'mass shooting', 'shoot up',
+            'massacre', 'genocide', 'ethnic cleansing',
+            
+            'اطلاق نار', 'اطلق النار', 'رصاص',
+            'مجزرة', 'ابادة', 'تطهير عرقي',
+            
+            // ========== CHILD ABUSE ==========
+            'pedo', 'pedophile', 'child abuse', 'cp',
+            'minor', 'underage', 'grooming',
+            
+            'تحرش بالأطفال', 'اعتداء على الأطفال',
+            'قاصر', 'قاصرين',
         ],
         patterns: [
-            /(?:اعرف|عارف|موجود)\s*(?:في|ب)?(?:مكان|عنوان|بيت)/i,
+            // Location threats
+            /(?:اعرف|عارف|موجود|وصلت)\s*(?:في|ب)?(?:مكان|عنوان|بيت|مكانك|عنوانك)/i,
             /i\s*know\s*where\s*you\s*live/i,
             /gonna\s*find\s*you/i,
+            /i['']ll\s*find\s*you/i,
+            /track\s*you\s*down/i,
+            /hunt\s*you\s*down/i,
+            
+            // Death threats
+            /i['']ll\s*kill\s*you/i,
+            /gonna\s*kill\s*you/i,
+            /you['']re\s*dead/i,
+            /you\s*will\s*die/i,
+            
+            // سأقتلك patterns
+            /(?:سوف|س|ح)\s*(?:اقتل|اذبح|امسح|ادعس)/i,
         ],
         category: 'severe_threats',
         description: 'تهديدات جسيمة',
@@ -254,14 +490,12 @@ const CATEGORIES = {
 // ══════════════════════════════════════════════════════════
 // CONFIGURATION
 // ══════════════════════════════════════════════════════════
-const PERM_BAN_THRESHOLD  = 3;           // Total bans before permanent
-const RECHECK_INTERVAL_MS = 30_000;      // Re-check Firebase every 30s
+const PERM_BAN_THRESHOLD  = 3;
+const RECHECK_INTERVAL_MS = 30_000;
 
-// LocalStorage keys
 const LS_BAN  = 'eljasus_ban_v4';
 const LS_WARN = 'eljasus_warnings_v4';
 
-// Internal state
 let _db          = null;
 let _user        = null;
 let _unsubBan    = null;
@@ -270,12 +504,12 @@ let _screenShown = false;
 let _navLocked   = false;
 
 // ══════════════════════════════════════════════════════════
-// TEXT NORMALIZATION
+// ENHANCED TEXT NORMALIZATION
 // ══════════════════════════════════════════════════════════
 function normArabic(s) {
     return s
         .toLowerCase()
-        .replace(/[\u064b-\u065f\u0670]/g, '')  // Remove diacritics
+        .replace(/[\u064b-\u065f\u0670]/g, '')
         .replace(/[أإآٱ]/g, 'ا')
         .replace(/ة/g, 'ه')
         .replace(/ى/g, 'ي')
@@ -283,7 +517,6 @@ function normArabic(s) {
 }
 
 function expandSymbols(text) {
-    // Generate all possible combinations by expanding symbols
     const chars = text.toLowerCase().split('');
     let results = [''];
     
@@ -296,48 +529,86 @@ function expandSymbols(text) {
             }
         }
         results = newResults;
-        // Limit combinations to prevent explosion
-        if (results.length > 100) {
-            results = results.slice(0, 100);
+        if (results.length > 150) {
+            results = results.slice(0, 150);
         }
     }
     
     return results;
 }
 
-function cleanText(text) {
-    // Remove spaces, dots, dashes, special chars
+function aggressiveClean(text) {
+    // Remove ALL special characters, spaces, symbols
     return text
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()\[\]'"<>|\\+ ]/g, '')
+        .replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '')
         .toLowerCase();
 }
 
 function normalizeText(text) {
-    const cleaned = cleanText(text);
+    const cleaned = aggressiveClean(text);
     const arabicNorm = normArabic(cleaned);
     
-    // Generate variations with symbol expansion
     const variations = new Set([
         cleaned,
         arabicNorm,
-        ...expandSymbols(cleaned),
+        ...expandSymbols(text),
     ]);
     
     return Array.from(variations);
 }
 
 // ══════════════════════════════════════════════════════════
-// VIOLATION DETECTION
-// Returns { level, category, word } or null
+// ADVANCED SUBSTRING EXTRACTION
+// Detects banned words hidden in gibberish like "jhfiyda*asholehinv"
+// ══════════════════════════════════════════════════════════
+function extractSubstrings(text, minLength = 3, maxLength = 20) {
+    const substrings = new Set();
+    const cleaned = aggressiveClean(text);
+    
+    // Generate all possible substrings
+    for (let i = 0; i < cleaned.length; i++) {
+        for (let j = i + minLength; j <= Math.min(i + maxLength + 1, cleaned.length + 1); j++) {
+            const substr = cleaned.substring(i, j);
+            if (substr.length >= minLength) {
+                substrings.add(substr);
+                // Also add Arabic normalized version
+                substrings.add(normArabic(substr));
+            }
+        }
+    }
+    
+    return Array.from(substrings);
+}
+
+// ══════════════════════════════════════════════════════════
+// ENHANCED VIOLATION DETECTION
+// Multi-layered approach:
+// 1. Check offensive emoji patterns
+// 2. Check full text variations
+// 3. Check all substrings (catches embedded words)
+// 4. Check regex patterns
 // ══════════════════════════════════════════════════════════
 function detectViolation(text) {
+    // Layer 1: Check offensive emoji patterns
+    for (let pattern of OFFENSIVE_EMOJI_PATTERNS) {
+        if (pattern.test(text)) {
+            return {
+                level: 3,
+                category: 'severe_profanity',
+                word: '<emoji pattern>',
+                description: 'رموز تعبيرية غير لائقة',
+            };
+        }
+    }
+    
     const variations = normalizeText(text);
+    const substrings = extractSubstrings(text, 3, 20);
     
     // Check each level from most severe (5) to least (1)
     for (let level = 5; level >= 1; level--) {
         const violation = VIOLATIONS[level];
         
-        // Check patterns first (for level 1 spam and level 5 threats)
+        // Layer 2: Check patterns first
         if (violation.patterns) {
             for (let pattern of violation.patterns) {
                 if (pattern.test(text)) {
@@ -351,9 +622,9 @@ function detectViolation(text) {
             }
         }
         
-        // Check words
+        // Layer 3: Check words against full text variations
         for (let badWord of violation.words) {
-            const normalizedBadWord = cleanText(normArabic(badWord));
+            const normalizedBadWord = aggressiveClean(normArabic(badWord));
             
             for (let variant of variations) {
                 if (variant.includes(normalizedBadWord)) {
@@ -362,6 +633,23 @@ function detectViolation(text) {
                         category: violation.category,
                         word: badWord,
                         description: violation.description,
+                    };
+                }
+            }
+        }
+        
+        // Layer 4: Check words against extracted substrings
+        // This catches "jhfiyda*asholehinv" → contains "asshole"
+        for (let badWord of violation.words) {
+            const normalizedBadWord = aggressiveClean(normArabic(badWord));
+            
+            for (let substr of substrings) {
+                if (substr === normalizedBadWord || substr.includes(normalizedBadWord)) {
+                    return {
+                        level,
+                        category: violation.category,
+                        word: badWord,
+                        description: violation.description + ' (مخفي)',
                     };
                 }
             }
@@ -474,7 +762,6 @@ async function issueBan(reason, category, level, bannedBy) {
     const ban = await buildBanObj(reason, category, level, bannedBy);
 
     if (_user) {
-        // Save to ban history
         const histKey = `players/${_user.uid}/banHistory/${ban.bannedAt}`;
         await dbSet(histKey, {
             reason:    ban.reason,
@@ -526,7 +813,6 @@ async function fetchActiveBan() {
     if (!ban) ban = lsGetBan();
     if (!ban) return null;
 
-    // Check expiry
     if (!ban.isPermanent && ban.expiresAt !== -1 && Date.now() >= ban.expiresAt) {
         await liftBan();
         return null;
@@ -597,7 +883,7 @@ function fmtRemaining(expiresAt) {
 }
 
 // ══════════════════════════════════════════════════════════
-// ENHANCED BAN SCREEN UI
+// ENHANCED BAN SCREEN UI (keeping your original design)
 // ══════════════════════════════════════════════════════════
 function showBanScreen(ban) {
     document.documentElement.style.cssText += ';overflow:hidden!important';
@@ -642,17 +928,14 @@ function showBanScreen(ban) {
     position:relative;overflow:hidden;
     animation:_bfade .6s ease both, _bglow 3s ease-in-out infinite;">
 
-    <!-- Animated background -->
     <div style="position:absolute;inset:0;border-radius:32px;
         background:${levelConfig.color}08;animation:_bpulse 2.5s ease-in-out infinite;pointer-events:none;"></div>
 
-    <!-- Spinning rings -->
     <div style="position:absolute;top:-80px;right:-80px;width:220px;height:220px;border-radius:50%;
         border:3px solid ${levelConfig.color}15;animation:_bspin 20s linear infinite;pointer-events:none;"></div>
     <div style="position:absolute;bottom:-60px;left:-60px;width:160px;height:160px;border-radius:50%;
         border:3px solid ${levelConfig.color}12;animation:_bspin 15s linear infinite reverse;pointer-events:none;"></div>
 
-    <!-- Level indicator -->
     <div style="display:inline-flex;align-items:center;justify-content:center;gap:8px;
         background:${levelConfig.color}20;border:2px solid ${levelConfig.color}60;
         border-radius:50px;padding:8px 20px;margin-bottom:16px;
@@ -668,18 +951,15 @@ function showBanScreen(ban) {
         </div>
     </div>
 
-    <!-- Main icon -->
     <div style="font-size:90px;margin-bottom:12px;line-height:1;
         filter:drop-shadow(0 0 30px ${levelConfig.color});">🚫</div>
 
-    <!-- Title -->
     <h1 style="font-family:'Orbitron',sans-serif;font-size:clamp(20px,5.5vw,30px);
         font-weight:900;color:#ef4444;margin:0 0 6px;
         text-shadow:0 0 30px rgba(239,68,68,.9);">تم حظر حسابك</h1>
     <p style="font-family:'Orbitron',sans-serif;font-size:11px;color:rgba(239,68,68,.6);
         letter-spacing:.3em;text-transform:uppercase;margin:0 0 28px;">ACCOUNT BANNED</p>
 
-    <!-- Category badge -->
     <div style="display:inline-flex;align-items:center;gap:10px;
         background:${cat.color}20;border:2px solid ${cat.color}60;
         border-radius:35px;padding:8px 20px;margin-bottom:24px;">
@@ -687,7 +967,6 @@ function showBanScreen(ban) {
         <span style="font-size:14px;font-weight:900;color:${cat.color};">${cat.ar}</span>
     </div>
 
-    <!-- Reason -->
     <div style="background:rgba(239,68,68,.09);border:2px solid rgba(239,68,68,.25);
         border-radius:18px;padding:18px 20px;margin-bottom:20px;">
         <p style="font-size:11px;color:rgba(255,255,255,.35);font-family:'Orbitron',sans-serif;
@@ -697,7 +976,6 @@ function showBanScreen(ban) {
         </p>
     </div>
 
-    <!-- Time grid -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
         <div style="background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
             border-radius:14px;padding:14px 12px;">
@@ -736,7 +1014,6 @@ function showBanScreen(ban) {
         </div>
     </div>
 
-    <!-- Live countdown -->
     ${isPerm ? `
     <div style="background:rgba(0,0,0,.5);border:3px solid rgba(239,68,68,.3);
         border-radius:20px;padding:20px;margin-bottom:24px;">
@@ -758,7 +1035,6 @@ function showBanScreen(ban) {
     </div>
     `}
 
-    <!-- Ban count warning -->
     ${ban.banCount > 1 ? `
     <div style="background:rgba(239,68,68,.12);border:2px solid rgba(239,68,68,.3);
         border-radius:16px;padding:14px;margin-bottom:20px;">
@@ -768,13 +1044,11 @@ function showBanScreen(ban) {
         </p>
     </div>` : ''}
 
-    <!-- Note -->
     <p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.9;margin:0 0 24px;">
         لا يمكنك اللعب خلال فترة الحظر.<br>
         للاستئناف أو الإبلاغ عن خطأ تواصل معنا.
     </p>
 
-    <!-- Discord appeal -->
     <a href="https://discord.gg/xBQ3ewVVHk" target="_blank" rel="noopener" style="
         display:inline-flex;align-items:center;gap:10px;
         padding:14px 30px;border-radius:16px;text-decoration:none;
@@ -791,7 +1065,6 @@ function showBanScreen(ban) {
     document.body.appendChild(overlay);
     _screenShown = true;
 
-    // Live countdown
     if (!isPerm) {
         const el = document.getElementById(remainingId);
         if (el) {
@@ -970,13 +1243,12 @@ async function init(db, user) {
 async function scan(text) {
     const violation = detectViolation(text);
     
-    if (!violation) return false; // Clean message
+    if (!violation) return false;
 
     const level = violation.level;
     const levelConfig = LEVELS[level];
     const { currentWarnings, previousBans } = await fetchOffenseHistory();
 
-    // Level 5: Instant permanent ban
     if (level === 5) {
         await new Promise(r => setTimeout(r, 800));
         await issueBan(
@@ -988,12 +1260,10 @@ async function scan(text) {
         return true;
     }
 
-    // If user has previous bans: reduce tolerance
     const adjustedThreshold = previousBans > 0 
         ? Math.max(1, Math.floor(levelConfig.warningsThreshold / 2))
         : levelConfig.warningsThreshold;
 
-    // Check if should ban now
     if (currentWarnings >= adjustedThreshold) {
         showWarningToast(level, currentWarnings, adjustedThreshold);
         await new Promise(r => setTimeout(r, 800));
@@ -1006,15 +1276,13 @@ async function scan(text) {
         return true;
     }
 
-    // Issue warning
     const newWarnings = await addWarning();
     const isLast = newWarnings >= adjustedThreshold - 1;
     showWarningToast(level, newWarnings, adjustedThreshold);
 
-    return true; // Message blocked
+    return true;
 }
 
-// Admin functions
 async function banUserManual(targetUid, reason, category, level) {
     const levelConfig = LEVELS[level] || LEVELS[3];
     const ban = {
@@ -1063,10 +1331,11 @@ window.MOD = {
     LEVELS,
 };
 
-// Legacy support
 window.moderateMessage = async (text) => {
     const blocked = await scan(text);
     return { allowed: !blocked, message: blocked ? 'رسالتك تحتوي على محتوى محظور' : null };
 };
+
+console.log('[MOD] JMS v3.1 Enhanced loaded — Advanced detection active');
 
 })();
