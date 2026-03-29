@@ -1512,13 +1512,6 @@ document.getElementById('createBtn').onclick = async () => {
         if (ban) { MOD.checkOnLoad(); return; }
     }
 
-    const user = auth.currentUser;
-    if (!user) {
-        alert('يجب تسجيل الدخول أولاً لإنشاء غرفة');
-        window.location.href = 'login.html';
-        return;
-    }
-
     localStorage.setItem('eljasus_user_name', myName);
     myRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
     isHost = true;
@@ -1561,13 +1554,6 @@ document.getElementById('joinBtn').onclick = async () => {
     if (window.MOD) {
         const ban = await MOD.checkBan?.();
         if (ban) { MOD.checkOnLoad(); return; }
-    }
-
-    const user = auth.currentUser;
-    if (!user) {
-        alert('يجب تسجيل الدخول أولاً للانضمام لغرفة');
-        window.location.href = 'login.html';
-        return;
     }
 
     localStorage.setItem('eljasus_user_name', myName);
