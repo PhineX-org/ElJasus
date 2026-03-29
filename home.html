@@ -736,6 +736,21 @@
     height: 1px;
     background: rgba(255,255,255,0.07);
 }
+
+.glass::before {
+  z-index: -1;
+}
+
+#local-fields > div:first-child {
+  position: relative;
+  z-index: 2;
+}
+
+#local-fields button {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
     </style>
 </head>
 <body class="p-4 pb-10">
@@ -1538,7 +1553,7 @@ document.getElementById('createBtn').onclick = async () => {
         await set(ref(db, 'rooms/' + myRoom), roomData);
         localStorage.setItem('currentRoom', myRoom);
         localStorage.setItem('isHost', 'true');
-        window.location.href = `room.html?room=${myRoom}`;  // ← Add room code to URL
+        window.location.href = `room.html?room=${myRoom}`;
     } catch (e) {
         console.error('Create room error:', e);
         alert('فشل إنشاء الغرفة: ' + e.message);
