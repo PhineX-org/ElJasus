@@ -20,6 +20,18 @@
             --primary-color: #00f2ff;
             --secondary-color: #7c30ff;
         }
+
+        /* Ensure visibility */
+        #notLoggedIn,
+        #loggedInContent {
+            position: relative;
+            z-index: 10;
+        }
+
+        #notLoggedIn.hidden,
+        #loggedInContent.hidden {
+            display: none !important;
+        }
         
         body { 
             font-family: 'Cairo', sans-serif; 
@@ -347,24 +359,30 @@ const firebaseConfig = {
         let currentUser = null;
 
         // Check Authentication
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('notLoggedIn').classList.add('hidden');
-                document.getElementById('loggedInContent').classList.remove('hidden');
-                
-                await loadUserData(user.uid);
-            } else {
-                document.getElementById('notLoggedIn').classList.remove('hidden');
-                document.getElementById('loggedInContent').classList.add('hidden');
-            }
-            
-            // Load moderation if available
-            if (typeof MOD !== 'undefined' && MOD.init) {
-                await MOD.init(db, user);
-                if (document.getElementById('_ej_ban')) return;
-            }
-        });
+onAuthStateChanged(auth, async (user) => {
+    const notLoggedInDiv = document.getElementById('notLoggedIn');
+    const loggedInDiv = document.getElementById('loggedInContent');
+    
+    if (user) {
+        currentUser = user;
+        
+        // Load moderation if available (before showing content)
+        if (typeof MOD !== 'undefined' && MOD.init) {
+            await MOD.init(db, user);
+            if (document.getElementById('_ej_ban')) return;
+        }
+        
+        // Show logged in content
+        notLoggedInDiv.classList.add('hidden');
+        loggedInDiv.classList.remove('hidden');
+        
+        await loadUserData(user.uid);
+    } else {
+        // Show not logged in screen
+        loggedInDiv.classList.add('hidden');
+        notLoggedInDiv.classList.remove('hidden');
+    }
+});
 
         // Load User Data
         async function loadUserData(uid) {

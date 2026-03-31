@@ -1142,14 +1142,28 @@
 
         // Auth state
         onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                console.log('No user authenticated');
-                window.location.href = 'home.html';
-                return;
-            }
+    const isGuestMode = localStorage.getItem('guestMode') === 'true';
+    
+    if (!user && !isGuestMode) {
+        console.log('No user authenticated and not guest mode');
+        window.location.href = 'home.html';
+        return;
+    }
 
-            console.log('User authenticated:', user.uid);
-            window.gameState.currentUser = user;
+    if (isGuestMode) {
+        const guestUID = localStorage.getItem('eljasus_guest_uid');
+        const guestName = localStorage.getItem('eljasus_user_name') || 'ضيف';
+        window.gameState.currentUser = { 
+            uid: guestUID, 
+            displayName: guestName, 
+            email: null,
+            isGuest: true 
+        };
+        console.log('Guest mode:', guestUID);
+    } else {
+        window.gameState.currentUser = user;
+        console.log('User authenticated:', user.uid);
+    }
             
             // ═══════════════════════════════════════════════════════════
             // INITIALIZE MODERATION SYSTEM

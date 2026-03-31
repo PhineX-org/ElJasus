@@ -1279,6 +1279,18 @@
         };
 
         const app  = initializeApp(firebaseConfig);
+        
+        // Guest mode helper
+        function generateGuestUID() {
+            const existing = localStorage.getItem('eljasus_guest_uid');
+            if (existing) return existing;
+            const guestUID = 'guest_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('eljasus_guest_uid', guestUID);
+            return guestUID;
+        }
+
+        let guestMode = false;
+        let guestUID = null;
         const auth = getAuth(app);
         const db   = getDatabase(app);
 
@@ -1289,27 +1301,35 @@
         let currentUser = null;
 
         onAuthStateChanged(auth, async (user) => {
-            currentUser = user;
+    if (!user) {
+        // Enable guest mode
+        guestMode = true;
+        guestUID = generateGuestUID();
+        currentUser = { uid: guestUID, displayName: null, email: null };
+    } else {
+        guestMode = false;
+        currentUser = user;
+        
+        if (window.MOD) {
+            await MOD.init(db, user);
+            if (document.getElementById('_ej_ban')) return;
+        }
 
-            if (window.MOD) {
-                await MOD.init(db, user);
-                if (document.getElementById('_ej_ban')) return;
-            }
-
-            await loadCustomCategories();
-
-            if (window.FriendsPanel && user) {
+        if (window.FriendsPanel) {
             FriendsPanel.init(db, user.uid, user.displayName || localStorage.getItem('eljasus_user_name') || 'لاعب');
         }
 
-            if (window.RoomInvites && user) {
-                RoomInvites.init(db, auth, (roomCode) => {
-                    localStorage.setItem('currentRoom', roomCode);
-                    localStorage.setItem('isHost', 'false');
-                    window.location.href = `room.html?room=${roomCode}`;
-                });
-            }
-        });
+        if (window.RoomInvites) {
+            RoomInvites.init(db, auth, (roomCode) => {
+                localStorage.setItem('currentRoom', roomCode);
+                localStorage.setItem('isHost', 'false');
+                window.location.href = `room.html?room=${roomCode}`;
+            });
+        }
+    }
+
+    await loadCustomCategories();
+});
 
         // ── GAME DATA ────────────────────────────────────────────────
         const gameData = {
@@ -1521,8 +1541,8 @@ document.getElementById('createBtn').onclick = async () => {
     myName = document.getElementById('pName').value.trim();
     if (!myName) return alert("الاسم مطلوب");
 
-    // Ban check
-    if (window.MOD) {
+    // Ban check (skip for guests)
+    if (!guestMode && window.MOD) {
         const ban = await MOD.checkBan?.();
         if (ban) { MOD.checkOnLoad(); return; }
     }
@@ -1531,21 +1551,23 @@ document.getElementById('createBtn').onclick = async () => {
     myRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
     isHost = true;
 
+    const userID = guestMode ? guestUID : currentUser.uid;
+
     try {
-        // ✅ FIXED: Correct structure matching room.html
         const roomData = {
-            hostId: user.uid,              // ← KEY FIX: Add hostId with UID
+            hostId: userID,
             category: document.getElementById('gameCat').value,
             visibility: 'public',
             status: 'waiting',
             createdAt: serverTimestamp(),
-            players: {                     // ← Use object, not array
-                [user.uid]: {
+            players: {
+                [userID]: {
                     username: myName,
-                    uid: user.uid,
+                    uid: userID,
                     joinedAt: serverTimestamp(),
                     connected: true,
-                    status: 'online'
+                    status: 'online',
+                    isGuest: guestMode
                 }
             }
         };
@@ -1553,6 +1575,7 @@ document.getElementById('createBtn').onclick = async () => {
         await set(ref(db, 'rooms/' + myRoom), roomData);
         localStorage.setItem('currentRoom', myRoom);
         localStorage.setItem('isHost', 'true');
+        localStorage.setItem('guestMode', guestMode);
         window.location.href = `room.html?room=${myRoom}`;
     } catch (e) {
         console.error('Create room error:', e);
@@ -1565,8 +1588,8 @@ document.getElementById('joinBtn').onclick = async () => {
     myName = document.getElementById('pName').value.trim();
     if (!myName) return alert("الاسم مطلوب");
 
-    // Ban check
-    if (window.MOD) {
+    // Ban check (skip for guests)
+    if (!guestMode && window.MOD) {
         const ban = await MOD.checkBan?.();
         if (ban) { MOD.checkOnLoad(); return; }
     }
@@ -1577,6 +1600,8 @@ document.getElementById('joinBtn').onclick = async () => {
     if (!codeInput) return;
     myRoom = codeInput.toString().toUpperCase();
 
+    const userID = guestMode ? guestUID : currentUser.uid;
+
     try {
         const roomRef = ref(db, 'rooms/' + myRoom);
         const snap = await get(roomRef);
@@ -1585,26 +1610,26 @@ document.getElementById('joinBtn').onclick = async () => {
         const roomData = snap.val();
         const players = roomData.players || {};
         
-        // Check if room is full (10 players max)
-        if (Object.keys(players).length >= 10 && !players[user.uid]) {
+        if (Object.keys(players).length >= 10 && !players[userID]) {
             return alert("الغرفة ممتلئة (10/10)");
         }
 
-        // ✅ FIXED: Add player with correct structure
-        if (!players[user.uid]) {
-            await update(ref(db, `rooms/${myRoom}/players/${user.uid}`), {
+        if (!players[userID]) {
+            await update(ref(db, `rooms/${myRoom}/players/${userID}`), {
                 username: myName,
-                uid: user.uid,
+                uid: userID,
                 joinedAt: serverTimestamp(),
                 connected: true,
-                status: 'online'
+                status: 'online',
+                isGuest: guestMode
             });
         }
 
         isHost = false;
         localStorage.setItem('currentRoom', myRoom);
         localStorage.setItem('isHost', 'false');
-        window.location.href = `room.html?room=${myRoom}`;  // ← Add room code to URL
+        localStorage.setItem('guestMode', guestMode);
+        window.location.href = `room.html?room=${myRoom}`;
     } catch (e) {
         console.error('Join room error:', e);
         alert('فشل الانضمام للغرفة: ' + e.message);
