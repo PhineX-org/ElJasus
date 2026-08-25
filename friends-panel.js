@@ -1,12 +1,6 @@
 // ============================================================
 // EL JASUS — FRIENDS PANEL  v2.1  (RIGHT-SIDE NAVBAR)
-// Fixes applied:
-//   ✅ Panel slides from RIGHT edge (not left)
-//   ✅ Added initRoom(db, auth, uid, roomCode, players)
-//   ✅ Added updateRoomPlayers(players)
-//   ✅ Vertical tab trigger on right edge (no z-index clash)
-//   ✅ ID changed to 'rp-friends-panel' (matches game-layout.js)
-//   ✅ Works on both home.html and room.html
+
 // ============================================================
 
 (function () {

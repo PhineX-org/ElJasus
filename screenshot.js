@@ -13,7 +13,7 @@ class ScreenshotSystem {
 
     // ── MAIN: generate + show ─────────────────
     async capture(data) {
-        /*  data = {
+         data = {
               winner:    'spy' | 'innocent',
               word:       string,
               category:   string,
@@ -28,7 +28,7 @@ class ScreenshotSystem {
               rank:       string,
               duration:   number   // seconds
             }
-        */
+        
 
         this.canvas = document.createElement('canvas');
         this.canvas.width  = this.W;

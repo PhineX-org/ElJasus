@@ -1,14 +1,6 @@
 /**
  * admin-reports-patch.js
- * Include at end of admin.html <script> module block, OR add as separate module script.
- * Enhances the reports section with: photo viewer, description, community standards,
- * warn player button, and improved report detail view.
- *
- * This overrides the renderReports function and adds warnPlayer.
- * Paste this content inside the existing <script type="module"> block in admin.html,
- * after all the existing code (before the closing </script>).
- */
-
+**/
 // ── REASON LABELS (enhanced) ────────────────────────────────────────────
 function reasonArFull(r) {
     const m = {

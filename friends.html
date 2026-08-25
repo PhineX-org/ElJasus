@@ -17,7 +17,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="dialogs.js"></script>
     <script src="moderation.js"></script>
-    <script src="friend-invite.js" defer></script>
+    <script src="name-themes.js"></script>
+   <script src="friend-invite-enhanced.js" defer></script>
+   <script src="profile-viewer.js" defer></script>
     
     <style>
         :root { 
@@ -424,7 +426,7 @@
                 const snap = await get(ref(db, `players/${fid}`));
                 if (snap.exists()) {
                     const d = snap.val();
-                    const info = { uid: fid, username: d.username||'مجهول', online: d.presence?.online||false, inGame: d.presence?.inGame||false };
+                    const info = { uid: fid, username: d.username||'مجهول', online: d.presence?.online||false, inGame: d.presence?.inGame||false, nameTheme: d.nameTheme||'default', nameTag: d.nameTag||null, rankPoints: parseInt(d.rankPoints)||0 };
                     friendsData.push(info);
                     if (info.online) onlineFriendsData.push(info);
                 }
@@ -439,6 +441,15 @@
             onlineList.innerHTML = onlineFriendsData.length
                 ? onlineFriendsData.map(f => createFriendCard(f, true)).join('')
                 : '<p class="text-gray-400 text-center py-8">لا يوجد أصدقاء متصلون</p>';
+
+            // Apply name themes (Snippet 12)
+            if (window.NameThemes) {
+                document.querySelectorAll('.player-name-display[data-friend-uid]').forEach(el => {
+                    const uid = el.dataset.friendUid;
+                    const friend = [...friendsData, ...onlineFriendsData].find(f => f.uid === uid);
+                    if (friend) window.NameThemes.applyPlayerStyle(el, friend);
+                });
+            }
         }
 
         function createFriendCard(friend, showInvite = false) {
@@ -461,7 +472,7 @@
                             ${statusDot}
                         </div>
                         <div>
-                            <h3 class="font-black text-white">${friend.username}</h3>
+                            <h3 class="font-black text-white player-name-display" data-friend-uid="${friend.uid}">${friend.username}</h3>
                             <div class="flex items-center gap-2 flex-wrap">
                                 ${gameStatus}
                                 <p class="text-xs text-gray-400">${friend.online ? 'متصل الآن' : 'غير متصل'}</p>
@@ -469,6 +480,12 @@
                         </div>
                     </div>
                     <div class="flex gap-2 flex-wrap">
+                        <button onclick="window.ProfileViewer && window.ProfileViewer.open('${friend.uid}', '${friend.username}')"
+                            class="px-3 py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 font-bold text-xs transition-all hover:scale-105 flex items-center gap-1"
+                            title="عرض الملف الشخصي">
+                            <i class="fas fa-user"></i>
+                            <span>الملف</span>
+                        </button>
                         ${friend.online ? `
                         <button onclick="openInviteModal('${friend.uid}','${friend.username}')"
                             class="px-3 py-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border-2 border-cyan-500/40 rounded-lg text-cyan-400 text-xs font-bold hover:from-cyan-500/30 hover:to-purple-500/30 transition-all">

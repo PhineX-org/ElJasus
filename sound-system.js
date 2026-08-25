@@ -1,5 +1,5 @@
 // ============================================
-// EL JASUS - SOUND SYSTEM v2.1 (fixed mobile position)
+// EL JASUS - SOUND SYSTEM v2.1
 // ============================================
 
 class SoundSystem {
