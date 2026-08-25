@@ -17,7 +17,5 @@ ElJasus is arabian muliplayer game built for family and friends
 3- ***features***
 - Friending system
 - Reporting system
-- Rooming system
+- Matchmaking system
 - Ranking system
-- Coins system
-- Announcement system
