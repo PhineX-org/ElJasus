@@ -1,6 +1,6 @@
   **ElJasus | The Classic Edition**
             By Phine**X**
-  ![ElJasus](https://github.com/user-attachments/assets/05b9160b-8cf2-4bc7-abba-62404b3cf162)
+  ![ElJasus](https://github.com/user-attachments/assets/ElJasus.jpg)
 ElJasus is arabian muliplayer game built for family and friends
 
 1- ***Gameplay***
