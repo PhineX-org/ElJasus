@@ -219,8 +219,6 @@ Please keep conversations respectful and help make the game enjoyable for everyo
 
 ---
 
-## QUALITY FIRST
-
 <div align="center">
 
 # BUILT FOR QUALITY.
