@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/PhineX-org/ElJasus/scheduled-release/Assets/ElJasus.jpg" alt="ElJasus" width="900">
+<img src="https://raw.githubusercontent.com/PhineX-org/ElJasus/main/Assets/ElJasus.jpg" alt="ElJasus" width="900">
 
 <br><br>
 
